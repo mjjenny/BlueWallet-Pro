@@ -9,6 +9,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Blue Wallet" />
+  <meta name="application-name" content="Blue Wallet v0.2" />
   <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
   <meta name="format-detection" content="telephone=no" />
 
@@ -971,6 +972,23 @@
     }
     .file-chip button { background: none; border: none; color: var(--bad); cursor: pointer; font-size: 14px; }
 
+
+    /* ===== v0.2: camera, update and storage UX ===== */
+    .capture-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
+    .capture-actions .btn { min-height:46px; }
+    .app-toast {
+      position:fixed; left:12px; right:12px; bottom:calc(92px + env(safe-area-inset-bottom, 0px));
+      z-index:12000; display:none; align-items:center; gap:10px; padding:12px 14px;
+      border-radius:14px; background:rgba(8,22,38,.96); border:1px solid var(--glass-border);
+      box-shadow:0 16px 40px rgba(0,0,0,.5); color:#fff; font-size:13px;
+    }
+    .app-toast.show { display:flex; }
+    .app-toast span { flex:1; }
+    .storage-meter { height:10px; overflow:hidden; border-radius:999px; background:rgba(255,255,255,.08); margin:10px 0 6px; }
+    .storage-meter > i { display:block; height:100%; width:0; background:linear-gradient(90deg,#5ed4ff,#2aa8e0); border-radius:inherit; }
+    .version-chip { font-size:11px; color:var(--muted); text-align:center; margin-top:8px; }
+    @media (max-width:420px) { .capture-actions { grid-template-columns:1fr; } }
+
     /* Print sheet only */
     @media print {
       body * { visibility: hidden !important; }
@@ -1060,6 +1078,7 @@
   </style>
 </head>
 <body>
+  <div class="app-toast" id="app-toast" role="status"><span id="app-toast-text"></span><button type="button" class="btn btn-primary" id="app-toast-action" style="padding:8px 12px;font-size:13px">Update</button><button type="button" class="x" id="app-toast-close" aria-label="Close">✕</button></div>
   <div id="ios-banner" role="status">
     <strong>Safari mode:</strong> The wallet will use Safari-compatible local storage when IndexedDB is unavailable.
     For Face ID, encryption and OCR, open it from an HTTPS website or localhost.
@@ -1309,6 +1328,7 @@
           <label>Scan / Photo *</label>
           <div class="drop" id="drop-zone">
             <input type="file" id="doc-file" accept="image/*,application/pdf" multiple class="hidden" />
+            <input type="file" id="camera-file" accept="image/*" capture="environment" class="hidden" />
             <div class="prev" id="file-preview"><img id="preview-img" alt="" /><div class="pn" id="preview-name"></div></div>
             <div class="file-chips" id="file-chips"></div>
             <div id="file-placeholder">
@@ -1317,6 +1337,11 @@
               <div style="font-size:13px;color:var(--muted);margin-top:3px">JPG, PNG or PDF</div>
             </div>
           </div>
+          <div class="capture-actions">
+            <button type="button" class="btn btn-primary" id="btn-camera">📷 Scan with camera</button>
+            <button type="button" class="btn btn-ghost" id="btn-files">📁 Choose files / PDF</button>
+          </div>
+          <p style="font-size:12px;color:var(--muted);margin-top:8px">v0.2 automatically reduces large photos for dependable offline storage while retaining readable document detail.</p>
           <button type="button" class="btn btn-ghost full-only" id="btn-ocr" style="width:100%;margin-top:10px">🔍 Read text from scan (OCR)</button>
           <div id="ocr-panel" class="full-only" style="display:none;margin-top:10px;padding:12px;border-radius:14px;background:rgba(0,0,0,.35);border:1px solid var(--glass-border);text-align:left">
             <div id="ocr-status" style="font-size:13px;color:var(--muted);margin-bottom:8px"></div>
@@ -1646,6 +1671,13 @@
           <button class="btn btn-ghost full-only" id="btn-meta-transfer" style="width:100%;margin-bottom:8px">Multi-device meta transfer</button>
           <button class="btn btn-ghost" id="btn-download-summary" style="width:100%">⬇ Download status summary</button>
           <p style="font-size:12px;color:var(--muted);margin-top:10px">Also: open any document → Download scan · Tools → Share / Calendar (.ics in Full).</p>
+        </div>
+        <div class="sblock">
+          <h3>Offline storage</h3>
+          <p id="storage-status">Checking available device storage…</p>
+          <div class="storage-meter"><i id="storage-meter-fill"></i></div>
+          <button class="btn btn-ghost" id="btn-storage-check" style="width:100%">Refresh storage check</button>
+          <div class="version-chip">Blue Wallet Offshore v0.2</div>
         </div>
         <div class="sblock">
           <h3>Clear Everything</h3>
@@ -3521,6 +3553,59 @@
       console.error(e.error || e.message || e);
     });
 
+    function showAppToast(message, actionLabel, actionFn) {
+      const box = document.getElementById('app-toast');
+      const text = document.getElementById('app-toast-text');
+      const action = document.getElementById('app-toast-action');
+      if (!box || !text || !action) return;
+      text.textContent = message;
+      action.textContent = actionLabel || 'OK';
+      action.style.display = actionFn ? 'inline-flex' : 'none';
+      action.onclick = actionFn || null;
+      box.classList.add('show');
+    }
+    function hideAppToast() { document.getElementById('app-toast')?.classList.remove('show'); }
+    async function updateStorageStatus() {
+      const statusEl = document.getElementById('storage-status');
+      const fill = document.getElementById('storage-meter-fill');
+      if (!statusEl || !fill) return;
+      if (!navigator.storage || !navigator.storage.estimate) {
+        statusEl.textContent = 'Storage estimate is not available in this browser. Keep regular backups.';
+        fill.style.width = '0%'; return;
+      }
+      try {
+        const { usage = 0, quota = 0 } = await navigator.storage.estimate();
+        const mb = n => (n / 1048576).toFixed(n > 104857600 ? 0 : 1);
+        const pct = quota ? Math.min(100, Math.round((usage / quota) * 100)) : 0;
+        statusEl.textContent = `${mb(usage)} MB used of approximately ${mb(quota)} MB available (${pct}%).`;
+        fill.style.width = pct + '%';
+      } catch (e) {
+        statusEl.textContent = 'Could not read storage usage. Keep regular full backups.';
+        fill.style.width = '0%';
+      }
+    }
+    async function optimizeImageFile(file) {
+      if (!file || !file.type || !file.type.startsWith('image/')) return file;
+      const MAX_SIDE = 2200, QUALITY = 0.86;
+      if (file.size < 900000) return file;
+      try {
+        const url = URL.createObjectURL(file);
+        const img = await new Promise((resolve, reject) => {
+          const el = new Image(); el.onload = () => resolve(el); el.onerror = reject; el.src = url;
+        });
+        const w0 = img.naturalWidth || img.width, h0 = img.naturalHeight || img.height;
+        const scale = Math.min(1, MAX_SIDE / Math.max(w0, h0));
+        const w = Math.max(1, Math.round(w0 * scale)), h = Math.max(1, Math.round(h0 * scale));
+        const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0,0,w,h); ctx.drawImage(img,0,0,w,h);
+        URL.revokeObjectURL(url);
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', QUALITY));
+        if (!blob || blob.size >= file.size) return file;
+        const base = (file.name || 'scan').replace(/\.[^.]+$/, '');
+        return new File([blob], base + '-optimized.jpg', { type:'image/jpeg', lastModified:Date.now() });
+      } catch (_) { return file; }
+    }
+
     document.addEventListener('DOMContentLoaded', async () => {
       try {
       await openDB();
@@ -3626,8 +3711,14 @@
         document.getElementById('bio-enabled').checked = localStorage.getItem('bwBio') === '1';
         document.getElementById('idle-mins').value = localStorage.getItem('bwIdleMins') || '5';
         updateBioStatus();
+        updateStorageStatus();
         document.getElementById('modal-settings').classList.add('show');
       };
+
+      document.getElementById('app-toast-close').onclick = hideAppToast;
+      document.getElementById('btn-storage-check').onclick = updateStorageStatus;
+      window.addEventListener('online', () => showAppToast('Internet connection restored. Blue Wallet remains available offline.', null, null));
+      window.addEventListener('offline', () => showAppToast('Offline mode active — your stored documents remain on this device.', null, null));
 
       // Search / sort / filter
       document.getElementById('search-q').oninput = e => { searchQ = e.target.value; render(); };
@@ -3914,6 +4005,22 @@
         try {
           const registration = await navigator.serviceWorker.register('./service-worker.js', { scope: './' });
           registration.update().catch(() => {});
+          if (registration.waiting) {
+            showAppToast('Blue Wallet v0.2 is ready to install.', 'Update', () => registration.waiting.postMessage({ type:'SKIP_WAITING' }));
+          }
+          registration.addEventListener('updatefound', () => {
+            const worker = registration.installing;
+            if (!worker) return;
+            worker.addEventListener('statechange', () => {
+              if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+                showAppToast('A new Blue Wallet version is ready.', 'Update', () => worker.postMessage({ type:'SKIP_WAITING' }));
+              }
+            });
+          });
+          let refreshing = false;
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (refreshing) return; refreshing = true; location.reload();
+          });
         } catch (err) {
           console.warn('Offline service worker registration failed', err);
         }
@@ -3921,7 +4028,10 @@
 
       const zone = document.getElementById('drop-zone');
       const fin = document.getElementById('doc-file');
+      const cam = document.getElementById('camera-file');
       zone.onclick = () => fin.click();
+      document.getElementById('btn-camera').onclick = e => { e.stopPropagation(); cam.click(); };
+      document.getElementById('btn-files').onclick = e => { e.stopPropagation(); fin.click(); };
       zone.ondragover = e => { e.preventDefault(); zone.classList.add('over'); };
       zone.ondragleave = () => zone.classList.remove('over');
       zone.ondrop = async e => {
@@ -3934,10 +4044,20 @@
         for (const f of files) await handleFile(f);
         fin.value = '';
       };
+      cam.onchange = async e => {
+        const f = e.target.files && e.target.files[0];
+        if (f) await handleFile(f);
+        cam.value = '';
+      };
 
       async function handleFile(file) {
+        if (!file) return;
+        if (file.size > 25 * 1024 * 1024) { alert('This file is larger than 25 MB. Reduce it before adding to protect offline storage.'); return; }
+        const originalSize = file.size || 0;
+        file = await optimizeImageFile(file);
         const data = await toDataURL(file);
         pendingFiles.push({ data, name: file.name, type: file.type });
+        if (originalSize && file.size < originalSize * 0.8) showAppToast('Photo optimized for offline storage.', null, null);
         renderFileChips();
         document.getElementById('file-preview').classList.add('show');
         document.getElementById('file-placeholder').classList.add('hidden');

@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'blue-wallet-offshore-v0.1.1';
+const CACHE_VERSION = 'blue-wallet-offshore-v0.2';
 const APP_SHELL = [
   './',
   './index.html',
@@ -58,3 +58,5 @@ self.addEventListener('fetch', event => {
     );
   }
 });
+
+self.addEventListener('message', event => { if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting(); });
