@@ -5,8 +5,8 @@ import { describe, expect, it } from "vitest";
 
 const repoRoot = path.resolve(process.cwd(), "..");
 
-const STABLE_CSS_SHA256 = "9666f698a2ccfe66a3f8528f15c5ad6c76b3b88e52d16ceee79762631e6a8e88";
-const STABLE_LAYOUT_MARKERS_SHA256 = "5b6adf3783a4af3245fa81bd04a560909c66c0a0d2bb3f3213e04f69898320fd";
+const STABLE_CSS_SHA256 = "b875bfe6f6b611ff7a57732e11e22bc9ee19c82931687ffb81e734bfbef72faa";
+const STABLE_LAYOUT_MARKERS_SHA256 = "330f3239f57f73630c3a8d6a8faab8ee41e8eebd88c3ab0f08ebc732d0b88b72";
 
 const STABLE_LAYOUT_MARKERS = [
   "ocean-bg",
@@ -56,7 +56,7 @@ describe("stable app UI lock", () => {
     expect(rootIndex).toContain("./legacy-root-pwa.html");
     expect(rootIndex).not.toContain("./react-app/index.html");
     expect(manifest.start_url).toBe("./legacy-root-pwa.html?v=stable");
-    expect(worker).toContain("blue-wallet-stable-rollback-v0.9");
+    expect(worker).toContain("blue-wallet-stable-rollback-v0.10");
     expect(worker).toContain('caches.match("./legacy-root-pwa.html")');
   });
 
@@ -118,5 +118,24 @@ describe("stable app UI lock", () => {
     expect(html).toContain("split.className = 'view-split';");
     expect(html).toContain("filePane.className = 'view-files';");
     expect(html).toContain("details.className = 'view-details';");
+  });
+
+  it("keeps expanded appearance themes inside the locked settings surface", () => {
+    const css = stableCss(readRootFile("legacy-root-pwa.html"));
+    const html = readRootFile("legacy-root-pwa.html");
+
+    expect(html).toContain('id="theme-grid"');
+    expect(html).toContain('data-theme-choice="ocean"');
+    expect(html).toContain('data-theme-choice="night"');
+    expect(html).toContain('data-theme-choice="aurora"');
+    expect(html).toContain('data-theme-choice="sunset"');
+    expect(html).toContain('data-theme-choice="current"');
+    expect(html).toContain("const THEME_CHOICES = ['ocean', 'night', 'aurora', 'sunset', 'current'];");
+    expect(html).toContain("localStorage.setItem('bwTheme', t);");
+    expect(css).toContain('html[data-theme="aurora"]');
+    expect(css).toContain('html[data-theme="sunset"]');
+    expect(css).toContain('html[data-theme="current"]');
+    expect(css).toContain(".theme-grid");
+    expect(css).toContain(".theme-choice.is-active");
   });
 });

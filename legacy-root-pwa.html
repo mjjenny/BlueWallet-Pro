@@ -52,6 +52,51 @@
       --glass: rgba(4, 12, 22, 0.5);
       --glass-border: rgba(100, 180, 230, 0.16);
     }
+    html[data-theme="aurora"] {
+      --bg: #03110f;
+      --panel: rgba(8, 34, 38, 0.58);
+      --panel-solid: #071f25;
+      --panel2: rgba(10, 58, 64, 0.66);
+      --line: rgba(118, 255, 210, 0.2);
+      --accent: #76ffd2;
+      --accent2: #35b9e8;
+      --text: #f3fffb;
+      --muted: #9bcfc5;
+      --brand-grad: linear-gradient(145deg, #76ffd2, #2d86f0);
+      --brand-shadow: rgba(118, 255, 210, 0.34);
+      --glass: rgba(4, 30, 34, 0.5);
+      --glass-border: rgba(118, 255, 210, 0.2);
+    }
+    html[data-theme="sunset"] {
+      --bg: #12080c;
+      --panel: rgba(46, 22, 30, 0.58);
+      --panel-solid: #251018;
+      --panel2: rgba(78, 36, 42, 0.66);
+      --line: rgba(255, 184, 116, 0.22);
+      --accent: #ffb874;
+      --accent2: #e46a7b;
+      --text: #fff7f0;
+      --muted: #d8a694;
+      --brand-grad: linear-gradient(145deg, #ffb874, #e46a7b);
+      --brand-shadow: rgba(255, 184, 116, 0.34);
+      --glass: rgba(40, 16, 24, 0.5);
+      --glass-border: rgba(255, 184, 116, 0.2);
+    }
+    html[data-theme="current"] {
+      --bg: #021414;
+      --panel: rgba(8, 38, 42, 0.58);
+      --panel-solid: #092529;
+      --panel2: rgba(14, 62, 68, 0.66);
+      --line: rgba(90, 232, 220, 0.18);
+      --accent: #5ae8dc;
+      --accent2: #1f9fa8;
+      --text: #effffe;
+      --muted: #89c3bd;
+      --brand-grad: linear-gradient(145deg, #5ae8dc, #1f9fa8);
+      --brand-shadow: rgba(90, 232, 220, 0.32);
+      --glass: rgba(5, 28, 30, 0.5);
+      --glass-border: rgba(90, 232, 220, 0.18);
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; }
     html, body, button, input, select, textarea {
@@ -117,6 +162,34 @@
     }
     html[data-theme="night"] .ocean-bg .wave { opacity: 0.35; }
     html[data-theme="night"] .ocean-bg .w1 { opacity: 0.5; }
+    html[data-theme="aurora"] body {
+      background-image:
+        radial-gradient(ellipse 120% 65% at 30% -10%, rgba(118,255,210,0.25), transparent 54%),
+        radial-gradient(ellipse 90% 48% at 80% 105%, rgba(45,134,240,0.26), transparent 54%);
+    }
+    html[data-theme="aurora"] .ocean-bg { filter: hue-rotate(72deg) saturate(1.35); }
+    html[data-theme="aurora"] .ocean-bg .w1 { animation-duration: 9s; opacity: .78; }
+    html[data-theme="aurora"] .ocean-bg .w2 { animation-duration: 13s; opacity: .58; }
+    html[data-theme="aurora"] .ocean-bg .w3 { animation-duration: 17s; opacity: .42; }
+    html[data-theme="aurora"] .ocean-bg .w4 { animation-duration: 11s; opacity: .5; }
+    html[data-theme="sunset"] body {
+      background-image:
+        radial-gradient(ellipse 110% 62% at 50% -12%, rgba(255,184,116,0.22), transparent 55%),
+        radial-gradient(ellipse 90% 48% at 50% 105%, rgba(228,106,123,0.26), transparent 54%);
+    }
+    html[data-theme="sunset"] .ocean-bg { filter: hue-rotate(142deg) saturate(1.2); }
+    html[data-theme="sunset"] .ocean-bg .wave { opacity: .48; }
+    html[data-theme="sunset"] .ocean-bg .w1 { animation-duration: 15s; }
+    html[data-theme="sunset"] .ocean-bg .w2 { animation-duration: 20s; }
+    html[data-theme="current"] body {
+      background-image:
+        radial-gradient(ellipse 100% 55% at 55% -15%, rgba(90,232,220,0.2), transparent 55%),
+        radial-gradient(ellipse 80% 45% at 45% 105%, rgba(31,159,168,0.28), transparent 50%);
+    }
+    html[data-theme="current"] .ocean-bg { filter: hue-rotate(42deg) saturate(1.1); }
+    html[data-theme="current"] .ocean-bg .wave { opacity: .5; }
+    html[data-theme="current"] .ocean-bg .w1 { animation-duration: 18s; }
+    html[data-theme="current"] .ocean-bg .w2 { animation-duration: 24s; }
     @media (prefers-reduced-motion: reduce) {
       .ocean-bg .wave { animation: none !important; }
     }
@@ -899,6 +972,47 @@
     }
     .sblock h3 { font-size: 17px; margin-bottom: 5px; color: #fff; }
     .sblock p { font-size: 15px; color: var(--muted); margin-bottom: 12px; }
+    .theme-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .theme-choice {
+      min-width: 0;
+      min-height: 54px;
+      border: 1px solid rgba(120,200,255,.22);
+      background: rgba(2, 11, 22, .34);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-align: left;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .theme-choice.is-active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(94,212,255,.18), inset 0 0 18px rgba(94,212,255,.1);
+    }
+    .theme-choice span:first-child {
+      width: 30px;
+      height: 30px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      background: var(--brand-grad);
+      box-shadow: 0 6px 16px var(--brand-shadow);
+    }
+    .theme-choice small {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      margin-top: 2px;
+    }
     .sfoot { text-align: center; font-size: 13px; color: #6a8f78; margin-top: 10px; }
 
     .hidden { display: none !important; }
@@ -956,6 +1070,7 @@
     }
     @media (max-width: 560px) {
       .help-grid { grid-template-columns: 1fr; }
+      .theme-grid { grid-template-columns: 1fr; }
       .view-body { max-height: 64dvh; }
       .view-split { grid-template-columns: 1fr; }
       .view-files { min-height: 340px; }
@@ -1765,8 +1880,14 @@
         </div>
         <div class="sblock">
           <h3>Appearance</h3>
-          <p>Ocean Blue or Abyssal Night.</p>
-          <button class="btn btn-ghost" id="btn-theme" style="width:100%">🌑 Abyssal Night</button>
+          <p>Choose a sea theme and motion style.</p>
+          <div class="theme-grid" id="theme-grid" role="radiogroup" aria-label="Appearance theme">
+            <button type="button" class="theme-choice" data-theme-choice="ocean"><span>🌊</span><span>Ocean Blue<small>Classic swell</small></span></button>
+            <button type="button" class="theme-choice" data-theme-choice="night"><span>🌑</span><span>Abyssal Night<small>Slow deep water</small></span></button>
+            <button type="button" class="theme-choice" data-theme-choice="aurora"><span>✨</span><span>Aurora Watch<small>Bright animated glow</small></span></button>
+            <button type="button" class="theme-choice" data-theme-choice="sunset"><span>🌅</span><span>Harbor Sunset<small>Warm rolling light</small></span></button>
+            <button type="button" class="theme-choice" data-theme-choice="current"><span>🧭</span><span>Deep Current<small>Calm teal motion</small></span></button>
+          </div>
         </div>
         <div class="sblock">
           <h3>Security</h3>
@@ -4449,16 +4570,27 @@
       resetIdle();
 
       // Theme
-      function applyTheme(theme) {
-        const t = theme === 'night' ? 'night' : 'green';
-        if (t === 'green') document.documentElement.removeAttribute('data-theme');
-        else document.documentElement.setAttribute('data-theme', 'night');
-        try { localStorage.setItem('greenVaultTheme', t); } catch (_) {}
-        const btn = document.getElementById('btn-theme');
-        if (btn) btn.textContent = t === 'night' ? '🌊 Ocean Blue' : '🌑 Abyssal Night';
+      const THEME_CHOICES = ['ocean', 'night', 'aurora', 'sunset', 'current'];
+      function normalizeTheme(theme) {
+        if (theme === 'green') return 'ocean';
+        return THEME_CHOICES.includes(theme) ? theme : 'ocean';
       }
-      let savedTheme = 'green';
-      try { savedTheme = localStorage.getItem('greenVaultTheme') || 'green'; } catch (_) {}
+      function applyTheme(theme) {
+        const t = normalizeTheme(theme);
+        if (t === 'ocean') document.documentElement.removeAttribute('data-theme');
+        else document.documentElement.setAttribute('data-theme', t);
+        try {
+          localStorage.setItem('greenVaultTheme', t);
+          localStorage.setItem('bwTheme', t);
+        } catch (_) {}
+        document.querySelectorAll('[data-theme-choice]').forEach(btn => {
+          const active = btn.dataset.themeChoice === t;
+          btn.classList.toggle('is-active', active);
+          btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+      }
+      let savedTheme = 'ocean';
+      try { savedTheme = localStorage.getItem('greenVaultTheme') || localStorage.getItem('bwTheme') || 'ocean'; } catch (_) {}
       applyTheme(savedTheme);
       
       document.getElementById('btn-mode').onclick = () => toggleAppMode();
@@ -4496,10 +4628,9 @@
         if (open) close(open.id);
       });
 
-      document.getElementById('btn-theme').onclick = () => {
-        const cur = document.documentElement.getAttribute('data-theme') === 'night' ? 'night' : 'green';
-        applyTheme(cur === 'night' ? 'green' : 'night');
-      };
+      document.querySelectorAll('[data-theme-choice]').forEach(btn => {
+        btn.onclick = () => applyTheme(btn.dataset.themeChoice);
+      });
 
       document.querySelectorAll('.cat').forEach(el => {
         el.setAttribute('role', 'button');
