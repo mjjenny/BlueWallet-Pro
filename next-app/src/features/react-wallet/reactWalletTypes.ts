@@ -1,13 +1,14 @@
 import type { LegacyDocumentType } from "../../legacy/legacyTypes";
 
 export const REACT_WALLET_DATABASE_NAME = "BlueWalletReactDB";
-export const REACT_WALLET_DATABASE_VERSION = 1;
+export const REACT_WALLET_DATABASE_VERSION = 2;
 
 export const REACT_WALLET_STORES = {
   documents: "documents",
   profile: "profile",
   settings: "settings",
   attachments: "attachments",
+  security: "security",
 } as const;
 
 export interface ReactWalletAttachment {
@@ -83,13 +84,68 @@ export type ReactWalletStatusFilter =
 export type ReactWalletSortKey = "expiry" | "name" | "category" | "updated";
 
 export interface ReactWalletBackup {
-  app: "BlueWallet-Pro React";
-  version: 1;
+  app: "BlueWallet-Pro React Secure";
+  version: 2;
   exportedAt: string;
-  documents: ReactWalletDocument[];
-  attachments: ReactWalletAttachment[];
-  profile: ReactWalletProfile | null;
-  settings: ReactWalletSettings | null;
+  security: ReactWalletVaultRecord;
+  encryptedStores: ReactWalletEncryptedBackupStores;
+}
+
+export interface ReactWalletCryptoEnvelope {
+  version: 1;
+  algorithm: "AES-256-GCM";
+  iv: string;
+  ciphertext: string;
+  aad?: string;
+}
+
+export type ReactWalletEncryptedRowKind = "document" | "attachment" | "profile" | "settings";
+
+export interface ReactWalletEncryptedRow {
+  id?: string;
+  key?: string;
+  kind: ReactWalletEncryptedRowKind;
+  envelopeVersion: 1;
+  envelope: ReactWalletCryptoEnvelope;
+  updatedAt: string;
+}
+
+export interface ReactWalletVaultRecord {
+  key: "vault";
+  schemaVersion: 1;
+  kdf: {
+    name: "PBKDF2";
+    hash: "SHA-256";
+    iterations: number;
+    salt: string;
+  };
+  wrappedDataKey: ReactWalletCryptoEnvelope;
+  pinVerifier: ReactWalletCryptoEnvelope;
+  rotationCounter: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReactWalletEncryptedBackupStores {
+  documents: ReactWalletEncryptedRow[];
+  attachments: ReactWalletEncryptedRow[];
+  profile: ReactWalletEncryptedRow[];
+  settings: ReactWalletEncryptedRow[];
+}
+
+export interface ReactWalletSession {
+  status: "unlocked";
+  dataKey: CryptoKey;
+  unlockedAt: string;
+  expiresAt: string;
+  rotationCounter: number;
+}
+
+export interface ReactWalletSecurityState {
+  configured: boolean;
+  webAuthnAvailable: boolean;
+  rotationCounter: number;
+  lastUnlockedAt: string | null;
 }
 
 export interface ReactWalletValidationResult {

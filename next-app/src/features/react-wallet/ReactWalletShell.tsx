@@ -60,6 +60,133 @@ function statusTone(key: string): "good" | "warn" | "bad" | "neutral" {
   return "neutral";
 }
 
+function SecurityBoundaryPanel({ mode }: { mode: "setup" | "locked" }) {
+  const wallet = useReactWallet();
+  const [pin, setPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+  const [message, setMessage] = useState("");
+  const blocked = wallet.lockedUntil ? Math.max(0, Math.ceil((wallet.lockedUntil - Date.now()) / 1000)) : 0;
+
+  async function submit() {
+    setMessage("");
+    if (mode === "setup" && pin !== confirmPin) {
+      setMessage("PINs do not match.");
+      return;
+    }
+    try {
+      if (mode === "setup") await wallet.setupPin(pin);
+      else await wallet.unlock(pin);
+      setPin("");
+      setConfirmPin("");
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Could not open the React vault.");
+    }
+  }
+
+  return (
+    <section className="security-panel" aria-labelledby="security-title">
+      <div className="section-title-row">
+        <div>
+          <p className="eyebrow">Security boundary</p>
+          <h2 id="security-title">{mode === "setup" ? "Set up React vault PIN" : "React vault locked"}</h2>
+        </div>
+        <Badge tone={wallet.security.webAuthnAvailable ? "good" : "neutral"}>
+          {wallet.security.webAuthnAvailable ? "WebAuthn available" : "PIN fallback"}
+        </Badge>
+      </div>
+      <p className="readonly-callout">
+        React-owned documents, profile, settings, and attachments are encrypted in BlueWalletReactDB.
+        Legacy data remains read-only and is not migrated here.
+      </p>
+      <div className="security-form">
+        <label>
+          <span>{mode === "setup" ? "New PIN" : "PIN"}</span>
+          <input
+            type="password"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            minLength={4}
+            maxLength={8}
+            value={pin}
+            onChange={(event) => setPin(event.target.value.replace(/\D/g, "").slice(0, 8))}
+          />
+        </label>
+        {mode === "setup" ? (
+          <label>
+            <span>Confirm PIN</span>
+            <input
+              type="password"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              minLength={4}
+              maxLength={8}
+              value={confirmPin}
+              onChange={(event) => setConfirmPin(event.target.value.replace(/\D/g, "").slice(0, 8))}
+            />
+          </label>
+        ) : null}
+        <button type="button" className="primary-action" disabled={blocked > 0 || pin.length < 4} onClick={() => void submit()}>
+          {blocked > 0 ? `Try again in ${blocked}s` : mode === "setup" ? "Create secure vault" : "Unlock vault"}
+        </button>
+      </div>
+      {wallet.retryCount > 0 ? <p className="muted">Failed attempts: {wallet.retryCount}</p> : null}
+      {message ? <section className="error-panel" aria-live="polite">{message}</section> : null}
+    </section>
+  );
+}
+
+function SecuritySettings() {
+  const wallet = useReactWallet();
+  const [currentPin, setCurrentPin] = useState("");
+  const [newPin, setNewPin] = useState("");
+  const [message, setMessage] = useState("");
+
+  async function run(label: string, action: () => Promise<void>) {
+    setMessage("");
+    try {
+      await action();
+      setCurrentPin("");
+      setNewPin("");
+      setMessage(label);
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Security action failed.");
+    }
+  }
+
+  return (
+    <section className="migration-status security-status" aria-labelledby="security-settings-title">
+      <div className="section-title-row">
+        <div>
+          <p className="eyebrow">Vault controls</p>
+          <h2 id="security-settings-title">Security</h2>
+        </div>
+        <Badge tone="good">Encrypted</Badge>
+      </div>
+      <dl className="status-list">
+        <div><dt>Session</dt><dd>Unlocked</dd></div>
+        <div><dt>Auto-lock</dt><dd>5 minutes or background</dd></div>
+        <div><dt>Key rotations</dt><dd>{wallet.security.rotationCounter}</dd></div>
+        <div><dt>Presence check</dt><dd>{wallet.security.webAuthnAvailable ? "Available" : "PIN fallback"}</dd></div>
+      </dl>
+      <div className="security-form compact">
+        <label>
+          <span>Current PIN</span>
+          <input type="password" inputMode="numeric" value={currentPin} onChange={(event) => setCurrentPin(event.target.value.replace(/\D/g, "").slice(0, 8))} />
+        </label>
+        <label>
+          <span>New PIN</span>
+          <input type="password" inputMode="numeric" value={newPin} onChange={(event) => setNewPin(event.target.value.replace(/\D/g, "").slice(0, 8))} />
+        </label>
+        <button type="button" className="secondary-action" onClick={() => void run("PIN changed.", () => wallet.changePin(currentPin, newPin))}>Change PIN</button>
+        <button type="button" className="secondary-action" onClick={() => void run("Data key rotated.", () => wallet.rotateDataKey(currentPin))}>Rotate key</button>
+        <button type="button" className="secondary-action" onClick={() => void run("Presence check completed.", async () => { await wallet.checkBiometricPresence(); })}>Check presence</button>
+        <button type="button" className="danger-action" onClick={() => void run("PIN removed and React vault erased.", () => wallet.removePinAndVault(currentPin))}>Remove PIN</button>
+      </div>
+      {message ? <p className="muted" aria-live="polite">{message}</p> : null}
+    </section>
+  );
+}
+
 function DocumentForm({
   editing,
   initialType,
@@ -307,6 +434,7 @@ export function ReactWalletShell({ legacySnapshot }: { legacySnapshot: LegacyWal
   const [editing, setEditing] = useState<ReactWalletDocumentView | null>(null);
   const [viewing, setViewing] = useState<ReactWalletDocumentView | null>(null);
   const [message, setMessage] = useState("");
+  const [restorePin, setRestorePin] = useState("");
   const counts = getReactWalletCounts(wallet.documents);
   const categoryCounts = getReactCategoryCounts(wallet.documents);
   const visible = useMemo(
@@ -317,8 +445,9 @@ export function ReactWalletShell({ legacySnapshot }: { legacySnapshot: LegacyWal
   async function handleImport(file: File | undefined) {
     if (!file) return;
     const backup = JSON.parse(await file.text()) as ReactWalletBackup;
-    await wallet.importBackup(backup);
-    setMessage("Backup restored into BlueWalletReactDB.");
+    await wallet.importBackup(backup, restorePin);
+    setRestorePin("");
+    setMessage("Encrypted backup restored into BlueWalletReactDB.");
   }
 
   return (
@@ -330,12 +459,18 @@ export function ReactWalletShell({ legacySnapshot }: { legacySnapshot: LegacyWal
         </div>
         <div className="status-cluster">
           <Badge tone={online ? "good" : "warn"}>{online ? "Online" : "Offline"}</Badge>
-          <Badge tone="info">BlueWalletReactDB v1</Badge>
+          <Badge tone="info">BlueWalletReactDB v2</Badge>
+          {wallet.status === "ready" ? <button type="button" className="secondary-action" onClick={wallet.lock}>Lock</button> : null}
         </div>
       </header>
 
       {wallet.status === "error" ? <section className="error-panel">{wallet.error}</section> : null}
       {wallet.status === "loading" ? <section className="loading-panel">Opening BlueWalletReactDB...</section> : null}
+      {wallet.status === "setup" ? <SecurityBoundaryPanel mode="setup" /> : null}
+      {wallet.status === "locked" ? <SecurityBoundaryPanel mode="locked" /> : null}
+      {wallet.status !== "ready" ? <MigrationWizard snapshot={legacySnapshot} /> : null}
+      {wallet.status !== "ready" ? null : (
+        <>
       {message ? <section className="loading-panel" aria-live="polite">{message}</section> : null}
       {wallet.lastDeletedId ? (
         <section className="undo-bar" aria-live="polite">
@@ -377,8 +512,12 @@ export function ReactWalletShell({ legacySnapshot }: { legacySnapshot: LegacyWal
           </div>
           <div className="form-actions toolbar-actions">
             <button type="button" className="secondary-action" onClick={() => void wallet.downloadBackupFile()}>Export backup</button>
+            <label className="restore-pin">
+              <span>Restore PIN</span>
+              <input type="password" inputMode="numeric" value={restorePin} onChange={(event) => setRestorePin(event.target.value.replace(/\D/g, "").slice(0, 8))} />
+            </label>
             <label className="secondary-action import-button">
-              Restore backup
+              Restore encrypted backup
               <input type="file" accept=".json,application/json" onChange={(event) => void handleImport(event.target.files?.[0])} />
             </label>
           </div>
@@ -417,7 +556,10 @@ export function ReactWalletShell({ legacySnapshot }: { legacySnapshot: LegacyWal
             </section>
           )}
         </div>
-        <MigrationWizard snapshot={legacySnapshot} />
+        <div>
+          <SecuritySettings />
+          <MigrationWizard snapshot={legacySnapshot} />
+        </div>
       </section>
 
       {showForm ? (
@@ -441,6 +583,8 @@ export function ReactWalletShell({ legacySnapshot }: { legacySnapshot: LegacyWal
         onDelete={(id) => { void wallet.deleteDocument(id); setViewing(null); }}
         onUndo={() => void wallet.undoDelete()}
       />
+        </>
+      )}
     </main>
   );
 }

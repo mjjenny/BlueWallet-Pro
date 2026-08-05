@@ -19,20 +19,31 @@ describe("React CRUD wallet shell", () => {
     await deleteDb(REACT_WALLET_DATABASE_NAME);
   });
 
+  async function setUpPin(user: ReturnType<typeof userEvent.setup>) {
+    await screen.findByText("Set up React vault PIN");
+    await user.type(screen.getByLabelText("New PIN"), "123456");
+    await user.type(screen.getByLabelText("Confirm PIN"), "123456");
+    await user.click(screen.getByRole("button", { name: /create secure vault/i }));
+    await screen.findByText("Document dashboard");
+  }
+
   it("renders the React database dashboard and migration wizard", async () => {
+    const user = userEvent.setup();
     render(<App initialSnapshot={createTestSnapshot()} />);
 
-    expect(await screen.findByText("Document dashboard")).toBeInTheDocument();
-    expect(screen.getByText("BlueWalletReactDB v1")).toBeInTheDocument();
+    expect(await screen.findByText("Set up React vault PIN")).toBeInTheDocument();
+    expect(screen.getByText("BlueWalletReactDB v2")).toBeInTheDocument();
     expect(screen.getByText("Legacy wallet assessment")).toBeInTheDocument();
     expect(screen.getByText("No migration action")).toBeInTheDocument();
+    await setUpPin(user);
+    expect(screen.getByText("Encrypted")).toBeInTheDocument();
   });
 
   it("creates, views, edits, soft deletes, and undoes a document", async () => {
     const user = userEvent.setup();
     render(<App initialSnapshot={createTestSnapshot()} />);
 
-    await screen.findByText("Document dashboard");
+    await setUpPin(user);
     await user.click(screen.getByRole("button", { name: /create document/i }));
     await user.type(screen.getByLabelText("Title"), "React Passport");
     await user.type(screen.getByLabelText("Number"), "RP-100");
@@ -63,7 +74,7 @@ describe("React CRUD wallet shell", () => {
     const user = userEvent.setup();
     render(<App initialSnapshot={createTestSnapshot()} />);
 
-    await screen.findByText("Document dashboard");
+    await setUpPin(user);
     await user.click(screen.getByRole("button", { name: /create document/i }));
     await user.type(screen.getByLabelText("Title"), "Certificate With Files");
     await user.click(screen.getByLabelText("No Expiry"));
@@ -81,7 +92,7 @@ describe("React CRUD wallet shell", () => {
     const user = userEvent.setup();
     render(<App initialSnapshot={createTestSnapshot()} />);
 
-    await screen.findByText("Document dashboard");
+    await setUpPin(user);
     await user.click(screen.getByRole("button", { name: /create document/i }));
     await user.selectOptions(screen.getByLabelText("Category"), "visa");
     await user.type(screen.getByLabelText("Title"), "Crew Visa Search Target");
@@ -95,13 +106,25 @@ describe("React CRUD wallet shell", () => {
     expect(screen.getByText("Crew Visa Search Target")).toBeInTheDocument();
   });
 
-  it("does not render PIN, encryption, OCR, camera, or migration execution controls", async () => {
+  it("does not render OCR, camera, or migration execution controls", async () => {
+    const user = userEvent.setup();
     render(<App initialSnapshot={createTestSnapshot()} />);
 
-    await screen.findByText("Document dashboard");
-    expect(screen.queryByRole("button", { name: /PIN/i })).not.toBeInTheDocument();
+    await setUpPin(user);
     expect(screen.queryByRole("button", { name: /OCR/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Camera/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /migrate/i })).not.toBeInTheDocument();
+  });
+
+  it("locks and unlocks with PIN fallback", async () => {
+    const user = userEvent.setup();
+    render(<App initialSnapshot={createTestSnapshot()} />);
+
+    await setUpPin(user);
+    await user.click(screen.getByRole("button", { name: "Lock" }));
+    expect(await screen.findByText("React vault locked")).toBeInTheDocument();
+    await user.type(screen.getByLabelText("PIN"), "123456");
+    await user.click(screen.getByRole("button", { name: /unlock vault/i }));
+    expect(await screen.findByText("Document dashboard")).toBeInTheDocument();
   });
 });

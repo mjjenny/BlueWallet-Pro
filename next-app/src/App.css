@@ -10,6 +10,7 @@
 .dashboard,
 .document-workspace,
 .migration-status,
+.security-panel,
 .loading-panel,
 .error-panel {
   border: 1px solid var(--line);
@@ -157,7 +158,8 @@
 }
 
 .document-workspace,
-.migration-status {
+.migration-status,
+.security-panel {
   padding: 16px;
   border-radius: 8px;
 }
@@ -425,6 +427,45 @@ select:focus-visible {
 .migration-status {
   position: sticky;
   top: calc(12px + env(safe-area-inset-top));
+}
+
+.security-panel {
+  margin-top: 14px;
+}
+
+.security-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  align-items: end;
+  margin-top: 14px;
+}
+
+.security-form.compact {
+  grid-template-columns: 1fr;
+}
+
+.security-form label,
+.restore-pin {
+  display: grid;
+  gap: 6px;
+}
+
+.security-form label span,
+.restore-pin span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.security-form .secondary-action,
+.security-form .danger-action {
+  grid-column: auto;
+  width: 100%;
+}
+
+.security-status {
+  margin-bottom: 14px;
 }
 
 .readonly-callout {
