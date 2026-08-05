@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'blue-wallet-offshore-v0.2';
+const CACHE_VERSION = 'blue-wallet-offshore-v0.2.1';
 const APP_SHELL = [
   './',
   './index.html',

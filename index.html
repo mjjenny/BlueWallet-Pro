@@ -2551,19 +2551,20 @@
         pinBuffer = ''; updatePinDots();
         return;
       }
-      const ok = await verifyPin(pinBuffer);
+
+      const enteredPin = pinBuffer;
+      const ok = await verifyPin(enteredPin);
       if (ok) {
         document.getElementById('lock-err').textContent = '';
         clearPinFails();
         if (cryptoSubtleOk()) {
           try {
-            vaultKey = await deriveVaultKey(pinBuffer);
+            vaultKey = await deriveVaultKey(enteredPin);
             pinBuffer = ''; updatePinDots();
             try { await reencryptAllDocuments(); } catch (e) { console.error(e); }
           } catch (e) {
             document.getElementById('lock-err').textContent = 'Key derivation failed — use HTTPS/localhost for encryption';
             pinBuffer = ''; updatePinDots();
-            // Still unlock UI lock without encryption
             vaultKey = null;
             unlockApp();
             return;
@@ -2573,14 +2574,23 @@
           pinBuffer = ''; updatePinDots();
         }
         unlockApp();
-      } else {
-        const n = registerPinFail();
-        const left = pinLockRemainingMs();
-        document.getElementById('lock-err').textContent = left
-          ? ('Wrong PIN — locked ' + Math.ceil(left/1000) + 's')
-          : ('Wrong PIN (' + n + ' fails)');
-        pinBuffer = ''; updatePinDots();
+        return;
       }
+
+      // A 4- or 5-digit entry may only be the prefix of a longer PIN.
+      // Do not count it as a failed attempt; wait for the next digit.
+      if (enteredPin.length < 6) {
+        document.getElementById('lock-err').textContent = 'Continue entering PIN';
+        return;
+      }
+
+      // Six digits is the maximum supported length, so only now record failure.
+      const n = registerPinFail();
+      const left = pinLockRemainingMs();
+      document.getElementById('lock-err').textContent = left
+        ? ('Wrong PIN — locked ' + Math.ceil(left/1000) + 's')
+        : ('Wrong PIN (' + n + ' fails)');
+      pinBuffer = ''; updatePinDots();
     }
 
     async function loadVaultData() {
