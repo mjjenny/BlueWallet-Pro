@@ -42,7 +42,7 @@ describe("stable production rollback contract", () => {
   it("uses the stable service worker cache version and offline fallback", () => {
     const worker = readRootFile("service-worker.js");
 
-    expect(worker).toContain("blue-wallet-stable-rollback-v0.2");
+    expect(worker).toContain("blue-wallet-stable-rollback-v0.3");
     expect(worker).toContain("./legacy-root-pwa.html");
     expect(worker).toContain("./offline.html");
     expect(worker).toContain("keys.filter((key) => key !== CACHE_VERSION)");
