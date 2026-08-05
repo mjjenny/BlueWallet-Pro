@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#020812" />
-    <meta http-equiv="refresh" content="0; url=./react-app/index.html" />
+    <meta http-equiv="refresh" content="0; url=./legacy-root-pwa.html" />
     <link rel="manifest" href="./manifest.json" />
     <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
     <title>Blue Wallet</title>
@@ -58,14 +58,14 @@
   <body>
     <main>
       <h1>Opening Blue Wallet</h1>
-      <p>The React vault is now the production app. If it does not open automatically, continue below.</p>
-      <a href="./react-app/index.html">Open Blue Wallet</a>
+      <p>The stable wallet is the production app. If it does not open automatically, continue below.</p>
+      <a href="./legacy-root-pwa.html">Open Blue Wallet</a>
     </main>
     <script>
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("./service-worker.js").catch(function () {});
       }
-      window.location.replace("./react-app/index.html");
+      window.location.replace("./legacy-root-pwa.html");
     </script>
   </body>
 </html>

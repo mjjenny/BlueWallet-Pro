@@ -1,9 +1,9 @@
 {
   "id": "./",
-  "name": "THE BLUE WALLET \u2014 Offshore Edition v1.0",
+  "name": "THE BLUE WALLET \u2014 Offshore Edition",
   "short_name": "Blue Wallet",
   "description": "Offline-first maritime document wallet with camera scanning and optimized local storage.",
-  "start_url": "./react-app/index.html?v=1.0",
+  "start_url": "./legacy-root-pwa.html?v=stable",
   "scope": "./",
   "display": "standalone",
   "display_override": [
