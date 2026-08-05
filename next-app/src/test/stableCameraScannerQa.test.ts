@@ -34,8 +34,22 @@ describe("stable camera and scanner QA safeguards", () => {
 
     expect(html).toContain("Scan could not be read. Try camera again, choose a file, or continue without changing saved data.");
     expect(html).toContain("Fields were not changed; retry with a clearer photo or enter details manually.");
+    expect(html).toContain("const OCR_TIMEOUT_MS = 30000;");
+    expect(html).toContain("function withTimeout(promise, ms, message)");
+    expect(html).toContain("let ocrRunId = 0;");
+    expect(html).toContain("if (btn) btn.disabled = false;");
     expect(html).toContain("recordActivity('camera-scan-cancelled'");
     expect(html).toContain("recordActivity('ocr-failed'");
+  });
+
+  it("skips OpenCV contour OCR in the default flow to avoid browser hangs", () => {
+    const html = stableHtml();
+
+    expect(html).toContain("OpenCV contour pass skipped for browser stability.");
+    expect(html).toContain("OpenCV contours skipped for browser stability");
+    expect(html).toContain("const crops = [];");
+    expect(html).not.toContain("const crops = await opencvTextRegions(canvas);");
+    expect(html).not.toContain("Contour layout (OpenCV)");
   });
 
   it("documents the required iOS Safari real-device check", () => {

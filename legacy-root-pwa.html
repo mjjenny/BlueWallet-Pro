@@ -843,6 +843,44 @@
     }
     .view-body img { max-width: 100%; max-height: 50dvh; object-fit: contain; border-radius: 8px; }
     .view-body iframe { width: 100%; height: 55dvh; border: none; }
+    .view-split {
+      width: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 7fr) minmax(220px, 3fr);
+      gap: 12px;
+      align-items: stretch;
+    }
+    .view-files {
+      min-width: 0;
+      min-height: 260px;
+      display: grid;
+      align-items: center;
+      justify-items: center;
+      overflow: auto;
+    }
+    .view-files img {
+      width: 100%;
+      max-width: 100%;
+      max-height: 50dvh;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+    .view-files iframe {
+      width: 100%;
+      height: 55dvh;
+      border: none;
+      border-radius: 8px;
+    }
+    .view-details {
+      min-width: 0;
+      color: #8eb8cc;
+      font-size: 13px;
+      line-height: 1.5;
+      text-align: left;
+      overflow: auto;
+      overflow-wrap: anywhere;
+      align-self: center;
+    }
     .view-foot {
       padding: 14px 20px; border-top: 1px solid var(--line);
       display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
@@ -918,6 +956,11 @@
     }
     @media (max-width: 560px) {
       .help-grid { grid-template-columns: 1fr; }
+      .view-body { max-height: 64dvh; }
+      .view-split { grid-template-columns: 1fr; }
+      .view-files { min-height: 340px; }
+      .view-files img { max-height: 48dvh; }
+      .view-details { align-self: stretch; }
     }
     .help-card {
       background: rgba(0,0,0,.28); border: 1px solid var(--glass-border);
@@ -3064,27 +3107,34 @@
       const body = document.getElementById('view-content');
       body.innerHTML = '';
       const files = doc.files && doc.files.length ? doc.files : (doc.fileData ? [{ data: doc.fileData, type: doc.fileType, name: doc.fileName }] : []);
+      const split = document.createElement('div');
+      split.className = 'view-split';
+      const filePane = document.createElement('div');
+      filePane.className = 'view-files';
+      const details = document.createElement('div');
+      details.className = 'view-details';
+      split.appendChild(filePane);
+      split.appendChild(details);
+      body.appendChild(split);
       if (!files.length) {
-        body.innerHTML = '<p style="color:#6a8f78">No scan attached</p>';
+        filePane.innerHTML = '<p style="color:#6a8f78">No scan attached</p>';
       } else {
         files.forEach((f, idx) => {
           if (f.type && f.type.includes('pdf')) {
             const fr = document.createElement('iframe');
             fr.src = f.data;
-            fr.style.width = '100%'; fr.style.height = files.length > 1 ? '40vh' : '55dvh'; fr.style.border = '0';
+            fr.style.height = files.length > 1 ? '40vh' : '55dvh';
             fr.style.marginBottom = '8px';
-            body.appendChild(fr);
+            filePane.appendChild(fr);
           } else {
             const img = document.createElement('img');
             img.src = f.data;
             img.alt = f.name || ('file ' + (idx+1));
-            img.style.maxWidth = '100%'; img.style.marginBottom = '8px'; img.style.borderRadius = '8px';
-            body.appendChild(img);
+            img.style.marginBottom = '8px';
+            filePane.appendChild(img);
           }
         });
       }
-      const details = document.createElement('div');
-      details.style.cssText = 'color:#8eb8cc;font-size:13px;padding:8px;text-align:left;width:100%;line-height:1.5';
       const q = doc.quality || {};
       const history = (doc.history || []).slice(0, 5).map(row =>
         `<li>${esc(row.at ? new Date(row.at).toLocaleString() : 'Previous version')} - ${esc(row.title || 'Untitled')} ${row.expiryDate ? '(' + esc(fmt(row.expiryDate)) + ')' : ''}</li>`
@@ -3096,7 +3146,6 @@
         <p><strong style="color:#fff">Checks:</strong> readable ${q.readable ? 'yes' : 'no'} · full page ${q.fullPage ? 'yes' : 'no'} · stamp ${q.stamp ? 'yes' : 'no'} · front/back ${q.frontBack ? 'yes' : 'no'} · verified ${q.verified ? 'yes' : 'no'}</p>
         ${history ? `<p><strong style="color:#fff">Version history:</strong></p><ul style="padding-left:18px">${history}</ul>` : '<p><strong style="color:#fff">Version history:</strong> No previous edits recorded.</p>'}
       `;
-      body.appendChild(details);
       document.getElementById('modal-view').classList.add('show');
     }
 
@@ -3837,6 +3886,8 @@
     let ocrSuggestions = { number: '', expiry: '', issue: '', title: '' };
     let tesseractLoading = null;
     let opencvLoading = null;
+    let ocrRunId = 0;
+    const OCR_TIMEOUT_MS = 30000;
 
     function loadTesseract() {
       if (window.Tesseract) return Promise.resolve(window.Tesseract);
@@ -3889,10 +3940,10 @@
       });
     }
 
-    function canvasFromImage(img, maxSide = 1800) {
+    function canvasFromImage(img, maxSide = 1400) {
       let w = img.naturalWidth || img.width;
       let h = img.naturalHeight || img.height;
-      const scale = Math.min(2.2, Math.max(1, maxSide / Math.max(w, h)));
+      const scale = Math.min(2.2, maxSide / Math.max(w, h));
       w = Math.round(w * scale); h = Math.round(h * scale);
       const canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
@@ -3903,6 +3954,18 @@
       ctx.fillRect(0, 0, w, h);
       ctx.drawImage(img, 0, 0, w, h);
       return { canvas, ctx, w, h };
+    }
+
+    function yieldToBrowser() {
+      return new Promise(resolve => setTimeout(resolve, 0));
+    }
+
+    function withTimeout(promise, ms, message) {
+      let timer;
+      const timeout = new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(message)), ms);
+      });
+      return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
     }
 
     function enhanceCanvasInPlace(ctx, w, h) {
@@ -4140,18 +4203,23 @@
     }
 
     async function runOcrFromPending() {
+      const runId = ++ocrRunId;
       const panel = document.getElementById('ocr-panel');
       const status = document.getElementById('ocr-status');
       const sug = document.getElementById('ocr-suggestions');
       const rawEl = document.getElementById('ocr-raw');
+      const btn = document.getElementById('btn-ocr');
+      const stillCurrent = () => runId === ocrRunId;
       panel.style.display = 'block';
       ocrSuggestions = { number: '', expiry: '', issue: '', title: '' };
+      btn.disabled = true;
 
       const imgFile = pendingFiles.find(f => f.type && f.type.startsWith('image/'));
       if (!imgFile) {
         status.textContent = 'Attach an image scan first (PDF OCR is limited — use a photo/JPG).';
         sug.innerHTML = '';
         rawEl.textContent = '';
+        btn.disabled = false;
         return;
       }
 
@@ -4159,10 +4227,14 @@
       sug.innerHTML = '';
       rawEl.textContent = '';
       try {
-        const Tesseract = await loadTesseract();
+        const Tesseract = await withTimeout(loadTesseract(), OCR_TIMEOUT_MS, 'OCR engine took too long to load');
+        if (!stillCurrent()) return;
         status.textContent = 'Layout analysis…';
+        await yieldToBrowser();
         const img = await loadImageEl(imgFile.data);
+        if (!stillCurrent()) return;
         const { canvas, ctx, w, h } = canvasFromImage(img);
+        await yieldToBrowser();
         enhanceCanvasInPlace(ctx, w, h);
         const zones = heuristicZones(canvas);
 
@@ -4170,8 +4242,11 @@
         status.textContent = 'Reading MRZ zone…';
         let mrzText = '';
         try {
-          mrzText = await ocrCrop(Tesseract, zones.bottom, 6, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<');
-        } catch (_) {}
+          mrzText = await withTimeout(ocrCrop(Tesseract, zones.bottom, 6, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<'), OCR_TIMEOUT_MS, 'MRZ OCR took too long');
+        } catch (e) {
+          console.warn('MRZ OCR skipped', e);
+        }
+        if (!stillCurrent()) return;
         const mrzLines = (mrzText || '').split(/\n+/);
         const mrzParsed = parseMrzLines(mrzLines);
 
@@ -4179,18 +4254,22 @@
         status.textContent = 'Reading page zones…';
         const zoneTexts = [];
         for (const [name, url] of [['top', zones.top], ['mid', zones.mid], ['full', zones.full]]) {
+          if (!stillCurrent()) return;
           status.textContent = 'Reading zone: ' + name + '…';
+          await yieldToBrowser();
           try {
-            const t = await ocrCrop(Tesseract, url, name === 'full' ? 3 : 6);
+            const t = await withTimeout(ocrCrop(Tesseract, url, name === 'full' ? 3 : 6), OCR_TIMEOUT_MS, 'OCR took too long on ' + name + ' zone');
             zoneTexts.push(t);
-          } catch (_) {}
+          } catch (e) {
+            console.warn('OCR zone skipped', name, e);
+          }
         }
 
-        // 3) OpenCV contour regions (optional, non-fatal)
-        status.textContent = 'Contour layout (OpenCV)…';
+        // 3) OpenCV contour regions are skipped in normal use for browser stability.
         let cvTexts = [];
+        status.textContent = 'OpenCV contour pass skipped for browser stability.';
         try {
-          const crops = await opencvTextRegions(canvas);
+          const crops = [];
           for (let i = 0; i < Math.min(crops.length, 6); i++) {
             status.textContent = `Contour OCR ${i + 1}/${Math.min(crops.length, 6)}…`;
             try { cvTexts.push(await ocrCrop(Tesseract, crops[i], 7)); } catch (_) {}
@@ -4217,6 +4296,7 @@
           (combined.slice(0, 1400) || '(no text detected)');
         const bits = [];
         bits.push(`<div style="color:var(--muted);font-size:12px">Layout: heuristic zones + ${mrzParsed ? 'MRZ ✓' : 'no MRZ'} + OpenCV contours</div>`);
+        bits[0] = `<div style="color:var(--muted);font-size:12px">Layout: safe OCR zones + ${mrzParsed ? 'MRZ verified' : 'no MRZ'}; OpenCV contours skipped for browser stability</div>`;
         if (ocrSuggestions.number) bits.push(`<div>Number: <b style="color:#fff">${esc(ocrSuggestions.number)}</b>${sourceNote==='MRZ'?' <span style="color:var(--ok)">(MRZ)</span>':''}</div>`);
         if (ocrSuggestions.issue) bits.push(`<div>Issue: <b style="color:#fff">${esc(ocrSuggestions.issue)}</b></div>`);
         if (ocrSuggestions.expiry) bits.push(`<div>Expiry: <b style="color:#fff">${esc(ocrSuggestions.expiry)}</b>${sourceNote==='MRZ'?' <span style="color:var(--ok)">(MRZ)</span>':''}</div>`);
@@ -4225,10 +4305,13 @@
         status.textContent = 'Review suggestions, then Apply (always verify before saving).';
       } catch (e) {
         console.error(e);
+        if (!stillCurrent()) return;
         status.textContent = 'OCR failed: ' + (e.message || e) + '. Fields were not changed; retry with a clearer photo or enter details manually.';
         sug.innerHTML = '';
         rawEl.textContent = '';
         recordActivity('ocr-failed', { reason: e.message || e.name || 'unknown' });
+      } finally {
+        if (stillCurrent()) btn.disabled = false;
       }
     }
 
@@ -4959,6 +5042,15 @@
       document.getElementById('btn-ocr').onclick = () => runOcrFromPending();
       document.getElementById('ocr-apply').onclick = () => applyOcrSuggestions();
       document.getElementById('ocr-dismiss').onclick = () => {
+        ocrRunId++;
+        const btn = document.getElementById('btn-ocr');
+        if (btn) btn.disabled = false;
+        const status = document.getElementById('ocr-status');
+        const raw = document.getElementById('ocr-raw');
+        const sug = document.getElementById('ocr-suggestions');
+        if (status) status.textContent = '';
+        if (raw) raw.textContent = '';
+        if (sug) sug.innerHTML = '';
         document.getElementById('ocr-panel').style.display = 'none';
       };
 

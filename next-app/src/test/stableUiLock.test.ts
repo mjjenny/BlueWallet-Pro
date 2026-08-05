@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 
 const repoRoot = path.resolve(process.cwd(), "..");
 
-const STABLE_CSS_SHA256 = "d1fa009201018882940e33e714d43371013d3d9233eed14fb833eeebe2bf4765";
+const STABLE_CSS_SHA256 = "9666f698a2ccfe66a3f8528f15c5ad6c76b3b88e52d16ceee79762631e6a8e88";
 const STABLE_LAYOUT_MARKERS_SHA256 = "5b6adf3783a4af3245fa81bd04a560909c66c0a0d2bb3f3213e04f69898320fd";
 
 const STABLE_LAYOUT_MARKERS = [
@@ -56,7 +56,7 @@ describe("stable app UI lock", () => {
     expect(rootIndex).toContain("./legacy-root-pwa.html");
     expect(rootIndex).not.toContain("./react-app/index.html");
     expect(manifest.start_url).toBe("./legacy-root-pwa.html?v=stable");
-    expect(worker).toContain("blue-wallet-stable-rollback-v0.7");
+    expect(worker).toContain("blue-wallet-stable-rollback-v0.8");
     expect(worker).toContain('caches.match("./legacy-root-pwa.html")');
   });
 
@@ -105,5 +105,18 @@ describe("stable app UI lock", () => {
     expect(css).toContain(".tool-select, .tool-btn {\n      min-width: 0;\n      width: 100%;\n      order: 1;");
     expect(css).toContain(".view-toggle {\n      display: grid;\n      grid-template-columns: 1fr 1fr;");
     expect(css).toContain("min-height: 44px;");
+  });
+
+  it("keeps document viewing space at a 70/30 scan-to-quality split", () => {
+    const css = stableCss(readRootFile("legacy-root-pwa.html"));
+    const html = readRootFile("legacy-root-pwa.html");
+
+    expect(css).toContain(".view-split");
+    expect(css).toContain("grid-template-columns: minmax(0, 7fr) minmax(220px, 3fr);");
+    expect(css).toContain(".view-files");
+    expect(css).toContain(".view-details");
+    expect(html).toContain("split.className = 'view-split';");
+    expect(html).toContain("filePane.className = 'view-files';");
+    expect(html).toContain("details.className = 'view-details';");
   });
 });
