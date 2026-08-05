@@ -14,11 +14,20 @@ describe("stable feature iteration safeguards", () => {
 
     expect(html).toContain("Search title, number, issuer, notes, expiry, category");
     expect(html).toContain("function queryMatchesDoc(doc, query)");
+    expect(html).toContain("return q || d.type === cat;");
     expect(html).toContain("expiryMonthTerms(doc)");
     expect(html).toContain("LABELS[doc.type]");
     expect(html).toContain("doc.authority");
     expect(html).toContain("doc.flagNotes");
     expect(html).toContain("st.key === 'none' ? 'no expiry' : st.key");
+  });
+
+  it("keeps stable helper declarations deduplicated", () => {
+    const html = stableHtml();
+
+    expect(html.match(/function buildPrintSheet\(\)/g)).toHaveLength(1);
+    expect(html.match(/function buildReminderReport\(\)/g)).toHaveLength(1);
+    expect(html.match(/function buildTimelineHtml\(\)/g)).toHaveLength(1);
   });
 
   it("groups expiry status and exports reminder files with calendar alarms", () => {
