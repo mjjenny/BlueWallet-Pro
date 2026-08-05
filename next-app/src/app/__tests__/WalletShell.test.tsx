@@ -1,112 +1,107 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import App from "../../App";
-import { LegacyDataProvider } from "../providers/LegacyDataProvider";
-import {
-  readFallbackDocumentsFromStorage,
-  readLegacySettingsFromStorage,
-} from "../../legacy/legacyDatabase";
-import { LEGACY_LOCAL_STORAGE_KEYS } from "../../legacy/legacyStorageKeys";
+import { REACT_WALLET_DATABASE_NAME } from "../../features/react-wallet/reactWalletTypes";
 import { createTestSnapshot } from "../../test/testSnapshots";
-import { plaintextDocumentFixture } from "../../legacy/__fixtures__/legacyRecordFixtures";
 
-class MemoryStorage {
-  private readonly data = new Map<string, string>();
-
-  getItem(key: string): string | null {
-    return this.data.get(key) ?? null;
-  }
-
-  setItem(key: string, value: string): void {
-    this.data.set(key, value);
-  }
+function deleteDb(name: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.deleteDatabase(name);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+    request.onblocked = () => resolve();
+  });
 }
 
-describe("read-only wallet shell", () => {
-  it("renders dashboard counts and migration status", () => {
-    render(<App initialSnapshot={createTestSnapshot()} />);
-
-    expect(screen.getByText("Wallet overview")).toBeInTheDocument();
-    expect(screen.getByText("Legacy database detected (v2)")).toBeInTheDocument();
-    expect(screen.getByText("Malformed skipped")).toBeInTheDocument();
-    expect(screen.getByText("Read-only")).toBeInTheDocument();
+describe("React CRUD wallet shell", () => {
+  beforeEach(async () => {
+    await deleteDb(REACT_WALLET_DATABASE_NAME);
   });
 
-  it("shows accessible horizontal category navigation", async () => {
+  it("renders the React database dashboard and migration wizard", async () => {
+    render(<App initialSnapshot={createTestSnapshot()} />);
+
+    expect(await screen.findByText("Document dashboard")).toBeInTheDocument();
+    expect(screen.getByText("BlueWalletReactDB v1")).toBeInTheDocument();
+    expect(screen.getByText("Legacy wallet assessment")).toBeInTheDocument();
+    expect(screen.getByText("No migration action")).toBeInTheDocument();
+  });
+
+  it("creates, views, edits, soft deletes, and undoes a document", async () => {
     const user = userEvent.setup();
     render(<App initialSnapshot={createTestSnapshot()} />);
 
-    const nav = screen.getByRole("navigation", { name: /document categories/i });
-    const yellowFever = within(nav).getByRole("button", { name: /yellow fever/i });
-    await user.tab();
+    await screen.findByText("Document dashboard");
+    await user.click(screen.getByRole("button", { name: /create document/i }));
+    await user.type(screen.getByLabelText("Title"), "React Passport");
+    await user.type(screen.getByLabelText("Number"), "RP-100");
+    await user.type(screen.getByLabelText("Authority"), "React Authority");
+    await user.type(screen.getByLabelText("Expiry date"), "2031-01-01");
+    await user.type(screen.getByLabelText("Tags"), "joining,primary");
+    await user.click(within(screen.getByRole("form", { name: /create document/i })).getByRole("button", { name: /create document/i }));
 
-    expect(within(nav).getByRole("button", { name: /passport/i })).toBeInTheDocument();
-    expect(yellowFever).toBeInTheDocument();
-  });
-
-  it("filters categories and displays empty states", async () => {
-    const user = userEvent.setup();
-    render(<App initialSnapshot={createTestSnapshot()} />);
-
-    await user.click(screen.getByRole("button", { name: /medical/i }));
-
-    expect(screen.getByText("No documents found")).toBeInTheDocument();
-    expect(screen.getByText(/No medical documents match/i)).toBeInTheDocument();
-  });
-
-  it("searches documents from the toolbar", async () => {
-    const user = userEvent.setup();
-    render(<App initialSnapshot={createTestSnapshot()} />);
-
-    await user.click(screen.getByRole("button", { name: /visa/i }));
-    await user.type(screen.getByRole("searchbox"), "crew visa");
-
-    expect(screen.getByText("Demo Crew Visa")).toBeInTheDocument();
-  });
-
-  it("opens read-only details without edit or delete actions", async () => {
-    const user = userEvent.setup();
-    render(<App initialSnapshot={createTestSnapshot()} />);
-
-    await user.click(screen.getByRole("button", { name: /view details/i }));
-
+    expect(await screen.findByText("React Passport")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "View" }));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByText("Primary travel document.")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /edit/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /delete/i })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Edit" }));
+    await user.clear(screen.getByLabelText("Title"));
+    await user.type(screen.getByLabelText("Title"), "React Passport Updated");
+    await user.click(within(screen.getByRole("form", { name: /edit document/i })).getByRole("button", { name: /save changes/i }));
+
+    expect(await screen.findByText("React Passport Updated")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "View" }));
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(await screen.findByText(/Document moved to deleted items/i)).toBeInTheDocument();
+    expect(screen.queryByText("React Passport Updated")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /undo delete/i }));
+    expect(await screen.findByText("React Passport Updated")).toBeInTheDocument();
   });
 
-  it("shows encrypted records as unavailable, not decrypted", async () => {
+  it("uploads image/PDF attachments and shows thumbnail or attachment count", async () => {
     const user = userEvent.setup();
     render(<App initialSnapshot={createTestSnapshot()} />);
 
-    await user.selectOptions(screen.getByRole("combobox", { name: "Status" }), "encrypted");
+    await screen.findByText("Document dashboard");
+    await user.click(screen.getByRole("button", { name: /create document/i }));
+    await user.type(screen.getByLabelText("Title"), "Certificate With Files");
+    await user.click(screen.getByLabelText("No Expiry"));
+    await user.upload(screen.getByLabelText("Images or PDFs"), [
+      new File(["image"], "cert.png", { type: "image/png" }),
+      new File(["pdf"], "cert.pdf", { type: "application/pdf" }),
+    ]);
+    await user.click(within(screen.getByRole("form", { name: /create document/i })).getByRole("button", { name: /create document/i }));
 
-    expect(screen.getByText("Locked legacy document")).toBeInTheDocument();
-    expect(screen.getAllByText(/Encrypted\/unavailable/i).length).toBeGreaterThan(1);
+    expect(await screen.findByText("Certificate With Files")).toBeInTheDocument();
+    expect(screen.getByText("2")).toBeInTheDocument();
   });
 
-  it("provider read path performs no localStorage writes", async () => {
-    const local = new MemoryStorage();
-    const session = new MemoryStorage();
-    local.setItem(LEGACY_LOCAL_STORAGE_KEYS.fallbackDocuments, JSON.stringify([plaintextDocumentFixture]));
-    const setSpy = vi.spyOn(local, "setItem");
-    setSpy.mockClear();
+  it("filters and searches React-owned documents", async () => {
+    const user = userEvent.setup();
+    render(<App initialSnapshot={createTestSnapshot()} />);
 
-    const loader = async () => {
-      readFallbackDocumentsFromStorage(local);
-      readLegacySettingsFromStorage(local, session);
-      return createTestSnapshot();
-    };
+    await screen.findByText("Document dashboard");
+    await user.click(screen.getByRole("button", { name: /create document/i }));
+    await user.selectOptions(screen.getByLabelText("Category"), "visa");
+    await user.type(screen.getByLabelText("Title"), "Crew Visa Search Target");
+    await user.type(screen.getByLabelText("Expiry date"), "2026-09-01");
+    await user.click(within(screen.getByRole("form", { name: /create document/i })).getByRole("button", { name: /create document/i }));
+    await user.click(screen.getByRole("button", { name: /visa/i }));
+    await user.type(screen.getByRole("searchbox"), "target");
 
-    render(
-      <LegacyDataProvider loader={loader}>
-        <div>provider test</div>
-      </LegacyDataProvider>,
-    );
+    expect(await screen.findByText("Crew Visa Search Target")).toBeInTheDocument();
+    await user.selectOptions(screen.getByRole("combobox", { name: "Status" }), "expiring");
+    expect(screen.getByText("Crew Visa Search Target")).toBeInTheDocument();
+  });
 
-    expect(await screen.findByText("provider test")).toBeInTheDocument();
-    expect(setSpy).not.toHaveBeenCalled();
+  it("does not render PIN, encryption, OCR, camera, or migration execution controls", async () => {
+    render(<App initialSnapshot={createTestSnapshot()} />);
+
+    await screen.findByText("Document dashboard");
+    expect(screen.queryByRole("button", { name: /PIN/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /OCR/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Camera/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /migrate/i })).not.toBeInTheDocument();
   });
 });

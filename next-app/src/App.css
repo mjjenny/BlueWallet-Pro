@@ -623,3 +623,170 @@ select:focus-visible {
     animation-duration: 0.001ms !important;
   }
 }
+
+.primary-action,
+.danger-action {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 14px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.primary-action {
+  border-color: rgba(94, 212, 255, 0.42);
+  background: var(--accent-strong);
+  color: #02111d;
+}
+
+.primary-action:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.danger-action {
+  border-color: rgba(255, 122, 138, 0.38);
+  background: rgba(255, 122, 138, 0.14);
+  color: var(--rose);
+}
+
+.toolbar-actions {
+  justify-content: flex-start;
+  margin-bottom: 16px;
+}
+
+.import-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.import-button input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.doc-thumb {
+  width: 74px;
+  height: 74px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  object-fit: cover;
+  background: #020812;
+}
+
+.doc-thumb.placeholder {
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  font-weight: 900;
+}
+
+.document-card:has(.doc-thumb) {
+  grid-template-columns: 74px minmax(0, 1fr) auto;
+}
+
+.undo-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  border: 1px solid rgba(255, 209, 102, 0.32);
+  border-radius: 8px;
+  padding: 12px;
+  background: rgba(255, 209, 102, 0.08);
+  color: var(--amber);
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.form-modal {
+  width: min(760px, 100%);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.form-grid label {
+  display: grid;
+  gap: 6px;
+}
+
+.form-grid label span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.form-grid textarea {
+  min-height: 92px;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--text-strong);
+  background: var(--field);
+  font: inherit;
+}
+
+.wide-field {
+  grid-column: 1 / -1;
+}
+
+.checkbox-row {
+  display: flex !important;
+  flex-direction: row;
+  align-items: center;
+  min-height: 44px;
+}
+
+.checkbox-row input {
+  width: 20px;
+  min-height: 20px;
+}
+
+.validation-list {
+  margin: 0;
+  color: var(--rose);
+}
+
+.wizard-panel {
+  align-self: start;
+}
+
+@media (max-width: 640px) {
+  .document-card:has(.doc-thumb) {
+    grid-template-columns: 64px 1fr;
+  }
+
+  .document-card:has(.doc-thumb) > .badge,
+  .document-card:has(.doc-thumb) > .secondary-action {
+    grid-column: 1 / -1;
+  }
+
+  .doc-thumb {
+    width: 64px;
+    height: 64px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
