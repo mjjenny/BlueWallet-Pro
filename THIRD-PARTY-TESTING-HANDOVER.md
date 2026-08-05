@@ -337,6 +337,10 @@ Test:
 Test:
 
 - Camera capture on supported mobile browsers.
+- On iOS Safari, camera permission prompt appears from Add Document -> Scan with camera.
+- If iOS Safari camera permission is denied/cancelled, the Add Document modal stays usable and saved data is unchanged.
+- Scanner/Add Document modal remains correctly sized on phone widths while the camera/file/OCR controls are visible.
+- Cancel from Add Document after opening camera/file picker clears pending scan state and returns cleanly.
 - File picker image upload.
 - PDF upload.
 - Large file guardrail.
@@ -355,6 +359,7 @@ Test:
 - OCR runs on image attachment over localhost/HTTPS.
 - First-run OCR library loading behavior is recorded.
 - OCR failure states are clear and recoverable.
+- Failed OCR leaves fields unchanged and supports retry/manual entry.
 - MRZ sample can be pasted/reviewed if image OCR is unavailable.
 - Apply suggestions updates document fields correctly.
 - Dismiss OCR does not corrupt data.
