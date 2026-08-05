@@ -628,3 +628,24 @@ Do not release based only on automated tests. Release should proceed only after:
 - backup/restore is proven with sample data
 - offline/PWA behavior is proven
 - Jenny approves any UI/UX changes that affect the locked stable app
+
+## Roadmap Items 2-19 Verification Addendum
+
+Test the stable-app feature iteration for:
+
+- Reminder Center: open Settings -> Reminder center, verify expired / expiring soon / no expiry / valid groups, missing-document tracker, CSV export, and calendar export.
+- Backup Health Dashboard: open Data safety status and verify last backup date, backup age, PIN/encryption status, restore status, release readiness, and activity-log count.
+- Import Preview: import a sample v6 backup and confirm the restore prompt shows checksum status, document count, quality-checked count, version-history count, packs, sea-time, vaccines, profile, reminders, and app settings before writing.
+- Duplicate Detection: attempt same type/number, same type/title, and same number/expiry; confirm warning allows cancel or keep-both.
+- Smart Renewal Timeline: open Timeline and verify overdue, upcoming months, renewal plan, risk labels, and missing-document tracker.
+- Advanced Search: verify normal search plus `status:expired`, `issuer:dg`, `tag:joining`, `missing-scan`, `quality:unchecked`, and `risk`.
+- Document Quality Checklist: add/edit a document, tick quality items, save, reopen, and confirm card/detail/export reflects quality and joining risk.
+- Bulk Edit Tools: select multiple documents, favourite, tag, share summary, create pack, and delete with confirmation.
+- Printable Master Index: print/download summary and verify quality, risk, reminder note, flag notes, and missing joining docs are included.
+- Joining Pack Builder: create a pack from selected documents and verify Packs opens the filtered pack.
+- Flag-State / Company Notes: add notes and verify search, view detail, print summary, and export include them.
+- Version History: edit a document and verify previous title/number/expiry appears in document detail and backup preview counts it.
+- Manual Reminder Notes: add notes and verify Reminder Center, card/detail, CSV, print summary, and share summary include them.
+- Secure Share Preparation: verify quick share/download contains summary metadata only and no scan/file payloads.
+- Offline Recovery Screen: open Settings -> Offline recovery check and verify app shell, storage, recovery steps, and install guidance are understandable on iOS Safari, Android Chrome, and Windows Edge.
+- Accessibility: verify dialog roles, close labels, Escape-to-close, visible controls, keyboard activation of document cards, and no horizontal overflow at phone/tablet/desktop widths.

@@ -13,10 +13,11 @@ describe("stable feature iteration safeguards", () => {
     const html = stableHtml();
 
     expect(html).toContain("Search title, number, issuer, notes, expiry, category");
-    expect(html).toContain("expiryMonthTerms(d)");
-    expect(html).toContain("LABELS[d.type]");
-    expect(html).toContain("d.authority");
-    expect(html).toContain("d.flagNotes");
+    expect(html).toContain("function queryMatchesDoc(doc, query)");
+    expect(html).toContain("expiryMonthTerms(doc)");
+    expect(html).toContain("LABELS[doc.type]");
+    expect(html).toContain("doc.authority");
+    expect(html).toContain("doc.flagNotes");
     expect(html).toContain("st.key === 'none' ? 'no expiry' : st.key");
   });
 

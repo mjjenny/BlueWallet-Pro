@@ -13,13 +13,13 @@ describe("stable backup hardening", () => {
     const html = readStableHtml();
 
     expect(html).toContain("const BACKUP_FORMAT = 'bluewallet-pro-stable-backup';");
-    expect(html).toContain("const BACKUP_VERSION = 5;");
-    expect(html).toContain("const BACKUP_LABEL = 'Blue Wallet Stable Backup v5';");
+    expect(html).toContain("const BACKUP_VERSION = 6;");
+    expect(html).toContain("const BACKUP_LABEL = 'Blue Wallet Stable Backup v6';");
     expect(html).toContain("backupVersionLabel: BACKUP_LABEL");
     expect(html).toContain("integrity: {");
     expect(html).toContain("algorithm: 'SHA-256'");
     expect(html).toContain("blue-wallet-stable-backup-v${BACKUP_VERSION}");
-    expect(html).toContain("Download full backup v5");
+    expect(html).toContain("Download full backup v6");
   });
 
   it("verifies backup integrity and structure before restoring", () => {

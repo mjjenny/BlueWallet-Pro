@@ -748,8 +748,18 @@
       min-height: 0;
       overflow-y: auto;
     }
+    .settings-sheet {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .settings-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+    }
     @media (max-width: 559.98px) {
-      .scan-sheet { max-height: 90dvh; }
+      .scan-sheet, .settings-sheet { max-height: 90dvh; }
     }
     @keyframes up {
       from { opacity: 0; transform: translateY(40px); }
@@ -1343,6 +1353,8 @@
       <span id="bulk-count">0 selected</span>
       <button class="btn btn-ghost" id="bulk-fav">★ Favourite</button>
       <button class="btn btn-ghost" id="bulk-share">↗ Share</button>
+      <button class="btn btn-ghost" id="bulk-tag">Tag</button>
+      <button class="btn btn-ghost" id="bulk-pack">Pack</button>
       <button class="btn btn-danger" id="bulk-delete">Delete</button>
       <button class="btn btn-ghost" id="bulk-cancel">Cancel</button>
     </div>
@@ -1444,6 +1456,15 @@
         </div>
         <div class="field"><label>Tags</label><input type="text" id="doc-tags" placeholder="comma separated e.g. original, manning, joining" /></div>
         <div class="field"><label>Flag-state notes</label><textarea id="doc-flag-notes" rows="2" placeholder="e.g. Accepted by Liberia / Marshall Islands"></textarea></div>
+        <div class="field"><label>Manual reminder note</label><textarea id="doc-reminder-note" rows="2" placeholder="e.g. Renew after medical appointment / submit to manning office"></textarea></div>
+        <div class="field">
+          <label>Document quality checklist</label>
+          <div class="check-item"><div><div class="cn">Scan is readable</div><div class="cs">Text, number and expiry can be checked.</div></div><label class="sw"><input type="checkbox" id="doc-q-readable" /><span class="sl"></span></label></div>
+          <div class="check-item"><div><div class="cn">Full page visible</div><div class="cs">No corners or important stamps are cropped.</div></div><label class="sw"><input type="checkbox" id="doc-q-fullpage" /><span class="sl"></span></label></div>
+          <div class="check-item"><div><div class="cn">Signature / stamp present</div><div class="cs">Use where the document requires endorsement proof.</div></div><label class="sw"><input type="checkbox" id="doc-q-stamp" /><span class="sl"></span></label></div>
+          <div class="check-item"><div><div class="cn">Front and back attached</div><div class="cs">Use for cards, IDs, certificates or endorsements.</div></div><label class="sw"><input type="checkbox" id="doc-q-frontback" /><span class="sl"></span></label></div>
+          <div class="check-item"><div><div class="cn">Verified against original</div><div class="cs">Mark after checking the physical document.</div></div><label class="sw"><input type="checkbox" id="doc-q-verified" /><span class="sl"></span></label></div>
+        </div>
         <div class="field"><label>Notes</label><textarea id="doc-notes" rows="2" placeholder="Optional"></textarea></div>
         <div class="actions">
           <button type="button" class="btn btn-ghost" id="btn-cancel">Cancel</button>
@@ -1567,7 +1588,7 @@
           </div>
           <div class="help-sec">
             <h3>Find documents</h3>
-            <p><strong>Search</strong> title, number, authority, notes, tags. <strong>Sort</strong> by expiry, name, type, recent. <strong>Filter</strong> Valid / Expiring / Expired / No expiry.</p>
+            <p><strong>Search</strong> title, number, authority, notes, tags. Advanced tokens include <code>status:expired</code>, <code>issuer:dg</code>, <code>tag:joining</code>, <code>missing-scan</code>, <code>quality:unchecked</code>, and <code>risk</code>. <strong>Sort</strong> by expiry, name, type, recent. <strong>Filter</strong> Valid / Expiring / Expired / No expiry.</p>
           </div>
           <div class="help-sec">
             <h3>Expiry</h3>
@@ -1691,9 +1712,9 @@
   </div>
 
   <div class="overlay" id="modal-settings">
-    <div class="modal">
+    <div class="modal settings-sheet">
       <div class="modal-head"><h2>Settings & Backup</h2><button class="x" id="close-settings">✕</button></div>
-      <div class="modal-body">
+      <div class="modal-body settings-body">
         <div class="sblock">
           <h3>App mode</h3>
           <p>Lite = core wallet only. Full = packs, STCW, OCR, logs, timeline, bulk tools.</p>
@@ -1759,13 +1780,15 @@
         <div class="sblock">
           <h3>Download &amp; backup</h3>
           <p>Export keeps scans private on your device. Full backups include a version label and integrity check.</p>
-          <button class="btn btn-primary" id="btn-export" style="width:100%;margin-bottom:8px">⬇ Download full backup v5</button>
+          <button class="btn btn-primary" id="btn-export" style="width:100%;margin-bottom:8px">⬇ Download full backup v6</button>
           <input type="file" id="import-file" accept=".json" class="hidden" />
           <button class="btn btn-ghost" id="btn-import" style="width:100%;margin-bottom:8px">⬆ Verify &amp; import backup</button>
           <button class="btn btn-ghost full-only" id="btn-meta-transfer" style="width:100%;margin-bottom:8px">Multi-device meta transfer</button>
+          <button class="btn btn-ghost" id="btn-reminder-center" style="width:100%;margin-bottom:8px">Reminder center</button>
           <button class="btn btn-ghost" id="btn-download-reminders" style="width:100%;margin-bottom:8px">⬇ Download expiry reminders</button>
           <button class="btn btn-ghost" id="btn-download-summary" style="width:100%;margin-bottom:8px">⬇ Download status summary</button>
           <button class="btn btn-ghost" id="btn-data-safety" style="width:100%;margin-bottom:8px">Data safety status</button>
+          <button class="btn btn-ghost" id="btn-offline-recovery" style="width:100%;margin-bottom:8px">Offline recovery check</button>
           <button class="btn btn-ghost" id="btn-activity-log" style="width:100%">Download activity log</button>
           <p style="font-size:12px;color:var(--muted);margin-top:10px">Also: open any document → Download scan · Tools → Share / Calendar (.ics in Full).</p>
         </div>
@@ -2154,6 +2177,68 @@
     function expiryGroupSummary(groups = getExpiryGroups()) {
       return `Expired ${groups.expired.length} · Expiring soon ${groups.expiring.length} · No expiry ${groups.noExpiry.length} · Valid ${groups.valid.length}`;
     }
+    function qualityScore(doc) {
+      const q = doc && doc.quality ? doc.quality : {};
+      return ['readable','fullPage','stamp','frontBack','verified'].filter(key => q[key]).length;
+    }
+    function qualitySummary(doc) {
+      const score = qualityScore(doc);
+      if (score >= 5) return 'Quality verified';
+      if (score >= 3) return 'Quality partly checked';
+      return 'Quality not fully checked';
+    }
+    function joiningRisk(doc) {
+      if (!doc) return 'Review';
+      const st = status(doc);
+      if (st.key === 'expired') return 'Joining risk: expired';
+      const days = daysUntil(doc.expiryDate);
+      if (!doc.noExpiry && days !== null && days <= 90) return 'Joining risk: renew soon';
+      if (!doc.files || !doc.files.length) return 'Joining risk: missing scan';
+      if (qualityScore(doc) < 3) return 'Joining risk: scan quality unchecked';
+      return 'Ready';
+    }
+    function missingJoiningDocs() {
+      return JOIN_REQUIRED
+        .filter(req => !documents.some(d => d.type === req.type))
+        .map(req => req.label);
+    }
+    function queryMatchesDoc(doc, query) {
+      const st = status(doc);
+      const tokens = query.split(/\s+/).filter(Boolean);
+      const haystack = [
+        doc.title,
+        doc.number,
+        doc.authority,
+        doc.notes,
+        doc.flagNotes,
+        doc.reminderNote,
+        LABELS[doc.type],
+        doc.type,
+        st.label,
+        st.key === 'none' ? 'no expiry' : st.key,
+        qualitySummary(doc),
+        joiningRisk(doc),
+        ...expiryMonthTerms(doc),
+        ...(doc.tags || [])
+      ].filter(Boolean).join(' ').toLowerCase();
+      return tokens.every(token => {
+        const [rawKey, ...rest] = token.split(':');
+        const value = rest.join(':').toLowerCase();
+        const key = rawKey.toLowerCase();
+        if (value) {
+          if (['type','category','cat'].includes(key)) return doc.type.includes(value) || (LABELS[doc.type] || '').toLowerCase().includes(value);
+          if (['status','expiry'].includes(key)) return st.key.includes(value) || st.label.toLowerCase().includes(value);
+          if (['issuer','authority'].includes(key)) return String(doc.authority || '').toLowerCase().includes(value);
+          if (key === 'tag') return (doc.tags || []).some(tag => String(tag).toLowerCase().includes(value));
+          if (key === 'month') return expiryMonthTerms(doc).join(' ').includes(value);
+        }
+        if (token === 'missing-scan' || token === 'missing:file') return !doc.files || !doc.files.length;
+        if (token === 'favorite' || token === 'favourite') return !!doc.favourite;
+        if (token === 'quality:unchecked') return qualityScore(doc) < 3;
+        if (token === 'risk') return joiningRisk(doc).toLowerCase() !== 'ready';
+        return haystack.includes(token);
+      });
+    }
     function fmt(d) {
       if (!d) return '—';
       return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -2290,10 +2375,27 @@
       doc.authority = String(doc.authority || '').slice(0, 120);
       doc.notes = String(doc.notes || '').slice(0, 2000);
       doc.flagNotes = String(doc.flagNotes || '').slice(0, 1000);
+      doc.reminderNote = String(doc.reminderNote || '').slice(0, 1000);
       if (doc.issueDate) doc.issueDate = String(doc.issueDate).slice(0, 32);
       if (doc.expiryDate) doc.expiryDate = String(doc.expiryDate).slice(0, 32);
       doc.noExpiry = !!doc.noExpiry;
       doc.favourite = !!doc.favourite;
+      if (!isPlainObject(doc.quality)) doc.quality = {};
+      doc.quality = {
+        readable: !!doc.quality.readable,
+        fullPage: !!doc.quality.fullPage,
+        stamp: !!doc.quality.stamp,
+        frontBack: !!doc.quality.frontBack,
+        verified: !!doc.quality.verified
+      };
+      if (!Array.isArray(doc.history)) doc.history = [];
+      doc.history = doc.history.filter(x => x && typeof x === 'object').slice(0, 20).map(x => ({
+        at: String(x.at || '').slice(0, 32),
+        title: String(x.title || '').slice(0, 200),
+        number: String(x.number || '').slice(0, 80),
+        expiryDate: x.expiryDate ? String(x.expiryDate).slice(0, 32) : null,
+        note: String(x.note || '').slice(0, 120)
+      }));
       if (!Array.isArray(doc.tags)) {
         doc.tags = typeof doc.tags === 'string' ? doc.tags.split(',').map(x => x.trim()).filter(Boolean) : [];
       }
@@ -2337,6 +2439,16 @@
         }
       }
       if (doc.flagNotes == null) doc.flagNotes = '';
+      if (doc.reminderNote == null) doc.reminderNote = '';
+      if (!doc.quality || typeof doc.quality !== 'object') doc.quality = {};
+      doc.quality = {
+        readable: !!doc.quality.readable,
+        fullPage: !!doc.quality.fullPage,
+        stamp: !!doc.quality.stamp,
+        frontBack: !!doc.quality.frontBack,
+        verified: !!doc.quality.verified
+      };
+      if (!Array.isArray(doc.history)) doc.history = [];
       if (doc.tags == null) doc.tags = [];
       if (typeof doc.tags === 'string') doc.tags = doc.tags.split(',').map(t=>t.trim()).filter(Boolean);
       if (doc.favourite == null) doc.favourite = false;
@@ -2391,8 +2503,8 @@
       downloadTextFile('blue-wallet-activity-log-' + new Date().toISOString().slice(0,10) + '.txt', text);
     }
     const BACKUP_FORMAT = 'bluewallet-pro-stable-backup';
-    const BACKUP_VERSION = 5;
-    const BACKUP_LABEL = 'Blue Wallet Stable Backup v5';
+    const BACKUP_VERSION = 6;
+    const BACKUP_LABEL = 'Blue Wallet Stable Backup v6';
     function isPlainObject(value) {
       return !!value && typeof value === 'object' && !Array.isArray(value);
     }
@@ -2473,9 +2585,14 @@
         integrity,
         counts: {
           documents: cleanDocs.length,
+          qualityChecked: cleanDocs.filter(doc => qualityScore(doc) >= 3).length,
+          versionHistory: cleanDocs.reduce((sum, doc) => sum + ((doc.history || []).length), 0),
           packs: Array.isArray(data.packs) ? data.packs.length : 0,
           seatime: Array.isArray(data.seatime) ? data.seatime.length : 0,
-          vaccines: Array.isArray(data.vaccines) ? data.vaccines.length : 0
+          vaccines: Array.isArray(data.vaccines) ? data.vaccines.length : 0,
+          profile: data.profile || data.seafarer ? 1 : 0,
+          reminders: data.reminders ? 1 : 0,
+          settings: data.settings ? 1 : 0
         }
       };
     }
@@ -2488,9 +2605,14 @@
         'Exported: ' + info.exportedAt,
         checked,
         'Documents: ' + info.counts.documents,
+        'Quality-checked documents: ' + info.counts.qualityChecked,
+        'Version-history entries: ' + info.counts.versionHistory,
         'Packs: ' + info.counts.packs,
         'Sea time entries: ' + info.counts.seatime,
         'Vaccines: ' + info.counts.vaccines,
+        'Profile included: ' + (info.counts.profile ? 'yes' : 'no'),
+        'Reminder settings included: ' + (info.counts.reminders ? 'yes' : 'no'),
+        'App settings included: ' + (info.counts.settings ? 'yes' : 'no'),
         '',
         'This will merge/update matching local records on this device.',
         'Continue restore?'
@@ -2525,19 +2647,66 @@
       const encOn = localStorage.getItem('bwEncEnabled') === '1';
       const logCount = readActivityLog().length;
       const groups = getExpiryGroups();
+      const backupAgeDays = lastBackup ? Math.floor((Date.now() - new Date(lastBackup).getTime()) / 86400000) : null;
+      const missing = missingJoiningDocs();
+      const risky = documents.filter(d => joiningRisk(d) !== 'Ready').length;
       return `
         <div class="help-grid">
           <div class="help-card"><h4>Local storage</h4><p>Documents, scans, profile, packs, sea time, vaccines, backups, and logs stay on this device unless you manually export or share.</p></div>
           <div class="help-card"><h4>PIN status</h4><p>${pinOn ? 'PIN protection is configured.' : 'PIN protection is not configured.'} ${encOn ? 'Encrypted vault rows are enabled.' : 'Encryption activates after PIN setup/unlock.'}</p></div>
-          <div class="help-card"><h4>Backup status</h4><p>${lastBackup ? 'Last full backup export: ' + esc(new Date(lastBackup).toLocaleString()) : 'No full backup export recorded on this device.'}</p></div>
+          <div class="help-card"><h4>Backup health</h4><p>${lastBackup ? 'Last full backup export: ' + esc(new Date(lastBackup).toLocaleString()) + (backupAgeDays !== null ? ' (' + backupAgeDays + ' days ago).' : '.') : 'No full backup export recorded on this device.'} ${backupAgeDays !== null && backupAgeDays <= 30 ? 'Backup is current.' : 'Export a fresh backup before release or device transfer.'}</p></div>
           <div class="help-card"><h4>Restore status</h4><p>${lastRestore ? 'Last restore: ' + esc(new Date(lastRestore).toLocaleString()) : 'No restore recorded on this device.'}</p></div>
           <div class="help-card"><h4>Expiry groups</h4><p>${esc(expiryGroupSummary(groups))}</p></div>
+          <div class="help-card"><h4>Release readiness</h4><p>${documents.length} docs · ${risky} need review · ${missing.length ? 'Missing joining docs: ' + esc(missing.join(', ')) : 'Core joining docs present.'}</p></div>
           <div class="help-card"><h4>Activity log</h4><p>${logCount} local entries. Logs are stored locally and can be downloaded from Settings.</p></div>
         </div>
         <p style="font-size:12px;color:var(--muted);margin-top:12px">The app does not upload document data. OCR libraries may load from CDN only when OCR is used on a secure origin.</p>`;
     }
     function openDataSafetyStatus() {
       showGeneric('Data safety status', buildDataSafetyHtml());
+    }
+    function buildReminderCenterHtml() {
+      const groups = getExpiryGroups();
+      const rows = [
+        ['Expired', groups.expired],
+        ['Expiring soon', groups.expiring],
+        ['No expiry', groups.noExpiry],
+        ['Valid', groups.valid]
+      ].map(([label, docs]) => {
+        const body = docs.map(d => `<div class="check-item">
+          <div><div class="cn">${esc(d.title)}</div><div class="cs">${esc(LABELS[d.type] || d.type)} · ${esc(d.number || 'no number')} · ${d.noExpiry ? 'No expiry' : esc(fmt(d.expiryDate))}${d.reminderNote ? ' · ' + esc(d.reminderNote) : ''}</div></div>
+          <span class="badge ${status(d).cls}">${esc(status(d).label)}</span>
+        </div>`).join('') || '<p style="color:var(--muted);margin:8px 0">No documents in this group.</p>';
+        return `<h3 style="margin:14px 0 8px">${esc(label)}</h3>${body}`;
+      }).join('');
+      const missing = missingJoiningDocs();
+      return `
+        <p style="color:var(--muted);margin-bottom:10px">${esc(expiryGroupSummary(groups))}</p>
+        ${missing.length ? `<div class="help-card"><h4>Missing document tracker</h4><p>${esc(missing.join(', '))}</p></div>` : '<div class="help-card"><h4>Missing document tracker</h4><p>Core joining documents are present.</p></div>'}
+        ${rows}
+        <div style="display:grid;gap:8px;margin-top:12px">
+          <button class="btn btn-primary" id="generic-export-reminders">Download reminder CSV</button>
+          <button class="btn btn-ghost" id="generic-export-calendar">Download calendar reminders</button>
+        </div>`;
+    }
+    function openReminderCenter() {
+      showGeneric('Reminder center', buildReminderCenterHtml());
+      document.getElementById('generic-export-reminders').onclick = () => exportReminderReport();
+      document.getElementById('generic-export-calendar').onclick = () => exportIcs();
+    }
+    function buildOfflineRecoveryHtml() {
+      const swReady = 'serviceWorker' in navigator && secureContextOk() && !isFileProtocol();
+      const storageReady = !!(window.indexedDB || useStorageFallback);
+      return `
+        <div class="help-grid">
+          <div class="help-card"><h4>App shell</h4><p>${swReady ? 'Service worker can cache the app on this URL.' : 'Service worker is unavailable here. Use the HTTPS GitHub Pages URL or localhost.'}</p></div>
+          <div class="help-card"><h4>Local data</h4><p>${storageReady ? 'Browser storage is available.' : 'Browser storage looks blocked. Check Safari private mode, site data settings, or storage permissions.'}</p></div>
+          <div class="help-card"><h4>Recovery steps</h4><p>1. Export backup before clearing data. 2. Reload the HTTPS app. 3. If offline launch fails, reconnect once and open the app again. 4. Restore from verified backup only if local data was cleared.</p></div>
+          <div class="help-card"><h4>Install check</h4><p>iPhone Safari: Share -> Add to Home Screen. Android Chrome/Edge: menu -> Install app. Windows Edge/Chrome: install icon or browser menu.</p></div>
+        </div>`;
+    }
+    function openOfflineRecovery() {
+      showGeneric('Offline recovery check', buildOfflineRecoveryHtml());
     }
 
     function filteredList() {
@@ -2550,23 +2719,7 @@
       });
       const q = searchQ.trim().toLowerCase();
       if (q) {
-        list = list.filter(d => {
-          const st = status(d);
-          const haystack = [
-            d.title,
-            d.number,
-            d.authority,
-            d.notes,
-            d.flagNotes,
-            LABELS[d.type],
-            d.type,
-            st.label,
-            st.key === 'none' ? 'no expiry' : st.key,
-            ...expiryMonthTerms(d),
-            ...(d.tags || [])
-          ].filter(Boolean).join(' ').toLowerCase();
-          return haystack.includes(q);
-        });
+        list = list.filter(d => queryMatchesDoc(d, q));
       }
       if (filterStatus !== 'all') {
         list = list.filter(d => status(d).key === filterStatus);
@@ -2665,6 +2818,8 @@
           const st = status(doc);
           const nfiles = (doc.files && doc.files.length) || 0;
           const tags = (doc.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('');
+          const risk = joiningRisk(doc);
+          const quality = qualitySummary(doc);
           const thumb = (doc.files && doc.files[0] && doc.files[0].type && doc.files[0].type.startsWith('image/'))
             ? `<img class="doc-thumb" src="${doc.files[0].data}" alt="" />` : '';
           const safeType = ALLOWED_TYPES.includes(doc.type) ? doc.type : 'other';
@@ -2686,6 +2841,9 @@
               ${doc.noExpiry
                 ? `<span>Validity</span><strong>No Expiry</strong>`
                 : `<span>Expiry</span><strong>${fmt(doc.expiryDate)}</strong>`}
+            </div>
+            <div class="doc-row2">
+              <span>${esc(quality)}</span><strong>${esc(risk)}</strong>
             </div>
           </div>`;
         }).join('');
@@ -2792,13 +2950,21 @@
             body.appendChild(img);
           }
         });
-        if (doc.flagNotes) {
-          const n = document.createElement('p');
-          n.style.cssText = 'color:#8eb8cc;font-size:13px;padding:8px;text-align:left;width:100%';
-          n.textContent = 'Flag notes: ' + doc.flagNotes;
-          body.appendChild(n);
-        }
       }
+      const details = document.createElement('div');
+      details.style.cssText = 'color:#8eb8cc;font-size:13px;padding:8px;text-align:left;width:100%;line-height:1.5';
+      const q = doc.quality || {};
+      const history = (doc.history || []).slice(0, 5).map(row =>
+        `<li>${esc(row.at ? new Date(row.at).toLocaleString() : 'Previous version')} - ${esc(row.title || 'Untitled')} ${row.expiryDate ? '(' + esc(fmt(row.expiryDate)) + ')' : ''}</li>`
+      ).join('');
+      details.innerHTML = `
+        ${doc.flagNotes ? `<p><strong style="color:#fff">Flag notes:</strong> ${esc(doc.flagNotes)}</p>` : ''}
+        ${doc.reminderNote ? `<p><strong style="color:#fff">Reminder note:</strong> ${esc(doc.reminderNote)}</p>` : ''}
+        <p><strong style="color:#fff">Quality:</strong> ${esc(qualitySummary(doc))} (${qualityScore(doc)}/5) - ${esc(joiningRisk(doc))}</p>
+        <p><strong style="color:#fff">Checks:</strong> readable ${q.readable ? 'yes' : 'no'} · full page ${q.fullPage ? 'yes' : 'no'} · stamp ${q.stamp ? 'yes' : 'no'} · front/back ${q.frontBack ? 'yes' : 'no'} · verified ${q.verified ? 'yes' : 'no'}</p>
+        ${history ? `<p><strong style="color:#fff">Version history:</strong></p><ul style="padding-left:18px">${history}</ul>` : '<p><strong style="color:#fff">Version history:</strong> No previous edits recorded.</p>'}
+      `;
+      body.appendChild(details);
       document.getElementById('modal-view').classList.add('show');
     }
 
@@ -2810,6 +2976,11 @@
       updateNoExp(false);
       const tg0 = document.getElementById('doc-tags'); if (tg0) tg0.value = '';
       const fv0 = document.getElementById('doc-fav'); if (fv0) fv0.checked = false;
+      const rn0 = document.getElementById('doc-reminder-note'); if (rn0) rn0.value = '';
+      ['readable','fullpage','stamp','frontback','verified'].forEach(key => {
+        const el = document.getElementById('doc-q-' + key);
+        if (el) el.checked = false;
+      });
       if (!editId) document.getElementById('doc-type').value = cat === 'yellowfever' ? 'yellowfever' : cat;
 
       if (editId) {
@@ -2826,10 +2997,18 @@
         document.getElementById('doc-notes').value = doc.notes || '';
         const fn = document.getElementById('doc-flag-notes');
         if (fn) fn.value = doc.flagNotes || '';
+        const rn = document.getElementById('doc-reminder-note');
+        if (rn) rn.value = doc.reminderNote || '';
         const tg = document.getElementById('doc-tags');
         if (tg) tg.value = (doc.tags || []).join(', ');
         const fv = document.getElementById('doc-fav');
         if (fv) fv.checked = !!doc.favourite;
+        const q = doc.quality || {};
+        const qMap = { readable: 'readable', fullpage: 'fullPage', stamp: 'stamp', frontback: 'frontBack', verified: 'verified' };
+        Object.keys(qMap).forEach(key => {
+          const el = document.getElementById('doc-q-' + key);
+          if (el) el.checked = !!q[qMap[key]];
+        });
         document.getElementById('doc-no-expiry').checked = !!doc.noExpiry;
         updateNoExp(!!doc.noExpiry);
         pendingFiles = (doc.files && doc.files.length)
@@ -3174,11 +3353,13 @@
       }).join('');
       const yf = documents.filter(d => d.type === 'yellowfever');
       const yfOk = yf.length > 0;
+      const risky = documents.filter(d => joiningRisk(d) !== 'Ready');
       body.innerHTML = items + `
         <div class="check-item ${yfOk ? 'ok' : 'miss'}">
           <div><div class="cn">Yellow Fever (recommended)</div><div class="cs">${yfOk ? esc(yf.map(d=>d.title).join(', ')) : 'Not on file'}</div></div>
           <div style="font-size:20px">${yfOk ? '✅' : '➖'}</div>
         </div>
+        <div class="help-card" style="margin-top:12px"><h4>Quality / joining risk review</h4><p>${risky.length ? esc(risky.map(d => d.title + ' - ' + joiningRisk(d)).join('; ')) : 'No quality or joining-risk issues found.'}</p></div>
         <p style="font-size:13px;color:var(--muted);margin-top:12px">Visa requirements depend on destination and are listed under VISAS.</p>`;
     }
 
@@ -3231,6 +3412,58 @@
       return lines.join('\r\n');
     }
 
+    function buildPrintSheet() {
+      const groups = getExpiryGroups();
+      const groupRows = [
+        ['Expired', groups.expired],
+        ['Expiring soon', groups.expiring],
+        ['No expiry', groups.noExpiry],
+        ['Valid', groups.valid]
+      ].map(([label, rows]) => {
+        const body = rows.map(d => {
+          const st = status(d);
+          return `<tr>
+            <td>${esc(label)}</td>
+            <td>${esc(LABELS[d.type]||d.type)}</td>
+            <td>${esc(d.title)}</td>
+            <td>${esc(d.number||'')}</td>
+            <td>${d.noExpiry ? 'No expiry' : fmt(d.expiryDate)}</td>
+            <td>${st.label}</td>
+            <td>${esc(d.flagNotes||'')}</td>
+            <td>${esc(qualitySummary(d))}</td>
+            <td>${esc(joiningRisk(d))}</td>
+            <td>${esc(d.reminderNote||'')}</td>
+          </tr>`;
+        }).join('');
+        return body || `<tr><td>${esc(label)}</td><td colspan="9">No documents</td></tr>`;
+      }).join('');
+      return `<h1>THE BLUE WALLET - Document Summary</h1>
+        <p>Generated ${new Date().toLocaleString()} - ${documents.length} documents - ${expiryGroupSummary(groups)} - Missing joining docs: ${missingJoiningDocs().join(', ') || 'none'}</p>
+        <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:12px">
+          <thead><tr><th>Group</th><th>Type</th><th>Title</th><th>Number</th><th>Expiry</th><th>Status</th><th>Flag notes</th><th>Quality</th><th>Risk</th><th>Reminder note</th></tr></thead>
+          <tbody>${groupRows}</tbody>
+        </table>`;
+    }
+
+    function buildReminderReport() {
+      const groups = getExpiryGroups();
+      const lines = [
+        'Group,Type,Title,Number,Expiry,Status,Days,Quality,Risk,Reminder note',
+        ...[
+          ['Expired', groups.expired],
+          ['Expiring soon', groups.expiring],
+          ['No expiry', groups.noExpiry],
+          ['Valid', groups.valid]
+        ].flatMap(([group, rows]) => rows.map(d => {
+          const st = status(d);
+          const days = d.noExpiry ? '' : (daysUntil(d.expiryDate) ?? '');
+          return [group, LABELS[d.type]||d.type, d.title, d.number||'', d.noExpiry ? 'No expiry' : fmt(d.expiryDate), st.label, days, qualitySummary(d), joiningRisk(d), d.reminderNote || '']
+            .map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',');
+        }))
+      ];
+      return lines.join('\r\n');
+    }
+
     function exportReminderReport() {
       const groups = getExpiryGroups();
       downloadTextFile('blue-wallet-expiry-reminders-' + new Date().toISOString().slice(0,10) + '.csv', buildReminderReport(), 'text/csv');
@@ -3274,9 +3507,9 @@
     async function quickShare() {
       const text = documents.map(d => {
         const st = status(d);
-        return `${LABELS[d.type]||d.type}: ${d.title} | ${d.number||'-'} | ${d.noExpiry?'No expiry':fmt(d.expiryDate)} | ${st.label}`;
+        return `${LABELS[d.type]||d.type}: ${d.title} | ${d.number||'-'} | ${d.noExpiry?'No expiry':fmt(d.expiryDate)} | ${st.label} | ${qualitySummary(d)} | ${joiningRisk(d)}${d.reminderNote ? ' | Reminder: ' + d.reminderNote : ''}`;
       }).join('\n') || 'No documents in THE BLUE WALLET';
-      const payload = 'THE BLUE WALLET summary\n' + text;
+      const payload = 'THE BLUE WALLET secure share summary\nNo scans or document files are attached by this summary.\nMissing joining docs: ' + (missingJoiningDocs().join(', ') || 'none') + '\n\n' + text;
       if (navigator.share) {
         try {
           await navigator.share({ title: 'THE BLUE WALLET', text: payload });
@@ -3317,6 +3550,35 @@
         }).join('') || '<div class="tl-item" style="color:var(--muted)">—</div>';
         return `<div class="tl-month"><h4>${mo.label}</h4>${items}</div>`;
       }).join('') + '</div>';
+    }
+
+    function buildTimelineHtml() {
+      const now = new Date();
+      const months = [];
+      for (let i = -1; i < 12; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+        months.push({ y: d.getFullYear(), m: d.getMonth(), label: i < 0 ? 'Expired / overdue' : d.toLocaleString('en', { month: 'short', year: 'numeric' }) });
+      }
+      const missing = missingJoiningDocs();
+      const plan = documents
+        .filter(doc => joiningRisk(doc) !== 'Ready')
+        .sort((a,b) => (daysUntil(a.expiryDate) ?? 9999) - (daysUntil(b.expiryDate) ?? 9999))
+        .map(doc => `<div class="tl-item ${status(doc).key==='expired'?'bad':'warn'}">${esc(doc.title)} - ${esc(joiningRisk(doc))}${doc.reminderNote ? ' - ' + esc(doc.reminderNote) : ''}</div>`)
+        .join('') || '<div class="tl-item" style="color:var(--muted)">No urgent renewal risk found.</div>';
+      return '<div class="timeline">' + months.map(mo => {
+        const items = documents.filter(doc => {
+          if (doc.noExpiry || !doc.expiryDate) return false;
+          const e = new Date(doc.expiryDate);
+          if (mo.label === 'Expired / overdue') return daysUntil(doc.expiryDate) !== null && daysUntil(doc.expiryDate) < 0;
+          return e.getFullYear() === mo.y && e.getMonth() === mo.m;
+        }).map(doc => {
+          const st = status(doc);
+          return `<div class="tl-item ${st.key==='expired'?'bad':(st.key==='expiring'?'warn':'')}">${esc(doc.title)} - ${fmt(doc.expiryDate)} - ${esc(joiningRisk(doc))}</div>`;
+        }).join('') || '<div class="tl-item" style="color:var(--muted)">-</div>';
+        return `<div class="tl-month"><h4>${mo.label}</h4>${items}</div>`;
+      }).join('') + `</div>
+        <div class="help-card" style="margin-top:12px"><h4>Renewal plan</h4>${plan}</div>
+        <div class="help-card" style="margin-top:12px"><h4>Missing document tracker</h4><p>${missing.length ? esc(missing.join(', ')) : 'Core joining documents are present.'}</p></div>`;
     }
 
     function openPacksUI() {
@@ -4071,9 +4333,20 @@
         ['btn-vaccines', 'Open vaccines log'],
         ['btn-bulk', 'Select multiple documents'],
         ['btn-data-safety', 'Open data safety status'],
+        ['btn-reminder-center', 'Open reminder center'],
+        ['btn-offline-recovery', 'Open offline recovery check'],
         ['btn-activity-log', 'Download local activity log']
       ].forEach(([id, label]) => document.getElementById(id)?.setAttribute('aria-label', label));
       document.querySelectorAll('.x').forEach(btn => btn.setAttribute('aria-label', 'Close'));
+      document.querySelectorAll('.overlay').forEach(overlay => {
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+      });
+      document.addEventListener('keydown', e => {
+        if (e.key !== 'Escape') return;
+        const open = [...document.querySelectorAll('.overlay.show')].pop();
+        if (open) close(open.id);
+      });
 
       document.getElementById('btn-theme').onclick = () => {
         const cur = document.documentElement.getAttribute('data-theme') === 'night' ? 'night' : 'green';
@@ -4162,7 +4435,9 @@
       document.getElementById('btn-share-quick').onclick = () => quickShare();
       document.getElementById('btn-ics').onclick = () => exportIcs();
       document.getElementById('btn-download-reminders').onclick = () => exportReminderReport();
+      document.getElementById('btn-reminder-center').onclick = () => openReminderCenter();
       document.getElementById('btn-data-safety').onclick = () => openDataSafetyStatus();
+      document.getElementById('btn-offline-recovery').onclick = () => openOfflineRecovery();
       document.getElementById('btn-activity-log').onclick = () => downloadActivityLog();
       document.getElementById('btn-timeline').onclick = () => {
         const w = document.getElementById('timeline-wrap');
@@ -4217,9 +4492,34 @@
         documents = (await getAllDocs()).map(normalizeDoc);
         render();
       };
+      document.getElementById('bulk-tag').onclick = async () => {
+        if (!selectedIds.size) return;
+        const tag = prompt('Tag to add to selected documents:');
+        if (!tag) return;
+        const clean = tag.trim().slice(0, 40);
+        for (const id of selectedIds) {
+          const d = documents.find(x => x.id === id);
+          if (d) {
+            d.tags = [...new Set([...(d.tags || []), clean])];
+            await saveDoc(d);
+          }
+        }
+        recordActivity('documents-bulk-tagged', { count: selectedIds.size, tag: clean });
+        documents = (await getAllDocs()).map(normalizeDoc);
+        render();
+      };
+      document.getElementById('bulk-pack').onclick = () => {
+        if (!selectedIds.size) return;
+        const name = prompt('Pack name for selected documents:', 'Joining vessel pack');
+        if (!name) return;
+        packs.push({ id: uid(), name: name.trim().slice(0, 80), docIds: [...selectedIds] });
+        savePacks();
+        recordActivity('pack-created-from-selection', { count: selectedIds.size, name: name.trim().slice(0, 80) });
+        showAppToast('Pack created from selected documents.', null, null);
+      };
       document.getElementById('bulk-share').onclick = () => {
         const docs = documents.filter(d => selectedIds.has(d.id));
-        const text = docs.map(d => `${d.title} | ${d.number||'-'} | ${d.noExpiry?'No exp':fmt(d.expiryDate)}`).join('\n');
+        const text = docs.map(d => `${d.title} | ${d.number||'-'} | ${d.noExpiry?'No exp':fmt(d.expiryDate)} | ${qualitySummary(d)} | ${joiningRisk(d)}`).join('\n');
         if (navigator.share) navigator.share({ title: 'Blue Wallet', text }).catch(()=>{});
         else {
           const a = document.createElement('a');
@@ -4540,15 +4840,29 @@
           return;
         }
         // Duplicate detection
-        if (number) {
-          const dup = documents.find(d => d.id !== id && d.type === type && (d.number || '').toLowerCase() === number.toLowerCase());
-          if (dup && !confirm('A document with the same type and number already exists:\n' + dup.title + '\nSave anyway?')) return;
+        const duplicateHits = documents.filter(d => {
+          if (d.id === id) return false;
+          const sameNumber = number && (d.number || '').toLowerCase() === number.toLowerCase();
+          const sameTitle = (d.title || '').trim().toLowerCase() === document.getElementById('doc-title').value.trim().toLowerCase();
+          const sameExpiry = !noExp && d.expiryDate && d.expiryDate === document.getElementById('doc-expiry').value;
+          return (d.type === type && sameNumber) || (d.type === type && sameTitle) || (sameNumber && sameExpiry);
+        });
+        if (duplicateHits.length) {
+          const summary = duplicateHits.slice(0, 5).map(d => '- ' + d.title + (d.number ? ' / ' + d.number : '')).join('\n');
+          if (!confirm('Possible duplicate document found:\n' + summary + '\n\nKeep both documents?')) return;
         }
         const existing = documents.find(d => d.id === id);
         const files = pendingFiles.length
           ? pendingFiles.map(f => ({ data: f.data, name: f.name, type: f.type }))
           : (existing?.files || []);
         const tagStr = (document.getElementById('doc-tags')?.value || '').trim();
+        const previousHistory = existing ? [{
+          at: existing.updatedAt || new Date().toISOString(),
+          title: existing.title || '',
+          number: existing.number || '',
+          expiryDate: existing.expiryDate || null,
+          note: 'Before edit'
+        }, ...(existing.history || [])].slice(0, 20) : [];
         const doc = {
           id,
           type,
@@ -4560,8 +4874,17 @@
           noExpiry: noExp,
           notes: document.getElementById('doc-notes').value.trim(),
           flagNotes: (document.getElementById('doc-flag-notes')?.value || '').trim(),
+          reminderNote: (document.getElementById('doc-reminder-note')?.value || '').trim(),
           tags: tagStr ? tagStr.split(',').map(t => t.trim()).filter(Boolean) : [],
           favourite: !!document.getElementById('doc-fav')?.checked,
+          quality: {
+            readable: !!document.getElementById('doc-q-readable')?.checked,
+            fullPage: !!document.getElementById('doc-q-fullpage')?.checked,
+            stamp: !!document.getElementById('doc-q-stamp')?.checked,
+            frontBack: !!document.getElementById('doc-q-frontback')?.checked,
+            verified: !!document.getElementById('doc-q-verified')?.checked
+          },
+          history: previousHistory,
           files,
           // D-14: do not dual-write legacy fileData/fileName/fileType on new saves
           updatedAt: new Date().toISOString()
@@ -4614,8 +4937,8 @@
 
       document.getElementById('btn-meta-transfer')?.addEventListener('click', exportQrRestore);
       document.getElementById('btn-download-summary').onclick = () => {
-        buildPrintSheet();
         const sheet = document.getElementById('print-sheet');
+        sheet.innerHTML = buildPrintSheet();
         const html = '<!DOCTYPE html><html><head><title>Blue Wallet Summary</title></head><body>' + sheet.innerHTML + '</body></html>';
         const blob = new Blob([html], { type: 'text/html' });
         const a = document.createElement('a');
