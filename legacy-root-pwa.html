@@ -921,6 +921,7 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      max-width: min(760px, calc(100vw - 24px));
     }
     .settings-body {
       flex: 1 1 auto;
@@ -1102,12 +1103,20 @@
       background: var(--brand-grad);
       box-shadow: 0 6px 16px var(--brand-shadow);
     }
+    .theme-choice span:last-child {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
     .theme-choice small {
       display: block;
       color: var(--muted);
       font-size: 11px;
       font-weight: 600;
+      line-height: 1.25;
       margin-top: 2px;
+    }
+    @media (min-width: 760px) {
+      .theme-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     }
     .sfoot { text-align: center; font-size: 13px; color: #6a8f78; margin-top: 10px; }
 
@@ -1133,7 +1142,7 @@
       display: grid; place-items: center;
     }
     .help-tabs {
-      display: flex; gap: 6px; flex-wrap: wrap;
+      display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px;
       margin: -4px 0 16px; padding-bottom: 12px;
       border-bottom: 1px solid var(--glass-border);
       position: sticky; top: 0; z-index: 2;
@@ -1144,6 +1153,7 @@
       border: 1px solid var(--glass-border); background: rgba(0,0,0,.25);
       color: var(--muted); border-radius: 999px; padding: 7px 12px;
       font-size: 12px; font-weight: 700; cursor: pointer; letter-spacing: .02em;
+      min-height: 36px; min-width: 0; text-align: center;
     }
     .help-tab.active {
       color: #020b16; background: var(--accent); border-color: var(--accent);
@@ -1157,6 +1167,7 @@
     }
     .help-sec p, .help-sec li {
       font-size: 13px; color: var(--muted); line-height: 1.55; margin-bottom: 6px;
+      overflow-wrap: anywhere;
     }
     .help-sec ul { padding-left: 18px; }
     .help-sec li { margin-bottom: 8px; }
@@ -1195,6 +1206,14 @@
     .faq-item[open] summary::after { content: '−'; }
     .faq-item .faq-a {
       padding: 0 14px 12px; font-size: 13px; color: var(--muted); line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+    .help-sec code, .faq-item code {
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    @media (min-width: 640px) {
+      .help-tabs { grid-template-columns: repeat(6, minmax(0, 1fr)); }
     }
 
     body.app-lite .mode-toggle { background: rgba(94,212,255,.15); border-color: rgba(94,212,255,.45); color: var(--accent); }
@@ -1801,25 +1820,30 @@
           <div class="help-sec">
             <h3>Quick start</h3>
             <ol style="padding-left:18px;color:var(--muted);font-size:13px;line-height:1.6">
-              <li>Tap <strong style="color:#fff">+ Add</strong> and store passport, CDC, COC, visas, certs.</li>
-              <li>Set a <strong style="color:#fff">PIN</strong> in Settings if the phone is shared.</li>
-              <li>Export a <strong style="color:#fff">backup</strong> after major updates.</li>
-              <li>Use <strong style="color:#fff">LITE</strong> day-to-day; switch to <strong style="color:#fff">FULL</strong> when you need packs, OCR, or logs.</li>
+              <li>Use <strong style="color:#fff">+ Add</strong> for passport, CDC, COC, visas, certificates, medical, yellow fever, contract, and other documents.</li>
+              <li>Attach clear scans or PDFs, complete the quality checklist, add notes/tags, then save.</li>
+              <li>Set a <strong style="color:#fff">PIN</strong> in Settings before using the wallet on a shared device.</li>
+              <li>Run <strong style="color:#fff">Export Backup</strong> after important changes and before device transfer.</li>
+              <li>Use <strong style="color:#fff">Lite</strong> for daily wallet use and <strong style="color:#fff">Full</strong> for packs, OCR, logs, QA, and release tools.</li>
             </ol>
           </div>
           <div class="help-grid">
             <div class="help-card">
               <h4>LITE</h4>
-              <p>Core wallet only — add, view, print, search, sort, filter, expiry banner, PIN, backup. Best for phones.</p>
+              <p>Core wallet: add, view, print, download, wallet-wide search, sort, status filter, expiry banner, PIN, backup, and install guidance.</p>
             </div>
             <div class="help-card">
               <h4>FULL</h4>
-              <p>Everything in Lite plus checklist, packs, timeline, STCW, sea-time, vaccines, bulk tools, OCR, biometrics.</p>
+              <p>Everything in Lite plus quality checklist, packs, renewal timeline, STCW, sea-time, vaccines, bulk tools, OCR, biometrics, activity log, QA pack, and release readiness.</p>
             </div>
           </div>
           <div class="help-sec" style="margin-top:14px">
             <h3>Privacy</h3>
-            <p>Documents live in this browser’s <strong>IndexedDB</strong> only. The app does not upload scans to a server.</p>
+            <p>The wallet is offline-first and local-only. Documents live in this browser's <strong>IndexedDB</strong>; the app does not upload scans, profile data, notes, or backups to a server.</p>
+          </div>
+          <div class="help-sec">
+            <h3>Appearance</h3>
+            <p>Settings include VIBGYOR appearance themes: Violet Tide, Indigo Depth, Ocean Blue, Deep Current, Golden Beacon, Harbor Sunset, and Coral Red, plus Abyssal Night and Aurora Watch animated sea themes. Ocean Blue remains the default stable appearance.</p>
           </div>
         </div>
 
@@ -1827,26 +1851,28 @@
           <div class="help-sec">
             <h3>Managing documents</h3>
             <ul>
-              <li><strong>Add</strong> — header + Add or mobile floating +. Choose type, title, number, issue/expiry. Use <strong>No Expiry</strong> when valid indefinitely.</li>
-              <li><strong>Scans</strong> — JPG, PNG or PDF; multiple files per document.</li>
-              <li><strong>View</strong> — open a card to preview, download or print.</li>
-              <li><strong>Edit / delete</strong> — from the view modal.</li>
-              <li><strong>Tags &amp; favourites</strong> — labels for search; favourites pin to top (Full).</li>
-              <li><strong>Flag-state notes</strong> — which flags accept the cert.</li>
+              <li><strong>Add</strong> - choose document type, title, number, authority, issue/expiry dates, scans, tags, notes, flag-state notes, and manual reminder notes.</li>
+              <li><strong>No Expiry</strong> - use for documents that do not expire; they stay out of expiry alerts but remain searchable and printable.</li>
+              <li><strong>Scans</strong> - attach JPG, PNG, or PDF files; multiple attachments are supported per document.</li>
+              <li><strong>Quality checklist</strong> - mark readable, full page, stamp/signature, front/back, and verified against original.</li>
+              <li><strong>View</strong> - open a card to preview, download, print, edit, or delete. On desktop/tablet the viewer gives about 70% of the space to the scan and 30% to quality/version details.</li>
+              <li><strong>Version history</strong> - edits are recorded locally so changed title, dates, notes, quality, and scan changes can be reviewed.</li>
+              <li><strong>Duplicates</strong> - import and document checks warn about likely duplicate records.</li>
             </ul>
           </div>
           <div class="help-sec">
             <h3>Categories</h3>
-            <p>PASSPORT · CDC · COC · VISAS · CERTIFICATES · MEDICAL · YELLOW FEVER · CONTRACT · OTHER.</p>
-            <p>Full mode shows complete tab names (swipe the row if needed). Lite hides Yellow Fever and Contract tabs.</p>
+            <p>PASSPORT - CDC - COC - VISAS - CERTIFICATES - MEDICAL - YELLOW FEVER - CONTRACT - OTHER.</p>
+            <p>Tabs stay visible in one row without horizontal scrolling. Narrow screens use clear short codes: PPT, CDC, COC, VSA, CRT, MED, YF, CTR, and OTH.</p>
           </div>
           <div class="help-sec">
             <h3>Find documents</h3>
-            <p><strong>Search</strong> title, number, authority, notes, tags. Advanced tokens include <code>status:expired</code>, <code>issuer:dg</code>, <code>tag:joining</code>, <code>missing-scan</code>, <code>quality:unchecked</code>, and <code>risk</code>. <strong>Sort</strong> by expiry, name, type, recent. <strong>Filter</strong> Valid / Expiring / Expired / No expiry.</p>
+            <p><strong>Search is wallet-wide when a query is entered</strong>, so results are not limited to the open category tab. Search covers title, document number, authority/issuer, notes, tags, expiry month/year, and category.</p>
+            <p>Advanced tokens include <code>status:expired</code>, <code>status:expiring</code>, <code>issuer:dg</code>, <code>tag:joining</code>, <code>category:medical</code>, <code>missing-scan</code>, <code>quality:unchecked</code>, <code>risk</code>, and <code>expiry:2026-09</code>. Empty search keeps category browsing normal.</p>
           </div>
           <div class="help-sec">
-            <h3>Expiry</h3>
-            <p>Yellow banner lists items inside reminder windows (default 183 / 90 / 30 / 7 days — editable in Settings). <strong>Summary</strong> prints a status table; <strong>Calendar</strong> (Full) exports <code>.ics</code>.</p>
+            <h3>Expiry &amp; reminders</h3>
+            <p>Expiry alerts group documents into expired, expiring soon, valid, and no-expiry. Reminder windows default to 183 / 90 / 30 / 7 days and can be edited in Settings. Full mode adds Reminder Center, Renewal Timeline, manual reminder notes, and Calendar <code>.ics</code> export.</p>
           </div>
         </div>
 
@@ -1858,27 +1884,27 @@
           <div class="help-grid">
             <div class="help-card">
               <h4>Single scan</h4>
-              <p>Open any document → <strong>Download</strong>. Multi-file docs download each attachment.</p>
+              <p>Open any document -> <strong>Download</strong>. Multi-file documents download each attachment.</p>
             </div>
             <div class="help-card">
               <h4>Print / PDF</h4>
-              <p>Open a document → <strong>Print</strong>, or use <strong>Summary</strong> in the tools row for a full status sheet.</p>
+              <p>Open a document -> <strong>Print</strong>, use <strong>Summary</strong>, or use the printable master index for a complete status pack.</p>
             </div>
             <div class="help-card">
               <h4>Full backup</h4>
-              <p>Settings → <strong>Export Backup</strong>. JSON with all documents and scans. Store it somewhere safe and private.</p>
+              <p>Settings -> <strong>Export Backup</strong>. The JSON includes a clear backup version label and integrity signature. Store it somewhere safe and private.</p>
             </div>
             <div class="help-card">
               <h4>Share text</h4>
-              <p>Tools → <strong>Share</strong> (or bulk select in Full). Sends a text summary via the system share sheet or a .txt file.</p>
+              <p>Tools -> <strong>Share</strong> or bulk select in Full. Secure share prepares a text summary without uploading document scans.</p>
             </div>
             <div class="help-card">
               <h4>Calendar (.ics)</h4>
-              <p>Full mode → <strong>Calendar</strong>. Imports expiry dates into phone/desktop calendar apps.</p>
+              <p>Full mode -> <strong>Calendar</strong>. Exports expiry reminders for phone or desktop calendar apps.</p>
             </div>
             <div class="help-card">
               <h4>Meta transfer</h4>
-              <p>Full mode → Settings → <strong>Multi-device meta transfer</strong>. Profile, packs, logs, metadata without heavy scan files.</p>
+              <p>Full mode -> Settings -> <strong>Multi-device meta transfer</strong>. Profile, packs, logs, and metadata without heavy scan files.</p>
             </div>
           </div>
           <div class="help-sec" style="margin-top:14px">
@@ -1886,13 +1912,13 @@
             <ol style="padding-left:18px;color:var(--muted);font-size:13px;line-height:1.6">
               <li>After adding important scans, run <strong style="color:#fff">Export Backup</strong>.</li>
               <li>Keep the backup file off the shared ship PC if possible (personal cloud or encrypted drive).</li>
-              <li>Before a new device, export backup on the old one → import on the new one.</li>
+              <li>Before a new device, export backup on the old one -> import on the new one.</li>
               <li>Use Summary before joining a vessel for a printable checklist of status.</li>
             </ol>
           </div>
           <div class="help-sec">
             <h3>Restore</h3>
-            <p>Settings → <strong>Import Backup</strong> and choose a previously exported JSON. Confirm when prompted. Existing items with the same IDs are updated.</p>
+            <p>Settings -> <strong>Import Backup</strong>. The app checks backup structure and SHA-256 integrity before import, shows a restore preview, and asks for confirmation before changing local data. Corrupt or edited backup files fail before any write.</p>
           </div>
         </div>
 
@@ -1900,29 +1926,32 @@
           <div class="help-sec">
             <h3>Full-mode tools</h3>
             <div class="help-grid">
-              <div class="help-card"><h4>Checklist</h4><p>Joining pack: passport, CDC, COC, medical, certs.</p></div>
-              <div class="help-card"><h4>Packs</h4><p>Named groups for a vessel or trip.</p></div>
-              <div class="help-card"><h4>Timeline</h4><p>Expiries over the next 12 months.</p></div>
-              <div class="help-card"><h4>STCW</h4><p>Course matrix vs rank (set rank in profile).</p></div>
-              <div class="help-card"><h4>Sea time / Vaccines</h4><p>Simple onboard logs, stored locally.</p></div>
-              <div class="help-card"><h4>Select &amp; Grid</h4><p>Bulk favourite/share/delete; thumbnail scan view.</p></div>
+              <div class="help-card"><h4>Checklist</h4><p>Joining pack status for passport, CDC, COC, medical, certificates, and missing documents.</p></div>
+              <div class="help-card"><h4>Packs</h4><p>Named vessel/trip packs with pack builder, bulk tag/pack tools, and printable joining lists.</p></div>
+              <div class="help-card"><h4>Timeline</h4><p>Renewal timeline and reminder center for upcoming expiry actions.</p></div>
+              <div class="help-card"><h4>STCW</h4><p>Course matrix by rank using profile data and certificate status.</p></div>
+              <div class="help-card"><h4>Sea time / Vaccines</h4><p>Local-only onboard service and vaccine logs.</p></div>
+              <div class="help-card"><h4>Audit / Data Safety</h4><p>Local activity log plus a data safety screen for backup, PIN, export, and offline status.</p></div>
+              <div class="help-card"><h4>Release readiness</h4><p>Summarizes real-device QA, backup health, PIN, expiry, missing document, and quality/risk status.</p></div>
+              <div class="help-card"><h4>Real device QA pack</h4><p>Guides iOS Safari, Android Chrome, Windows Chrome, and Windows Edge checks for final release evidence.</p></div>
             </div>
           </div>
           <div class="help-sec">
             <h3>OCR</h3>
-            <p>On Add/Edit after attaching an <strong>image</strong>. Runs layout zones + MRZ + OpenCV when available. Always <strong>review → Apply</strong>. Needs HTTPS or localhost (not <code>file://</code>).</p>
+            <p>Use <strong>Read text from scan (OCR)</strong> on Add/Edit after attaching an <strong>image</strong>. OCR uses safe layout zones and MRZ checks where possible. OpenCV contour analysis is skipped for browser stability. Always review suggestions before Apply. OCR needs HTTPS or localhost, not <code>file://</code>.</p>
             <ul>
               <li>On iOS Safari, camera permission is tested from <strong>Scan with camera</strong> inside Add Document.</li>
               <li>If camera is cancelled or blocked, the form stays open and no saved document is changed.</li>
-              <li>If OCR fails, fields remain unchanged; retry with a clearer photo or enter details manually.</li>
+              <li>If OCR cannot load or times out, the app shows a clear message, keeps fields unchanged, and leaves Dismiss/Retry available.</li>
             </ul>
           </div>
           <div class="help-sec">
             <h3>Backup</h3>
             <ul>
-              <li><strong>Export Backup</strong> — full JSON including scans (keep private).</li>
-              <li><strong>Import</strong> — restore documents from a backup file.</li>
-              <li><strong>Meta transfer</strong> (Full) — profile, packs, logs, metadata without heavy scan blobs.</li>
+              <li><strong>Export Backup</strong> - full JSON including scans, version label, timestamp, and integrity signature.</li>
+              <li><strong>Import Backup</strong> - validates structure and integrity, then shows a restore confirmation before applying changes.</li>
+              <li><strong>Backup Health</strong> - reminds you when no recent full backup exists.</li>
+              <li><strong>Meta transfer</strong> - profile, packs, logs, and metadata without heavy scan blobs.</li>
             </ul>
           </div>
         </div>
@@ -1935,9 +1964,10 @@
           <div class="help-sec">
             <h3>PIN &amp; lock</h3>
             <ul>
-              <li><strong>PIN</strong> — 4–6 digits in Settings; turn on “Require unlock on open”.</li>
-              <li><strong>Lock now</strong> (Full) — padlock in the header.</li>
-              <li><strong>Auto-lock</strong> (Full) — re-lock after idle minutes.</li>
+              <li><strong>PIN</strong> - 4-6 digits in Settings; turn on "Require unlock on open".</li>
+              <li><strong>Encryption</strong> - setting a PIN encrypts documents at rest with AES-GCM; the key is derived locally with PBKDF2.</li>
+              <li><strong>Lock now</strong> - Full mode padlock locks the wallet immediately.</li>
+              <li><strong>Auto-lock</strong> - Full mode can re-lock after idle minutes.</li>
             </ul>
           </div>
           <div class="help-sec">
@@ -1945,19 +1975,25 @@
             <p>Register under Settings on HTTPS/localhost. Unlock with fingerprint / Face ID; PIN remains the fallback.</p>
           </div>
           <div class="help-sec">
+            <h3>Accessibility</h3>
+            <p>Controls use larger tap targets, labels for assistive technology where practical, keyboard-friendly buttons, readable focus states, and no required horizontal scrolling in the main category/tools rows.</p>
+          </div>
+          <div class="help-sec">
             <h3>Install</h3>
-            <p>Settings → Install / Add to Home Screen for offline app-like use (browser dependent).</p>
+            <p>Settings -> Install / Add to Home Screen. On iOS Safari, use Share -> Add to Home Screen; on Android/desktop, use the browser install prompt when available.</p>
           </div>
         </div>
 
         <div class="help-pane" id="help-faq">
-          <details class="faq-item"><summary>Where are files stored?</summary><div class="faq-a">Only on this device in the browser’s IndexedDB. Clearing site data removes them unless you exported a backup.</div></details>
-          <details class="faq-item"><summary>Why won’t OCR or biometrics work?</summary><div class="faq-a">They need a secure context: HTTPS or localhost. Opening the HTML as file:// usually blocks them.</div></details>
-          <details class="faq-item"><summary>Lite and Full — same data?</summary><div class="faq-a">Yes. One database; only the UI changes. Toggle anytime from the header or Settings.</div></details>
-          <details class="faq-item"><summary>Document has no expiry date?</summary><div class="faq-a">Enable “No Expiry Date” when adding or editing. It will not appear in expiry alerts.</div></details>
-          <details class="faq-item"><summary>Lost PIN?</summary><div class="faq-a">The app cannot unlock without the PIN. Restore from a backup after clearing site data if you accept resetting local storage.</div></details>
+          <details class="faq-item"><summary>Where are files stored?</summary><div class="faq-a">Only on this device in the browser's IndexedDB. Clearing site data removes them unless you exported a backup.</div></details>
+          <details class="faq-item"><summary>Why won't OCR or biometrics work?</summary><div class="faq-a">They need a secure context: HTTPS or localhost. Opening the HTML as <code>file://</code> usually blocks them. OCR also needs its external library to be reachable when you press the OCR button.</div></details>
+          <details class="faq-item"><summary>Lite and Full use the same data?</summary><div class="faq-a">Yes. One local database; only available controls change. Toggle anytime from the header or Settings.</div></details>
+          <details class="faq-item"><summary>Document has no expiry date?</summary><div class="faq-a">Enable "No Expiry Date" when adding or editing. It will not appear in expiry alerts but stays in search, summary, backup, and packs.</div></details>
+          <details class="faq-item"><summary>Lost PIN?</summary><div class="faq-a">The app cannot decrypt locked data without the PIN. Restore from a backup after clearing site data only if you accept resetting the local encrypted store.</div></details>
           <details class="faq-item"><summary>Category names look cut off?</summary><div class="faq-a">On narrow screens, compact category codes keep every tab visible in one row.</div></details>
-          <details class="faq-item"><summary>Is anything uploaded online?</summary><div class="faq-a">No document uploads by the app. OCR libraries load from CDN only when you run OCR on a secure origin.</div></details>
+          <details class="faq-item"><summary>Is anything uploaded online?</summary><div class="faq-a">No document uploads by the app. OCR libraries may load from CDN only when you run OCR on a secure origin; document data remains local.</div></details>
+          <details class="faq-item"><summary>Why does search ignore the open category tab?</summary><div class="faq-a">That is intentional. When you type a query, search becomes wallet-wide. Clear the search box to browse one category tab at a time.</div></details>
+          <details class="faq-item"><summary>How do I know the final build is ready?</summary><div class="faq-a">Use Full mode -> Release Readiness and Real Device QA Pack, then run the required physical-device checks on iOS Safari, Android Chrome, Windows Chrome, and Windows Edge.</div></details>
         </div>
 
         <p class="sfoot">THE BLUE WALLET · offline-first seafarer document vault</p>

@@ -5,8 +5,8 @@ import { describe, expect, it } from "vitest";
 
 const repoRoot = path.resolve(process.cwd(), "..");
 
-const STABLE_CSS_SHA256 = "654f217b4f7354c722e162258c48b9b00ff56aedad34360d03a5f7a85718c6d2";
-const STABLE_LAYOUT_MARKERS_SHA256 = "0464903a11ac5a69a1c2dc163585b1fc2e50f8b882dde90f6fa60ab71a559190";
+const STABLE_CSS_SHA256 = "08b7486c0fc0a19704918200c58384b455cf95f7b9711f47f5cb73491f0d468c";
+const STABLE_LAYOUT_MARKERS_SHA256 = "e4e5cb20cb069c6c03a25fd83161674d81dae93f08c019e3dc39d092416b785a";
 
 const STABLE_LAYOUT_MARKERS = [
   "ocean-bg",
@@ -56,7 +56,7 @@ describe("stable app UI lock", () => {
     expect(rootIndex).toContain("./legacy-root-pwa.html");
     expect(rootIndex).not.toContain("./react-app/index.html");
     expect(manifest.start_url).toBe("./legacy-root-pwa.html?v=stable");
-    expect(worker).toContain("blue-wallet-stable-rollback-v0.11");
+    expect(worker).toContain("blue-wallet-stable-rollback-v0.12");
     expect(worker).toContain('caches.match("./legacy-root-pwa.html")');
   });
 
