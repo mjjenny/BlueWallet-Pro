@@ -8,9 +8,13 @@ function readRepoFile(name: string): string {
   return readFileSync(path.join(repoRoot, name), "utf8");
 }
 
+function normalizeLines(input: string): string {
+  return input.replace(/\r\n/g, "\n");
+}
+
 describe("stable app visual parity guardrails", () => {
   it("keeps the stable ocean and helm animation markers in the React shell", () => {
-    const css = readRepoFile(path.join("next-app", "src", "App.css"));
+    const css = normalizeLines(readRepoFile(path.join("next-app", "src", "App.css")));
     const shell = readRepoFile(path.join("next-app", "src", "features", "react-wallet", "ReactWalletShell.tsx"));
 
     expect(shell).toContain("stable-ocean-background");
@@ -25,7 +29,7 @@ describe("stable app visual parity guardrails", () => {
   });
 
   it("keeps the scanner modal on the stable three-panel review layout without page-like overflow", () => {
-    const css = readRepoFile(path.join("next-app", "src", "App.css"));
+    const css = normalizeLines(readRepoFile(path.join("next-app", "src", "App.css")));
     const scanner = readRepoFile(path.join("next-app", "src", "features", "scanner", "ScannerWorkflow.tsx"));
 
     expect(scanner).toContain("Capture");
@@ -54,7 +58,7 @@ describe("stable app visual parity guardrails", () => {
   });
 
   it("keeps mobile parity rules for the compact stable top bar and category rail", () => {
-    const css = readRepoFile(path.join("next-app", "src", "App.css"));
+    const css = normalizeLines(readRepoFile(path.join("next-app", "src", "App.css")));
 
     expect(css).toContain(".category-nav::-webkit-scrollbar");
     expect(css).toContain(".stable-topbar .badge-info {\n    display: none;");
