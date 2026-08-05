@@ -41,6 +41,7 @@ The current stable app UI, animation, layout, visual theme, and production routi
 Approved UI changes already recorded:
 
 - Category tabs must be visible in one row without horizontal scrolling.
+- At phone/tablet widths, category tabs may use the locked compact codes `PPT`, `CDC`, `COC`, `VSA`, `CRT`, `MED`, `YF`, `CTR`, and `OTH`; each code must remain readable and distinct.
 - Tools/action controls must be readable and non-scrolling: desktop may keep all actions in one row, while phone/tablet widths may use a non-scrolling action grid.
 - Search must span a full row below the tools/actions.
 - No horizontal scrolling is allowed in the category rail or tools/search area.
@@ -213,6 +214,7 @@ Test:
 - Reduced-motion setting disables or minimizes motion where supported.
 - Top bar remains usable on phone, tablet, and desktop.
 - Category tabs all fit in one row with no horizontal scrolling.
+- Category labels remain readable and distinct on phone/tablet widths, including the compact code labels.
 - Tools/action controls are readable and non-scrolling on phone, tablet, and desktop.
 - Search box spans a full row below the tools/actions.
 - No horizontal scrolling in category row or tools/search rows.

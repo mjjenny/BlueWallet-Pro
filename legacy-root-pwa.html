@@ -377,6 +377,21 @@
     @media (min-width: 1100px) {
       .cat-name { font-size: clamp(10px, .68vw, 12px); }
     }
+    @media (max-width: 1023.99px) {
+      .cat-name {
+        flex: 1 1 auto;
+        min-width: 0;
+        text-align: center;
+        overflow: visible;
+        text-overflow: clip;
+        font-size: 0;
+      }
+      .cat-name::after {
+        content: attr(data-short);
+        font-size: clamp(9px, 1.45vw, 11px);
+      }
+      .cat-n { display: none; }
+    }
 
     /* ===== SECTION HEAD ===== */
     .section-head {
@@ -626,12 +641,7 @@
       .cats { gap: 3px; }
       .cat { padding: 8px 3px; border-radius: 10px; gap: 3px; }
       .cat-ico { display: none; }
-      .cat-name { font-size: 0; }
-      .cat-name::after {
-        content: attr(data-short);
-        font-size: clamp(8px, 2.45vw, 9px);
-      }
-      .cat-n { font-size: 10px; min-width: 15px; height: 15px; }
+      .cat-name::after { font-size: clamp(8px, 2.45vw, 9px); }
       body.app-lite .cat { padding: 9px 4px; }
       body.app-lite .cat-name { font-size: 9px; }
 
@@ -657,9 +667,12 @@
       }
       .cats { gap: 4px; }
       .cat { padding: 11px 4px; gap: 4px; }
-      .cat-name { font-size: clamp(8px, 1.2vw, 11px); }
       .fab { display: none; }
       .top-actions .btn-primary { display: inline-flex; }
+    }
+    @media (max-width: 420px) {
+      .cat { padding: 8px 1px; gap: 0; }
+      .cat-name::after { font-size: 8px; }
     }
 
     /* ========== RESPONSIVE: DESKTOP ========== */
@@ -678,7 +691,8 @@
       .cat { padding: 14px 7px; gap: 5px; border-radius: 14px; }
       .cat-ico { font-size: 16px; }
       .cat-name { font-size: clamp(9px, .7vw, 12px); }
-      .cat-n { font-size: 11px; min-width: 18px; height: 18px; }
+      .cat-name::after { content: none; }
+      .cat-n { display: grid; font-size: 11px; min-width: 18px; height: 18px; }
 
       .docs {
         display: grid;
@@ -1264,15 +1278,15 @@
 
     <!-- Categories — NO "All" -->
     <div class="cats" id="cats">
-      <div class="cat active" data-cat="passport"><span class="cat-ico">🛂</span><span class="cat-name" data-short="PASS">PASSPORT</span><span class="cat-n" id="count-passport">0</span></div>
+      <div class="cat active" data-cat="passport"><span class="cat-ico">🛂</span><span class="cat-name" data-short="PPT">PASSPORT</span><span class="cat-n" id="count-passport">0</span></div>
       <div class="cat" data-cat="cdc"><span class="cat-ico">📘</span><span class="cat-name" data-short="CDC">CDC</span><span class="cat-n" id="count-cdc">0</span></div>
       <div class="cat" data-cat="coc"><span class="cat-ico">🎓</span><span class="cat-name" data-short="COC">COC</span><span class="cat-n" id="count-coc">0</span></div>
-      <div class="cat" data-cat="visa"><span class="cat-ico">✈️</span><span class="cat-name" data-short="VISA">VISAS</span><span class="cat-n" id="count-visa">0</span></div>
-      <div class="cat" data-cat="certificate"><span class="cat-ico">📜</span><span class="cat-name" data-short="CERT">CERTIFICATES</span><span class="cat-n" id="count-certificate">0</span></div>
+      <div class="cat" data-cat="visa"><span class="cat-ico">✈️</span><span class="cat-name" data-short="VSA">VISAS</span><span class="cat-n" id="count-visa">0</span></div>
+      <div class="cat" data-cat="certificate"><span class="cat-ico">📜</span><span class="cat-name" data-short="CRT">CERTIFICATES</span><span class="cat-n" id="count-certificate">0</span></div>
       <div class="cat" data-cat="medical"><span class="cat-ico">🏥</span><span class="cat-name" data-short="MED">MEDICAL</span><span class="cat-n" id="count-medical">0</span></div>
       <div class="cat" data-cat="yellowfever"><span class="cat-ico">💉</span><span class="cat-name" data-short="YF">YELLOW FEVER</span><span class="cat-n" id="count-yellowfever">0</span></div>
-      <div class="cat" data-cat="contract"><span class="cat-ico">📝</span><span class="cat-name" data-short="CNTR">CONTRACT</span><span class="cat-n" id="count-contract">0</span></div>
-      <div class="cat" data-cat="other"><span class="cat-ico">📄</span><span class="cat-name" data-short="OTHER">OTHER</span><span class="cat-n" id="count-other">0</span></div>
+      <div class="cat" data-cat="contract"><span class="cat-ico">📝</span><span class="cat-name" data-short="CTR">CONTRACT</span><span class="cat-n" id="count-contract">0</span></div>
+      <div class="cat" data-cat="other"><span class="cat-ico">📄</span><span class="cat-name" data-short="OTH">OTHER</span><span class="cat-n" id="count-other">0</span></div>
     </div>
 
     
@@ -1646,7 +1660,7 @@
           <details class="faq-item"><summary>Lite and Full — same data?</summary><div class="faq-a">Yes. One database; only the UI changes. Toggle anytime from the header or Settings.</div></details>
           <details class="faq-item"><summary>Document has no expiry date?</summary><div class="faq-a">Enable “No Expiry Date” when adding or editing. It will not appear in expiry alerts.</div></details>
           <details class="faq-item"><summary>Lost PIN?</summary><div class="faq-a">The app cannot unlock without the PIN. Restore from a backup after clearing site data if you accept resetting local storage.</div></details>
-          <details class="faq-item"><summary>Category names look cut off?</summary><div class="faq-a">In Full mode, swipe the category row horizontally — full labels are used.</div></details>
+          <details class="faq-item"><summary>Category names look cut off?</summary><div class="faq-a">On narrow screens, compact category codes keep every tab visible in one row.</div></details>
           <details class="faq-item"><summary>Is anything uploaded online?</summary><div class="faq-a">No document uploads by the app. OCR libraries load from CDN only when you run OCR on a secure origin.</div></details>
         </div>
 

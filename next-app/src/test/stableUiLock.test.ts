@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 
 const repoRoot = path.resolve(process.cwd(), "..");
 
-const STABLE_CSS_SHA256 = "ca21f454c69ec61c9044d2e92ae3ca68303e652b3ca1f201e7d7c261246bb500";
+const STABLE_CSS_SHA256 = "19d9da08ac3b805b8dec48454cfe8a7ecedf7a051e1789dbe4a1ee5e5e489ee3";
 const STABLE_LAYOUT_MARKERS_SHA256 = "ceb7d452bcb9d78e347140e99ccde060d011b374aa739b827e2c804ae5b63415";
 
 const STABLE_LAYOUT_MARKERS = [
@@ -84,9 +84,14 @@ describe("stable app UI lock", () => {
     expect(css).toContain("scrollbar-width: none");
     expect(css).toContain(".cat {\n      display: flex; align-items: center; justify-content: center; gap: 5px;\n      flex: 1 1 0; min-width: 0;");
     expect(css).toContain("content: attr(data-short);");
-    expect(html).toContain('data-short="PASS"');
-    expect(html).toContain('data-short="CERT"');
-    expect(html).toContain('data-short="OTHER"');
+    expect(css).toContain("@media (max-width: 1023.99px)");
+    expect(css).toContain(".cat-n { display: none; }");
+    expect(css).toContain(".cat-name::after { content: none; }");
+    expect(css).toContain(".cat-n { display: grid; font-size: 11px; min-width: 18px; height: 18px; }");
+    expect(html).toContain('data-short="PPT"');
+    expect(html).toContain('data-short="CRT"');
+    expect(html).toContain('data-short="OTH"');
+    expect(html).toContain('data-short="CTR"');
   });
 
   it("keeps tools readable without horizontal scrolling and search full-width below", () => {
