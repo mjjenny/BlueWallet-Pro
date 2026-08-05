@@ -335,6 +335,7 @@
     .cat {
       display: flex; align-items: center; justify-content: center; gap: 5px;
       flex: 1 1 0; min-width: 0;
+      min-height: 44px;
       padding: 10px clamp(4px, .55vw, 10px); border-radius: 12px; cursor: pointer;
       background: var(--glass);
       backdrop-filter: blur(12px);
@@ -1293,7 +1294,7 @@
     <div class="tools-row">
       <div class="search-box">
         <span>🔍</span>
-        <input type="search" id="search-q" placeholder="Search title, number, authority..." autocomplete="off" />
+        <input type="search" id="search-q" placeholder="Search title, number, issuer, notes, expiry, category..." autocomplete="off" aria-label="Search documents by title, number, issuer, notes, expiry month, or category" />
       </div>
       <select class="tool-select" id="sort-by" title="Sort">
         <option value="expiry">Sort: Expiry</option>
@@ -1733,7 +1734,7 @@
           <h3>Install app</h3>
           <p>Add to Home Screen for offline use like a native app.</p>
           <button class="btn btn-ghost" id="btn-install" style="width:100%">📲 Install / Add to Home Screen</button>
-          <p style="font-size:12px;color:var(--muted);margin-top:8px">On iPhone: Share → Add to Home Screen. On Android/Chrome: use the install prompt or browser menu.</p>
+          <p style="font-size:12px;color:var(--muted);margin-top:8px">On iPhone Safari: open the HTTPS app URL, tap Share, then Add to Home Screen. On Android/Chrome: use Install app or Add to Home Screen.</p>
         </div>
         <div class="sblock">
           <h3>Download &amp; backup</h3>
@@ -1742,7 +1743,10 @@
           <input type="file" id="import-file" accept=".json" class="hidden" />
           <button class="btn btn-ghost" id="btn-import" style="width:100%;margin-bottom:8px">⬆ Verify &amp; import backup</button>
           <button class="btn btn-ghost full-only" id="btn-meta-transfer" style="width:100%;margin-bottom:8px">Multi-device meta transfer</button>
-          <button class="btn btn-ghost" id="btn-download-summary" style="width:100%">⬇ Download status summary</button>
+          <button class="btn btn-ghost" id="btn-download-reminders" style="width:100%;margin-bottom:8px">⬇ Download expiry reminders</button>
+          <button class="btn btn-ghost" id="btn-download-summary" style="width:100%;margin-bottom:8px">⬇ Download status summary</button>
+          <button class="btn btn-ghost" id="btn-data-safety" style="width:100%;margin-bottom:8px">Data safety status</button>
+          <button class="btn btn-ghost" id="btn-activity-log" style="width:100%">Download activity log</button>
           <p style="font-size:12px;color:var(--muted);margin-top:10px">Also: open any document → Download scan · Tools → Share / Calendar (.ics in Full).</p>
         </div>
         <div class="sblock">
@@ -2099,6 +2103,37 @@
       if (d <= rem.primary) return { label: d + 'd left', cls: 'b-warn', key: 'expiring' };
       return { label: 'Valid', cls: 'b-ok', key: 'valid' };
     }
+    function expiryMonthTerms(doc) {
+      if (doc.noExpiry || !doc.expiryDate) return ['no expiry'];
+      const d = new Date(doc.expiryDate);
+      if (Number.isNaN(d.getTime())) return [];
+      return [
+        d.toLocaleString('en', { month: 'long' }).toLowerCase(),
+        d.toLocaleString('en', { month: 'short' }).toLowerCase(),
+        String(d.getFullYear()),
+        d.toISOString().slice(0, 7)
+      ];
+    }
+    function getExpiryGroups(source = documents) {
+      const rem = getReminders();
+      const groups = { expired: [], expiring: [], noExpiry: [], valid: [] };
+      source.forEach(doc => {
+        if (doc.noExpiry) { groups.noExpiry.push(doc); return; }
+        const d = daysUntil(doc.expiryDate);
+        if (d === null) { groups.noExpiry.push(doc); return; }
+        if (d < 0) groups.expired.push(doc);
+        else if (d <= rem.primary) groups.expiring.push(doc);
+        else groups.valid.push(doc);
+      });
+      groups.expired.sort((a,b) => (daysUntil(a.expiryDate) ?? 0) - (daysUntil(b.expiryDate) ?? 0));
+      groups.expiring.sort((a,b) => (daysUntil(a.expiryDate) ?? 9999) - (daysUntil(b.expiryDate) ?? 9999));
+      groups.valid.sort((a,b) => (daysUntil(a.expiryDate) ?? 9999) - (daysUntil(b.expiryDate) ?? 9999));
+      groups.noExpiry.sort((a,b) => (a.title || '').localeCompare(b.title || ''));
+      return groups;
+    }
+    function expiryGroupSummary(groups = getExpiryGroups()) {
+      return `Expired ${groups.expired.length} · Expiring soon ${groups.expiring.length} · No expiry ${groups.noExpiry.length} · Valid ${groups.valid.length}`;
+    }
     function fmt(d) {
       if (!d) return '—';
       return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -2298,6 +2333,43 @@
     function savePacks() { localStorage.setItem('bwPacks', JSON.stringify(packs)); }
     function saveSeatime() { localStorage.setItem('bwSeatime', JSON.stringify(seatime)); }
     function saveVaccines() { localStorage.setItem('bwVaccines', JSON.stringify(vaccines)); }
+    const ACTIVITY_LOG_KEY = 'bwActivityLog';
+    function readActivityLog() {
+      try {
+        const rows = JSON.parse(localStorage.getItem(ACTIVITY_LOG_KEY) || '[]');
+        return Array.isArray(rows) ? rows : [];
+      } catch (_) { return []; }
+    }
+    function recordActivity(action, detail = {}) {
+      try {
+        const rows = readActivityLog();
+        rows.unshift({ at: new Date().toISOString(), action, detail });
+        localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(rows.slice(0, 300)));
+      } catch (_) {}
+    }
+    function safeActivityDetail(detail) {
+      if (!detail || typeof detail !== 'object') return '';
+      return Object.keys(detail).sort().map(key => `${key}=${detail[key]}`).join(' | ');
+    }
+    function downloadTextFile(filename, text, type = 'text/plain') {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([text], { type }));
+      a.download = filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }
+    function downloadActivityLog() {
+      recordActivity('activity-log-exported', { entries: readActivityLog().length + 1 });
+      const rows = readActivityLog();
+      const text = [
+        'THE BLUE WALLET local activity log',
+        'Generated: ' + new Date().toISOString(),
+        'Stored locally on this device only. No document data is uploaded by the app.',
+        '',
+        ...rows.map(row => `${row.at} | ${row.action} | ${safeActivityDetail(row.detail)}`)
+      ].join('\n');
+      downloadTextFile('blue-wallet-activity-log-' + new Date().toISOString().slice(0,10) + '.txt', text);
+    }
     const BACKUP_FORMAT = 'bluewallet-pro-stable-backup';
     const BACKUP_VERSION = 5;
     const BACKUP_LABEL = 'Blue Wallet Stable Backup v5';
@@ -2426,6 +2498,27 @@
       document.getElementById('generic-body').innerHTML = bodyHtml;
       document.getElementById('modal-generic').classList.add('show');
     }
+    function buildDataSafetyHtml() {
+      const lastBackup = localStorage.getItem('bwLastBackupExportAt');
+      const lastRestore = localStorage.getItem('bwLastRestoreAt');
+      const pinOn = localStorage.getItem('bwPinRequired') === '1' || !!localStorage.getItem('bwPinHash');
+      const encOn = localStorage.getItem('bwEncEnabled') === '1';
+      const logCount = readActivityLog().length;
+      const groups = getExpiryGroups();
+      return `
+        <div class="help-grid">
+          <div class="help-card"><h4>Local storage</h4><p>Documents, scans, profile, packs, sea time, vaccines, backups, and logs stay on this device unless you manually export or share.</p></div>
+          <div class="help-card"><h4>PIN status</h4><p>${pinOn ? 'PIN protection is configured.' : 'PIN protection is not configured.'} ${encOn ? 'Encrypted vault rows are enabled.' : 'Encryption activates after PIN setup/unlock.'}</p></div>
+          <div class="help-card"><h4>Backup status</h4><p>${lastBackup ? 'Last full backup export: ' + esc(new Date(lastBackup).toLocaleString()) : 'No full backup export recorded on this device.'}</p></div>
+          <div class="help-card"><h4>Restore status</h4><p>${lastRestore ? 'Last restore: ' + esc(new Date(lastRestore).toLocaleString()) : 'No restore recorded on this device.'}</p></div>
+          <div class="help-card"><h4>Expiry groups</h4><p>${esc(expiryGroupSummary(groups))}</p></div>
+          <div class="help-card"><h4>Activity log</h4><p>${logCount} local entries. Logs are stored locally and can be downloaded from Settings.</p></div>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-top:12px">The app does not upload document data. OCR libraries may load from CDN only when OCR is used on a secure origin.</p>`;
+    }
+    function openDataSafetyStatus() {
+      showGeneric('Data safety status', buildDataSafetyHtml());
+    }
 
     function filteredList() {
       let list = documents.filter(d => {
@@ -2437,14 +2530,23 @@
       });
       const q = searchQ.trim().toLowerCase();
       if (q) {
-        list = list.filter(d =>
-          (d.title || '').toLowerCase().includes(q) ||
-          (d.number || '').toLowerCase().includes(q) ||
-          (d.authority || '').toLowerCase().includes(q) ||
-          (d.notes || '').toLowerCase().includes(q) ||
-          (d.flagNotes || '').toLowerCase().includes(q) ||
-          (d.tags || []).some(t => t.toLowerCase().includes(q))
-        );
+        list = list.filter(d => {
+          const st = status(d);
+          const haystack = [
+            d.title,
+            d.number,
+            d.authority,
+            d.notes,
+            d.flagNotes,
+            LABELS[d.type],
+            d.type,
+            st.label,
+            st.key === 'none' ? 'no expiry' : st.key,
+            ...expiryMonthTerms(d),
+            ...(d.tags || [])
+          ].filter(Boolean).join(' ').toLowerCase();
+          return haystack.includes(q);
+        });
       }
       if (filterStatus !== 'all') {
         list = list.filter(d => status(d).key === filterStatus);
@@ -2516,7 +2618,7 @@
             ? `<img class="doc-thumb" src="${doc.files[0].data}" alt="" />` : '';
           const safeType = ALLOWED_TYPES.includes(doc.type) ? doc.type : 'other';
           const safeId = esc(sanitizeId(doc.id));
-          return `<div class="doc t-${safeType}${doc.favourite?' fav-pin':''}${bulkMode?' select-mode':''}${selectedIds.has(doc.id)?' selected':''}" data-id="${safeId}" style="animation-delay:${0.02 + i * 0.03}s">
+          return `<div class="doc t-${safeType}${doc.favourite?' fav-pin':''}${bulkMode?' select-mode':''}${selectedIds.has(doc.id)?' selected':''}" data-id="${safeId}" role="button" tabindex="0" aria-label="${esc('Open ' + doc.title + ', ' + (LABELS[safeType] || safeType) + ', ' + st.label)}" style="animation-delay:${0.02 + i * 0.03}s">
             ${viewMode==='grid' ? thumb : ''}
             <div class="doc-row1">
               <div class="doc-left">
@@ -2536,14 +2638,22 @@
             </div>
           </div>`;
         }).join('');
-        grid.querySelectorAll('[data-id]').forEach(c => c.addEventListener('click', () => {
-          const id = c.dataset.id;
-          if (bulkMode) {
-            if (selectedIds.has(id)) selectedIds.delete(id); else selectedIds.add(id);
-            updateBulkBar(); render(); return;
-          }
-          openView(id);
-        }));
+        grid.querySelectorAll('[data-id]').forEach(c => {
+          const activate = () => {
+            const id = c.dataset.id;
+            if (bulkMode) {
+              if (selectedIds.has(id)) selectedIds.delete(id); else selectedIds.add(id);
+              updateBulkBar(); render(); return;
+            }
+            openView(id);
+          };
+          c.addEventListener('click', activate);
+          c.addEventListener('keydown', e => {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            e.preventDefault();
+            activate();
+          });
+        });
       }
 
       document.getElementById('stat-total').textContent = documents.length;
@@ -2559,23 +2669,21 @@
         return x !== null && x < 0;
       }).length;
 
-      // Multi-tier alerts
+      const groups = getExpiryGroups();
       const bands = [];
-      documents.forEach(d => {
-        if (d.noExpiry) return;
+      groups.expired.forEach(d => bands.push(`Expired: ${d.title} (${Math.abs(daysUntil(d.expiryDate) || 0)}d overdue)`));
+      groups.expiring.forEach(d => {
         const x = daysUntil(d.expiryDate);
-        if (x === null || x < 0) return;
-        let tag = null;
+        let tag = 'WATCH';
         if (x <= rem.critical) tag = 'CRITICAL';
         else if (x <= rem.urgent) tag = 'URGENT';
         else if (x <= rem.secondary) tag = 'SOON';
-        else if (x <= rem.primary) tag = 'WATCH';
-        if (tag) bands.push(`${d.title} (${x}d · ${tag})`);
+        bands.push(`Expiring: ${d.title} (${x}d · ${tag})`);
       });
       const alert = document.getElementById('alert-banner');
       if (bands.length) {
         alert.classList.add('show');
-        document.getElementById('alert-list').textContent = bands.join(' · ');
+        document.getElementById('alert-list').textContent = expiryGroupSummary(groups) + ' · ' + bands.join(' · ');
       } else alert.classList.remove('show');
 
       document.querySelectorAll('.cat').forEach(el => {
@@ -3029,27 +3137,63 @@
     }
 
     function buildPrintSheet() {
-      const rows = documents.slice().sort((a,b)=>(a.type||'').localeCompare(b.type||'')).map(d => {
-        const st = status(d);
-        return `<tr>
-          <td>${esc(LABELS[d.type]||d.type)}</td>
-          <td>${esc(d.title)}</td>
-          <td>${esc(d.number||'')}</td>
-          <td>${d.noExpiry ? 'No expiry' : fmt(d.expiryDate)}</td>
-          <td>${st.label}</td>
-          <td>${esc(d.flagNotes||'')}</td>
-        </tr>`;
+      const groups = getExpiryGroups();
+      const groupRows = [
+        ['Expired', groups.expired],
+        ['Expiring soon', groups.expiring],
+        ['No expiry', groups.noExpiry],
+        ['Valid', groups.valid]
+      ].map(([label, rows]) => {
+        const body = rows.map(d => {
+          const st = status(d);
+          return `<tr>
+            <td>${esc(label)}</td>
+            <td>${esc(LABELS[d.type]||d.type)}</td>
+            <td>${esc(d.title)}</td>
+            <td>${esc(d.number||'')}</td>
+            <td>${d.noExpiry ? 'No expiry' : fmt(d.expiryDate)}</td>
+            <td>${st.label}</td>
+            <td>${esc(d.flagNotes||'')}</td>
+          </tr>`;
+        }).join('');
+        return body || `<tr><td>${esc(label)}</td><td colspan="6">No documents</td></tr>`;
       }).join('');
       return `<h1>THE BLUE WALLET — Document Summary</h1>
-        <p>Generated ${new Date().toLocaleString()} · ${documents.length} documents</p>
+        <p>Generated ${new Date().toLocaleString()} · ${documents.length} documents · ${expiryGroupSummary(groups)}</p>
         <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:12px">
-          <thead><tr><th>Type</th><th>Title</th><th>Number</th><th>Expiry</th><th>Status</th><th>Flag notes</th></tr></thead>
-          <tbody>${rows || '<tr><td colspan="6">No documents</td></tr>'}</tbody>
+          <thead><tr><th>Group</th><th>Type</th><th>Title</th><th>Number</th><th>Expiry</th><th>Status</th><th>Flag notes</th></tr></thead>
+          <tbody>${groupRows}</tbody>
         </table>`;
+    }
+
+    function buildReminderReport() {
+      const groups = getExpiryGroups();
+      const lines = [
+        'Group,Type,Title,Number,Expiry,Status,Days',
+        ...[
+          ['Expired', groups.expired],
+          ['Expiring soon', groups.expiring],
+          ['No expiry', groups.noExpiry],
+          ['Valid', groups.valid]
+        ].flatMap(([group, rows]) => rows.map(d => {
+          const st = status(d);
+          const days = d.noExpiry ? '' : (daysUntil(d.expiryDate) ?? '');
+          return [group, LABELS[d.type]||d.type, d.title, d.number||'', d.noExpiry ? 'No expiry' : fmt(d.expiryDate), st.label, days]
+            .map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',');
+        }))
+      ];
+      return lines.join('\r\n');
+    }
+
+    function exportReminderReport() {
+      const groups = getExpiryGroups();
+      downloadTextFile('blue-wallet-expiry-reminders-' + new Date().toISOString().slice(0,10) + '.csv', buildReminderReport(), 'text/csv');
+      recordActivity('reminders-exported', { expired: groups.expired.length, expiring: groups.expiring.length, noExpiry: groups.noExpiry.length });
     }
 
     function exportIcs() {
       const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//THE BLUE WALLET//EN'];
+      const rem = getReminders();
       documents.forEach(d => {
         if (d.noExpiry || !d.expiryDate) return;
         const dt = d.expiryDate.replace(/-/g, '');
@@ -3060,6 +3204,16 @@
         lines.push('DTSTART;VALUE=DATE:' + dt);
         lines.push('SUMMARY:Expiry: ' + (d.title || d.type));
         lines.push('DESCRIPTION:THE BLUE WALLET document expiry' + (d.number ? ' · ' + d.number : ''));
+        [rem.primary, rem.secondary, rem.urgent, rem.critical]
+          .filter((value, index, arr) => value > 0 && arr.indexOf(value) === index)
+          .sort((a,b) => b - a)
+          .forEach(days => {
+            lines.push('BEGIN:VALARM');
+            lines.push('TRIGGER:-P' + days + 'D');
+            lines.push('ACTION:DISPLAY');
+            lines.push('DESCRIPTION:Blue Wallet reminder: ' + (d.title || d.type) + ' expires in ' + days + ' days');
+            lines.push('END:VALARM');
+          });
         lines.push('END:VEVENT');
       });
       lines.push('END:VCALENDAR');
@@ -3068,6 +3222,7 @@
       a.href = URL.createObjectURL(blob);
       a.download = 'blue-wallet-expiries.ics';
       a.click();
+      recordActivity('calendar-exported', { documents: documents.filter(d => !d.noExpiry && d.expiryDate).length });
     }
 
     async function quickShare() {
@@ -3077,12 +3232,17 @@
       }).join('\n') || 'No documents in THE BLUE WALLET';
       const payload = 'THE BLUE WALLET summary\n' + text;
       if (navigator.share) {
-        try { await navigator.share({ title: 'THE BLUE WALLET', text: payload }); return; } catch {}
+        try {
+          await navigator.share({ title: 'THE BLUE WALLET', text: payload });
+          recordActivity('summary-shared', { documents: documents.length });
+          return;
+        } catch {}
       }
       const a = document.createElement('a');
       a.href = URL.createObjectURL(new Blob([payload], { type: 'text/plain' }));
       a.download = 'blue-wallet-share.txt';
       a.click();
+      recordActivity('summary-shared', { documents: documents.length });
     }
 
 
@@ -3850,6 +4010,23 @@
       document.getElementById('btn-mode-settings').onclick = () => {
         toggleAppMode();
       };
+      [
+        ['sort-by', 'Sort documents'],
+        ['filter-status', 'Filter documents by expiry status'],
+        ['btn-checklist', 'Open checklist'],
+        ['btn-print-sheet', 'Print document summary'],
+        ['btn-share-quick', 'Share document summary'],
+        ['btn-ics', 'Download calendar reminders'],
+        ['btn-timeline', 'Open expiry timeline'],
+        ['btn-packs', 'Open document packs'],
+        ['btn-stcw', 'Open STCW matrix'],
+        ['btn-seatime', 'Open sea time log'],
+        ['btn-vaccines', 'Open vaccines log'],
+        ['btn-bulk', 'Select multiple documents'],
+        ['btn-data-safety', 'Open data safety status'],
+        ['btn-activity-log', 'Download local activity log']
+      ].forEach(([id, label]) => document.getElementById(id)?.setAttribute('aria-label', label));
+      document.querySelectorAll('.x').forEach(btn => btn.setAttribute('aria-label', 'Close'));
 
       document.getElementById('btn-theme').onclick = () => {
         const cur = document.documentElement.getAttribute('data-theme') === 'night' ? 'night' : 'green';
@@ -3857,7 +4034,16 @@
       };
 
       document.querySelectorAll('.cat').forEach(el => {
-        el.addEventListener('click', () => { cat = el.dataset.cat; activePack = null; render(); });
+        el.setAttribute('role', 'button');
+        el.setAttribute('tabindex', '0');
+        el.setAttribute('aria-label', (LABELS[el.dataset.cat] || el.dataset.cat || 'Documents') + ' category');
+        const activateCategory = () => { cat = el.dataset.cat; activePack = null; render(); };
+        el.addEventListener('click', activateCategory);
+        el.addEventListener('keydown', e => {
+          if (e.key !== 'Enter' && e.key !== ' ') return;
+          e.preventDefault();
+          activateCategory();
+        });
       });
 
       const openAddFn = () => openAdd();
@@ -3928,6 +4114,9 @@
       };
       document.getElementById('btn-share-quick').onclick = () => quickShare();
       document.getElementById('btn-ics').onclick = () => exportIcs();
+      document.getElementById('btn-download-reminders').onclick = () => exportReminderReport();
+      document.getElementById('btn-data-safety').onclick = () => openDataSafetyStatus();
+      document.getElementById('btn-activity-log').onclick = () => downloadActivityLog();
       document.getElementById('btn-timeline').onclick = () => {
         const w = document.getElementById('timeline-wrap');
         if (w.style.display === 'none') { w.style.display = 'block'; w.innerHTML = buildTimelineHtml(); }
@@ -3965,7 +4154,9 @@
       };
       document.getElementById('bulk-delete').onclick = async () => {
         if (!selectedIds.size || !confirm('Delete ' + selectedIds.size + ' documents?')) return;
+        const deletedCount = selectedIds.size;
         for (const id of [...selectedIds]) await deleteDoc(id);
+        recordActivity('documents-bulk-deleted', { count: deletedCount });
         documents = (await getAllDocs()).map(normalizeDoc);
         selectedIds.clear(); bulkMode = false;
         document.getElementById('btn-bulk').classList.remove('active');
@@ -4186,7 +4377,7 @@
           await deferredInstall.userChoice;
           deferredInstall = null;
         } else {
-          alert('To install:\n• iPhone Safari: Share → Add to Home Screen\n• Chrome/Android: browser menu → Install app / Add to Home Screen');
+          alert('To install:\n• iPhone Safari: open the HTTPS app URL, tap Share, then Add to Home Screen\n• Android Chrome: browser menu → Install app / Add to Home Screen\n• Windows Edge/Chrome: use the install icon in the address bar or browser menu');
         }
       };
       // Production service worker: caches the app shell for vessel/offline use.
@@ -4305,6 +4496,7 @@
           updatedAt: new Date().toISOString()
         };
         await saveDoc(doc);
+        recordActivity(isEdit ? 'document-edited' : 'document-added', { type: LABELS[type] || type, title: doc.title });
         documents = (await getAllDocs()).map(normalizeDoc);
         cat = doc.type;
         render();
@@ -4322,6 +4514,7 @@
           a.download = f.name || (doc.title + '-' + (i+1));
           a.click();
         });
+        recordActivity('document-exported', { type: LABELS[doc.type] || doc.type, title: doc.title, files: files.length });
       };
       document.getElementById('btn-print').onclick = () => {
         const doc = documents.find(d => d.id === viewId);
@@ -4339,7 +4532,9 @@
       document.getElementById('btn-edit').onclick = () => { close('modal-view'); openAdd(viewId); };
       document.getElementById('btn-delete').onclick = async () => {
         if (!confirm('Delete this document?')) return;
+        const doc = documents.find(d => d.id === viewId);
         await deleteDoc(viewId);
+        if (doc) recordActivity('document-deleted', { type: LABELS[doc.type] || doc.type, title: doc.title });
         documents = (await getAllDocs()).map(normalizeDoc);
         render();
         close('modal-view');
@@ -4356,6 +4551,7 @@
         a.href = URL.createObjectURL(blob);
         a.download = 'blue-wallet-summary-' + new Date().toISOString().slice(0,10) + '.html';
         a.click();
+        recordActivity('status-summary-exported', { documents: documents.length });
         // D-11: download only — print is separate via Print tool / sheet
       };
 
@@ -4383,6 +4579,8 @@
           // PIN hash and WebAuthn credentials intentionally excluded
         };
         const signed = await signBackup(data);
+        localStorage.setItem('bwLastBackupExportAt', data.exportedAt);
+        recordActivity('backup-exported', { version: BACKUP_VERSION, documents: documents.length });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(new Blob([JSON.stringify(signed, null, 2)], { type: 'application/json' }));
         a.download = `blue-wallet-stable-backup-v${BACKUP_VERSION}-${new Date().toISOString().slice(0,10)}.json`;
@@ -4419,6 +4617,8 @@
             if (data.settings.appMode) localStorage.setItem('bwAppMode', data.settings.appMode === 'lite' ? 'lite' : 'full');
             if (data.settings.theme) localStorage.setItem('bwTheme', String(data.settings.theme));
           }
+          localStorage.setItem('bwLastRestoreAt', new Date().toISOString());
+          recordActivity('backup-restored', { version: backupInfo.version, documents: backupInfo.counts.documents });
           documents = (await getAllDocs()).map(d => sanitizeDoc(normalizeDoc(d))).filter(Boolean);
           await loadProfile();
           loadMeta();
