@@ -32,6 +32,7 @@ describe("React CRUD wallet shell", () => {
     render(<App initialSnapshot={createTestSnapshot()} />);
 
     expect(await screen.findByText("Set up React vault PIN")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /skip to documents/i })).toHaveAttribute("href", "#document-workspace");
     expect(screen.getByText("BlueWalletReactDB v2")).toBeInTheDocument();
     expect(screen.getByText("Legacy wallet assessment")).toBeInTheDocument();
     expect(screen.getByText("No migration action")).toBeInTheDocument();

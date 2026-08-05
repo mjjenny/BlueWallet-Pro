@@ -94,15 +94,6 @@ export function ReactWalletProvider({ children }: { children: ReactNode }) {
     [db, session],
   );
 
-  async function refreshSecurity(openedDb = db, nextSession = session) {
-    if (!openedDb) return;
-    const state = await getReactWalletSecurityState(openedDb);
-    setSecurity({
-      ...state,
-      lastUnlockedAt: nextSession?.unlockedAt ?? security.lastUnlockedAt,
-    });
-  }
-
   useEffect(() => {
     let cancelled = false;
     let openedDb: IDBDatabase | null = null;
@@ -258,10 +249,6 @@ export function ReactWalletProvider({ children }: { children: ReactNode }) {
     }),
     [db, documents, error, lastDeletedId, lock, lockedUntil, reload, retryCount, security, session, status],
   );
-
-  useEffect(() => {
-    void refreshSecurity();
-  }, []);
 
   return <ReactWalletContext.Provider value={value}>{children}</ReactWalletContext.Provider>;
 }

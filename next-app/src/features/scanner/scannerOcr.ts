@@ -93,7 +93,7 @@ function parseNumber(labels: string[], text: string): string {
 }
 
 function detectAuthority(text: string): string {
-  const match = text.match(/\b(?:authority|issued by|administration)\s*[:\-]?\s*([A-Z][A-Za-z .,&-]{2,80})/i);
+  const match = text.match(/\b(?:authority|issued by|administration)\s*[:-]?\s*([A-Z][A-Za-z .,&-]{2,80})/i);
   return clean(match?.[1] ?? "");
 }
 
@@ -102,8 +102,8 @@ function genericSuggestion(text: string, type: LegacyDocumentType, source: Scann
     type === "cdc" ? ["cdc", "seaman.?s book", "discharge book"] : ["certificate", "cert", "document", "license", "licence"],
     text,
   );
-  const issueDate = findDateAfter(/\b(?:issue date|issued on|date of issue)\s*[:\-]?\s*([A-Za-z0-9 .\-/]+)/i, text);
-  const expiryDate = findDateAfter(/\b(?:expiry date|expires|valid until|date of expiry)\s*[:\-]?\s*([A-Za-z0-9 .\-/]+)/i, text);
+  const issueDate = findDateAfter(/\b(?:issue date|issued on|date of issue)\s*[:-]?\s*([A-Za-z0-9 ./-]+)/i, text);
+  const expiryDate = findDateAfter(/\b(?:expiry date|expires|valid until|date of expiry)\s*[:-]?\s*([A-Za-z0-9 ./-]+)/i, text);
   const titleMatch = text.match(/\b(STCW|Basic Safety|Medical Fitness|Yellow Fever|Certificate of Competency|Seafarer'?s? Identity|CDC)\b/i);
   const title = clean(titleMatch?.[0] ?? (type === "cdc" ? "CDC scan" : type === "certificate" ? "Certificate scan" : "Scanned document"));
   const fields = ["type", "title"];

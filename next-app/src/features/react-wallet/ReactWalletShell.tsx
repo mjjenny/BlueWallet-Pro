@@ -13,6 +13,7 @@ import { ScannerWorkflow } from "../scanner/ScannerWorkflow";
 import { useReactWallet } from "./ReactWalletProvider";
 import {
   getReactCategoryCounts,
+  getReactWalletRenderWindow,
   getReactWalletCounts,
   selectReactWalletDocuments,
 } from "./reactWalletSelectors";
@@ -444,17 +445,23 @@ export function ReactWalletShell({ legacySnapshot }: { legacySnapshot: LegacyWal
     () => selectReactWalletDocuments(wallet.documents, { category, search, filter, sort }),
     [wallet.documents, category, filter, search, sort],
   );
+  const { visible: visiblePage, hiddenCount: hiddenVisibleCount } = useMemo(() => getReactWalletRenderWindow(visible), [visible]);
 
   async function handleImport(file: File | undefined) {
     if (!file) return;
-    const backup = JSON.parse(await file.text()) as ReactWalletBackup;
-    await wallet.importBackup(backup, restorePin);
-    setRestorePin("");
-    setMessage("Encrypted backup restored into BlueWalletReactDB.");
+    try {
+      const backup = JSON.parse(await file.text()) as ReactWalletBackup;
+      await wallet.importBackup(backup, restorePin);
+      setRestorePin("");
+      setMessage("Encrypted backup restored into BlueWalletReactDB.");
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Backup restore failed.");
+    }
   }
 
   return (
-    <main className="wallet-app">
+    <main className="wallet-app" id="wallet-main">
+      <a className="skip-link" href="#document-workspace">Skip to documents</a>
       <header className="app-header">
         <div>
           <p className="eyebrow">BlueWallet-Pro React</p>
@@ -505,7 +512,7 @@ export function ReactWalletShell({ legacySnapshot }: { legacySnapshot: LegacyWal
       </section>
 
       <section className="workspace-grid">
-        <div className="document-workspace">
+        <div className="document-workspace" id="document-workspace">
           <CategoryNav selected={category} counts={categoryCounts} onSelect={setCategory} />
           <div className="document-toolbar">
             <label className="search-field"><span>Search</span><input type="search" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
@@ -535,7 +542,7 @@ export function ReactWalletShell({ legacySnapshot }: { legacySnapshot: LegacyWal
             <section className="empty-state"><strong>No documents found</strong><p>Create a document or adjust filters.</p></section>
           ) : (
             <section className="document-list">
-              {visible.map((document) => {
+              {visiblePage.map((document) => {
                 const validity = getDocumentValidity(document);
                 const thumbnail = document.attachments.find(isImageFile);
                 return (
@@ -559,6 +566,12 @@ export function ReactWalletShell({ legacySnapshot }: { legacySnapshot: LegacyWal
                   </article>
                 );
               })}
+              {hiddenVisibleCount > 0 ? (
+                <section className="empty-state compact-state">
+                  <strong>{hiddenVisibleCount} more matching documents</strong>
+                  <p>Use search, category, status, or sort controls to narrow this large wallet view.</p>
+                </section>
+              ) : null}
             </section>
           )}
         </div>

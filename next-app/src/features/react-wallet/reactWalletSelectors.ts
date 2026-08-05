@@ -24,6 +24,15 @@ export interface ReactWalletCounts {
   favourites: number;
 }
 
+export const REACT_WALLET_RENDER_LIMIT = 100;
+
+export function getReactWalletRenderWindow(documents: ReactWalletDocumentView[]) {
+  return {
+    visible: documents.slice(0, REACT_WALLET_RENDER_LIMIT),
+    hiddenCount: Math.max(0, documents.length - REACT_WALLET_RENDER_LIMIT),
+  };
+}
+
 export function getReactWalletCounts(documents: ReactWalletDocumentView[]): ReactWalletCounts {
   const active = documents.filter((document) => !document.deletedAt);
   return {

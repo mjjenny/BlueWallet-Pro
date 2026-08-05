@@ -1,5 +1,6 @@
 import "./App.css";
 import { AppRoutes } from "./app/routes";
+import { AppErrorBoundary } from "./components/AppErrorBoundary";
 import {
   LegacyDataProvider,
   useLegacyData,
@@ -17,9 +18,11 @@ function AppContent() {
 
 function App({ initialSnapshot }: AppProps) {
   return (
-    <LegacyDataProvider initialSnapshot={initialSnapshot}>
-      <AppContent />
-    </LegacyDataProvider>
+    <AppErrorBoundary>
+      <LegacyDataProvider initialSnapshot={initialSnapshot}>
+        <AppContent />
+      </LegacyDataProvider>
+    </AppErrorBoundary>
   );
 }
 
