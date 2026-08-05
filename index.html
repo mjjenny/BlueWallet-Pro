@@ -574,11 +574,25 @@
       font-size: 13px;
     }
 
+    /* Installed iOS web app: reserve the complete top safe area. */
+    @media (display-mode: standalone) {
+      .topbar {
+        top: 0;
+        padding-top: calc(env(safe-area-inset-top, 0px) + 10px);
+      }
+    }
+
     /* ========== RESPONSIVE: MOBILE ========== */
     @media (max-width: 640px) {
       .topbar {
-        padding: 10px 12px; gap: 8px; flex-wrap: nowrap;
+        /* Keep all header controls below the iPhone Dynamic Island/status bar. */
+        padding-top: calc(env(safe-area-inset-top, 0px) + 10px);
+        padding-right: max(12px, env(safe-area-inset-right, 0px));
+        padding-bottom: 10px;
+        padding-left: max(12px, env(safe-area-inset-left, 0px));
+        gap: 8px; flex-wrap: nowrap;
         align-items: center;
+        min-height: calc(56px + env(safe-area-inset-top, 0px));
       }
       .brand { flex: 1 1 auto; min-width: 0; gap: 10px; }
       .brand-mark { width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0; }
