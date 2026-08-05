@@ -954,6 +954,12 @@ select:focus-visible {
   gap: 8px;
 }
 
+.sea-service-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
 .sea-service-form label {
   display: grid;
   gap: 6px;

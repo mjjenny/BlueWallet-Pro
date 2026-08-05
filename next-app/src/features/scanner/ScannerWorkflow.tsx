@@ -4,6 +4,7 @@ import type { LegacyDocumentType } from "../../legacy/legacyTypes";
 import { getCategoryLabel } from "../documents/documentCategories";
 import type { ReactWalletDocumentInput } from "../react-wallet/reactWalletTypes";
 import { validateDocumentInput } from "../react-wallet/reactWalletValidation";
+import { recognizeScannerPages } from "./ocrEngine";
 import { buildScannerPages, mergeScannerFiles, pagesToFiles, type ScannerPage } from "./scannerPipeline";
 import { parseScannerOcrText, type ScannerOcrSuggestion } from "./scannerOcr";
 
@@ -40,6 +41,8 @@ export function ScannerWorkflow({ initialType, online, onCancel, onSave }: Scann
   const [suggestion, setSuggestion] = useState<ScannerOcrSuggestion | null>(null);
   const [input, setInput] = useState<ReactWalletDocumentInput>(() => ({ ...blankScanInput, type: initialType }));
   const [saving, setSaving] = useState(false);
+  const [ocrReading, setOcrReading] = useState(false);
+  const [ocrProgress, setOcrProgress] = useState("");
   const [message, setMessage] = useState("");
   const validation = useMemo(() => validateDocumentInput(input), [input]);
 
@@ -55,6 +58,30 @@ export function ScannerWorkflow({ initialType, online, onCancel, onSave }: Scann
     const next = parseScannerOcrText(ocrText);
     setSuggestion(next);
     setInput(next.input);
+  }
+
+  async function readImages() {
+    if (!pages.length) return;
+    setOcrReading(true);
+    setOcrProgress("Starting OCR");
+    setMessage("");
+    try {
+      const result = await recognizeScannerPages(pages, (progress) => {
+        setOcrProgress(`${progress.status} ${Math.round(progress.progress * 100)}%`);
+      });
+      if (!result.text) {
+        setMessage("No image text was detected. PDFs can be attached, but image OCR reads image pages only.");
+        return;
+      }
+      setOcrText(result.text);
+      const skipped = result.skippedPages ? ` ${result.skippedPages} non-image page(s) skipped.` : "";
+      setMessage(`OCR read ${result.pagesRead} image page(s).${skipped}`);
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "OCR could not read these images.");
+    } finally {
+      setOcrReading(false);
+      setOcrProgress("");
+    }
   }
 
   async function save() {
@@ -124,7 +151,11 @@ export function ScannerWorkflow({ initialType, online, onCancel, onSave }: Scann
               <span>OCR text</span>
               <textarea value={ocrText} onChange={(event) => setOcrText(event.target.value)} />
             </label>
+            <button type="button" className="secondary-action" disabled={!pages.length || ocrReading} onClick={() => void readImages()}>
+              {ocrReading ? "Reading images..." : "Read images"}
+            </button>
             <button type="button" className="secondary-action" disabled={!ocrText.trim()} onClick={applyOcr}>Parse OCR</button>
+            {ocrProgress ? <p className="muted" aria-live="polite">{ocrProgress}</p> : null}
             {suggestion ? (
               <div className="warning-list">
                 <h3>{suggestion.source.toUpperCase()} fields</h3>

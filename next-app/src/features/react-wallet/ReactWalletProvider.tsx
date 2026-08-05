@@ -1,12 +1,15 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   changeReactWalletPin,
+  createReactWalletSeaServiceEntry,
   createReactWalletDocument,
+  deleteReactWalletSeaServiceEntry,
   detectWebAuthnSupport,
   downloadBackup,
   exportReactWalletBackup,
   getReactWalletSecurityState,
   importReactWalletBackup,
+  listReactWalletSeaService,
   listReactWalletDocuments,
   openReactWalletDB,
   removeReactWalletPinAndVault,
@@ -22,6 +25,7 @@ import type {
   ReactWalletBackup,
   ReactWalletDocumentInput,
   ReactWalletDocumentView,
+  ReactWalletSeaServiceEntry,
   ReactWalletSecurityState,
   ReactWalletSession,
 } from "./reactWalletTypes";
@@ -30,6 +34,7 @@ interface ReactWalletContextValue {
   status: "loading" | "setup" | "locked" | "ready" | "error";
   error: string | null;
   documents: ReactWalletDocumentView[];
+  seaService: ReactWalletSeaServiceEntry[];
   lastDeletedId: string | null;
   security: ReactWalletSecurityState;
   lockedUntil: number | null;
@@ -41,6 +46,8 @@ interface ReactWalletContextValue {
   removePinAndVault: (currentPin: string) => Promise<void>;
   rotateDataKey: (pin: string) => Promise<void>;
   checkBiometricPresence: () => Promise<boolean>;
+  createSeaServiceEntry: (input: Pick<ReactWalletSeaServiceEntry, "vessel" | "rank" | "signOn" | "signOff">) => Promise<void>;
+  deleteSeaServiceEntry: (id: string) => Promise<void>;
   createDocument: (input: ReactWalletDocumentInput, files: File[]) => Promise<void>;
   updateDocument: (id: string, input: ReactWalletDocumentInput, files: File[]) => Promise<void>;
   deleteDocument: (id: string) => Promise<void>;
@@ -69,6 +76,7 @@ export function ReactWalletProvider({ children }: { children: ReactNode }) {
   const [db, setDb] = useState<IDBDatabase | null>(null);
   const [session, setSession] = useState<ReactWalletSession | null>(null);
   const [documents, setDocuments] = useState<ReactWalletDocumentView[]>([]);
+  const [seaService, setSeaService] = useState<ReactWalletSeaServiceEntry[]>([]);
   const [status, setStatus] = useState<ReactWalletContextValue["status"]>("loading");
   const [error, setError] = useState<string | null>(null);
   const [lastDeletedId, setLastDeletedId] = useState<string | null>(null);
@@ -80,6 +88,7 @@ export function ReactWalletProvider({ children }: { children: ReactNode }) {
     () => () => {
       setSession(null);
       setDocuments([]);
+      setSeaService([]);
       setLastDeletedId(null);
       setStatus((current) => (current === "ready" ? "locked" : current));
     },
@@ -89,7 +98,12 @@ export function ReactWalletProvider({ children }: { children: ReactNode }) {
   const reload = useMemo(
     () => async () => {
       if (!db || !session) return;
-      setDocuments(await listReactWalletDocuments(db, session));
+      const [nextDocuments, nextSeaService] = await Promise.all([
+        listReactWalletDocuments(db, session),
+        listReactWalletSeaService(db, session),
+      ]);
+      setDocuments(nextDocuments);
+      setSeaService(nextSeaService);
     },
     [db, session],
   );
@@ -146,6 +160,7 @@ export function ReactWalletProvider({ children }: { children: ReactNode }) {
       status,
       error,
       documents,
+      seaService,
       lastDeletedId,
       security,
       retryCount,
@@ -157,7 +172,12 @@ export function ReactWalletProvider({ children }: { children: ReactNode }) {
         setRetryCount(0);
         setLockedUntil(null);
         setSecurity({ ...(await getReactWalletSecurityState(db)), lastUnlockedAt: nextSession.unlockedAt });
-        setDocuments(await listReactWalletDocuments(db, nextSession));
+        const [nextDocuments, nextSeaService] = await Promise.all([
+          listReactWalletDocuments(db, nextSession),
+          listReactWalletSeaService(db, nextSession),
+        ]);
+        setDocuments(nextDocuments);
+        setSeaService(nextSeaService);
         setStatus("ready");
       },
       async unlock(pin) {
@@ -169,7 +189,12 @@ export function ReactWalletProvider({ children }: { children: ReactNode }) {
           setRetryCount(0);
           setLockedUntil(null);
           setSecurity({ ...(await getReactWalletSecurityState(db)), lastUnlockedAt: nextSession.unlockedAt });
-          setDocuments(await listReactWalletDocuments(db, nextSession));
+          const [nextDocuments, nextSeaService] = await Promise.all([
+            listReactWalletDocuments(db, nextSession),
+            listReactWalletSeaService(db, nextSession),
+          ]);
+          setDocuments(nextDocuments);
+          setSeaService(nextSeaService);
           setStatus("ready");
         } catch (err) {
           const failures = retryCount + 1;
@@ -191,6 +216,7 @@ export function ReactWalletProvider({ children }: { children: ReactNode }) {
         await removeReactWalletPinAndVault(db, currentPin);
         setSession(null);
         setDocuments([]);
+        setSeaService([]);
         setSecurity({ ...(await getReactWalletSecurityState(db)), lastUnlockedAt: null });
         setStatus("setup");
       },
@@ -199,13 +225,28 @@ export function ReactWalletProvider({ children }: { children: ReactNode }) {
         const nextSession = await rotateReactWalletDataKey(db, session, pin);
         setSession(nextSession);
         setSecurity({ ...(await getReactWalletSecurityState(db)), lastUnlockedAt: nextSession.unlockedAt });
-        setDocuments(await listReactWalletDocuments(db, nextSession));
+        const [nextDocuments, nextSeaService] = await Promise.all([
+          listReactWalletDocuments(db, nextSession),
+          listReactWalletSeaService(db, nextSession),
+        ]);
+        setDocuments(nextDocuments);
+        setSeaService(nextSeaService);
       },
       async checkBiometricPresence() {
         const available = await detectWebAuthnSupport();
         setSecurity((current) => ({ ...current, webAuthnAvailable: available }));
         if (!available) return false;
         return requestWebAuthnPresence();
+      },
+      async createSeaServiceEntry(input) {
+        if (!db || !session) throw new Error("Unlock the React vault before changing sea-service entries.");
+        await createReactWalletSeaServiceEntry(db, session, input);
+        await reload();
+      },
+      async deleteSeaServiceEntry(id) {
+        if (!db || !session) throw new Error("Unlock the React vault before changing sea-service entries.");
+        await deleteReactWalletSeaServiceEntry(db, session, id);
+        await reload();
       },
       async createDocument(input, files) {
         if (!db || !session) throw new Error("Unlock the React vault before changing documents.");
@@ -242,12 +283,17 @@ export function ReactWalletProvider({ children }: { children: ReactNode }) {
         const nextSession = await importReactWalletBackup(db, backup, pin);
         setSession(nextSession);
         setSecurity({ ...(await getReactWalletSecurityState(db)), lastUnlockedAt: nextSession.unlockedAt });
-        setDocuments(await listReactWalletDocuments(db, nextSession));
+        const [nextDocuments, nextSeaService] = await Promise.all([
+          listReactWalletDocuments(db, nextSession),
+          listReactWalletSeaService(db, nextSession),
+        ]);
+        setDocuments(nextDocuments);
+        setSeaService(nextSeaService);
         setStatus("ready");
       },
       reload,
     }),
-    [db, documents, error, lastDeletedId, lock, lockedUntil, reload, retryCount, security, session, status],
+    [db, documents, error, lastDeletedId, lock, lockedUntil, reload, retryCount, seaService, security, session, status],
   );
 
   return <ReactWalletContext.Provider value={value}>{children}</ReactWalletContext.Provider>;

@@ -20,6 +20,7 @@ import {
   type ReactWalletEncryptedRow,
   type ReactWalletEncryptedRowKind,
   type ReactWalletProfile,
+  type ReactWalletSeaServiceEntry,
   type ReactWalletSecurityState,
   type ReactWalletSession,
   type ReactWalletSettings,
@@ -74,6 +75,9 @@ export async function openReactWalletDB(factory: IDBFactory = globalThis.indexed
       if (!db.objectStoreNames.contains(REACT_WALLET_STORES.security)) {
         db.createObjectStore(REACT_WALLET_STORES.security, { keyPath: "key" });
       }
+      if (!db.objectStoreNames.contains(REACT_WALLET_STORES.seaService)) {
+        db.createObjectStore(REACT_WALLET_STORES.seaService, { keyPath: "id" });
+      }
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
@@ -90,6 +94,7 @@ function clearWalletStores(tx: IDBTransaction): void {
   tx.objectStore(REACT_WALLET_STORES.attachments).clear();
   tx.objectStore(REACT_WALLET_STORES.profile).clear();
   tx.objectStore(REACT_WALLET_STORES.settings).clear();
+  tx.objectStore(REACT_WALLET_STORES.seaService).clear();
 }
 
 function isEncryptedRow(value: unknown): value is ReactWalletEncryptedRow {
@@ -181,11 +186,12 @@ export async function setupReactWalletVault(db: IDBDatabase, pin: string): Promi
   if (await getVaultRecord(db)) throw new Error("React vault already has a PIN.");
 
   const dataKey = await generateVaultDataKey();
-  const [documents, attachments, profiles, settings] = await Promise.all([
+  const [documents, attachments, profiles, settings, seaService] = await Promise.all([
     allFromStore<unknown>(db, REACT_WALLET_STORES.documents),
     allFromStore<unknown>(db, REACT_WALLET_STORES.attachments),
     allFromStore<unknown>(db, REACT_WALLET_STORES.profile),
     allFromStore<unknown>(db, REACT_WALLET_STORES.settings),
+    allFromStore<unknown>(db, REACT_WALLET_STORES.seaService),
   ]);
   const encryptedDocuments = await Promise.all(
     documents.filter((row) => !isEncryptedRow(row)).map((row) => encryptedRow(dataKey, "document", (row as ReactWalletDocument).id, row)),
@@ -199,6 +205,9 @@ export async function setupReactWalletVault(db: IDBDatabase, pin: string): Promi
   const encryptedSettings = await Promise.all(
     settings.filter((row) => !isEncryptedRow(row)).map((row) => encryptedRow(dataKey, "settings", (row as ReactWalletSettings).key, row)),
   );
+  const encryptedSeaService = await Promise.all(
+    seaService.filter((row) => !isEncryptedRow(row)).map((row) => encryptedRow(dataKey, "seaService", (row as ReactWalletSeaServiceEntry).id, row)),
+  );
   const vault = await makeVaultRecord(pin, dataKey);
 
   const tx = db.transaction(Object.values(REACT_WALLET_STORES), "readwrite");
@@ -206,6 +215,7 @@ export async function setupReactWalletVault(db: IDBDatabase, pin: string): Promi
   encryptedAttachments.forEach((row) => tx.objectStore(REACT_WALLET_STORES.attachments).put(row));
   encryptedProfiles.forEach((row) => tx.objectStore(REACT_WALLET_STORES.profile).put(row));
   encryptedSettings.forEach((row) => tx.objectStore(REACT_WALLET_STORES.settings).put(row));
+  encryptedSeaService.forEach((row) => tx.objectStore(REACT_WALLET_STORES.seaService).put(row));
   tx.objectStore(REACT_WALLET_STORES.security).put(vault);
   await txDone(tx);
   return openSessionFromVault(vault, pin);
@@ -251,7 +261,7 @@ export async function rotateReactWalletDataKey(
   const oldVault = await getVaultRecord(db);
   if (!oldVault) throw new Error("React vault is not configured.");
   const nextKey = await generateVaultDataKey();
-  const [documents, attachments, profile, settings] = await encryptSnapshot(nextKey, current);
+  const [documents, attachments, profile, settings, seaService] = await encryptSnapshot(nextKey, current);
   const nextVault = await makeVaultRecord(pin, nextKey, {
     ...oldVault,
     rotationCounter: oldVault.rotationCounter + 1,
@@ -262,6 +272,7 @@ export async function rotateReactWalletDataKey(
   attachments.forEach((row) => tx.objectStore(REACT_WALLET_STORES.attachments).put(row));
   profile.forEach((row) => tx.objectStore(REACT_WALLET_STORES.profile).put(row));
   settings.forEach((row) => tx.objectStore(REACT_WALLET_STORES.settings).put(row));
+  seaService.forEach((row) => tx.objectStore(REACT_WALLET_STORES.seaService).put(row));
   tx.objectStore(REACT_WALLET_STORES.security).put(nextVault);
   await txDone(tx);
   return openSessionFromVault(nextVault, pin);
@@ -408,17 +419,19 @@ export async function undoDeleteReactWalletDocument(db: IDBDatabase, session: Re
 }
 
 async function exportPlaintextSnapshot(db: IDBDatabase, session: ReactWalletSession) {
-  const [documentRows, attachmentRows, profileRows, settingRows] = await Promise.all([
+  const [documentRows, attachmentRows, profileRows, settingRows, seaServiceRows] = await Promise.all([
     allFromStore<ReactWalletEncryptedRow>(db, REACT_WALLET_STORES.documents),
     allFromStore<ReactWalletEncryptedRow>(db, REACT_WALLET_STORES.attachments),
     allFromStore<ReactWalletEncryptedRow>(db, REACT_WALLET_STORES.profile),
     allFromStore<ReactWalletEncryptedRow>(db, REACT_WALLET_STORES.settings),
+    allFromStore<ReactWalletEncryptedRow>(db, REACT_WALLET_STORES.seaService),
   ]);
   return {
     documents: await Promise.all(documentRows.filter(isEncryptedRow).map((row) => decryptRow<ReactWalletDocument>(session.dataKey, row))),
     attachments: await Promise.all(attachmentRows.filter(isEncryptedRow).map((row) => decryptRow<ReactWalletAttachment>(session.dataKey, row))),
     profile: await Promise.all(profileRows.filter(isEncryptedRow).map((row) => decryptRow<ReactWalletProfile>(session.dataKey, row))),
     settings: await Promise.all(settingRows.filter(isEncryptedRow).map((row) => decryptRow<ReactWalletSettings>(session.dataKey, row))),
+    seaService: await Promise.all(seaServiceRows.filter(isEncryptedRow).map((row) => decryptRow<ReactWalletSeaServiceEntry>(session.dataKey, row))),
   };
 }
 
@@ -428,29 +441,31 @@ async function encryptSnapshot(dataKey: CryptoKey, snapshot: Awaited<ReturnType<
     Promise.all(snapshot.attachments.map((attachment) => encryptedRow(dataKey, "attachment", attachment.id, attachment))),
     Promise.all(snapshot.profile.map((profile) => encryptedRow(dataKey, "profile", profile.key, profile))),
     Promise.all(snapshot.settings.map((settings) => encryptedRow(dataKey, "settings", settings.key, settings))),
+    Promise.all(snapshot.seaService.map((entry) => encryptedRow(dataKey, "seaService", entry.id, entry))),
   ]);
 }
 
 export async function exportReactWalletBackup(db: IDBDatabase): Promise<ReactWalletBackup> {
   const security = await getVaultRecord(db);
   if (!security) throw new Error("Set up a PIN before exporting a secure backup.");
-  const [documents, attachments, profile, settings] = await Promise.all([
+  const [documents, attachments, profile, settings, seaService] = await Promise.all([
     allFromStore<ReactWalletEncryptedRow>(db, REACT_WALLET_STORES.documents),
     allFromStore<ReactWalletEncryptedRow>(db, REACT_WALLET_STORES.attachments),
     allFromStore<ReactWalletEncryptedRow>(db, REACT_WALLET_STORES.profile),
     allFromStore<ReactWalletEncryptedRow>(db, REACT_WALLET_STORES.settings),
+    allFromStore<ReactWalletEncryptedRow>(db, REACT_WALLET_STORES.seaService),
   ]);
   return {
     app: "BlueWallet-Pro React Secure",
-    version: 2,
+    version: 3,
     exportedAt: nowIso(),
     security,
-    encryptedStores: { documents, attachments, profile, settings },
+    encryptedStores: { documents, attachments, profile, settings, seaService },
   };
 }
 
 async function verifyBackupCanDecrypt(backup: ReactWalletBackup, pin: string): Promise<void> {
-  if (backup.app !== "BlueWallet-Pro React Secure" || backup.version !== 2) {
+  if (backup.app !== "BlueWallet-Pro React Secure" || ![2, 3].includes(backup.version)) {
     throw new Error("Unsupported React secure backup.");
   }
   const session = await openSessionFromVault(backup.security, pin);
@@ -460,6 +475,7 @@ async function verifyBackupCanDecrypt(backup: ReactWalletBackup, pin: string): P
     ...stores.attachments.map((row) => decryptRow<ReactWalletAttachment>(session.dataKey, row)),
     ...stores.profile.map((row) => decryptRow<ReactWalletProfile>(session.dataKey, row)),
     ...stores.settings.map((row) => decryptRow<ReactWalletSettings>(session.dataKey, row)),
+    ...(stores.seaService ?? []).map((row) => decryptRow<ReactWalletSeaServiceEntry>(session.dataKey, row)),
   ]);
 }
 
@@ -472,9 +488,56 @@ export async function importReactWalletBackup(db: IDBDatabase, backup: ReactWall
   backup.encryptedStores.attachments.forEach((row) => tx.objectStore(REACT_WALLET_STORES.attachments).put(row));
   backup.encryptedStores.profile.forEach((row) => tx.objectStore(REACT_WALLET_STORES.profile).put(row));
   backup.encryptedStores.settings.forEach((row) => tx.objectStore(REACT_WALLET_STORES.settings).put(row));
+  (backup.encryptedStores.seaService ?? []).forEach((row) => tx.objectStore(REACT_WALLET_STORES.seaService).put(row));
   tx.objectStore(REACT_WALLET_STORES.security).put(backup.security);
   await txDone(tx);
   return unlockReactWalletVault(db, pin);
+}
+
+export async function listReactWalletSeaService(
+  db: IDBDatabase,
+  session: ReactWalletSession,
+): Promise<ReactWalletSeaServiceEntry[]> {
+  const rows = await allFromStore<ReactWalletEncryptedRow>(db, REACT_WALLET_STORES.seaService);
+  const entries = await Promise.all(rows.filter(isEncryptedRow).map((row) => decryptRow<ReactWalletSeaServiceEntry>(session.dataKey, row)));
+  return entries.sort((a, b) => b.signOn.localeCompare(a.signOn));
+}
+
+export async function createReactWalletSeaServiceEntry(
+  db: IDBDatabase,
+  session: ReactWalletSession,
+  input: Pick<ReactWalletSeaServiceEntry, "vessel" | "rank" | "signOn" | "signOff">,
+): Promise<ReactWalletSeaServiceEntry> {
+  if (!input.vessel.trim()) throw new Error("Vessel is required.");
+  if (!input.signOn || !input.signOff) throw new Error("Sign-on and sign-off dates are required.");
+  if (input.signOff < input.signOn) throw new Error("Sign-off cannot be before sign-on.");
+  const timestamp = nowIso();
+  const entry: ReactWalletSeaServiceEntry = {
+    id: uid("sea"),
+    vessel: input.vessel.trim().slice(0, 120),
+    rank: input.rank.trim().slice(0, 80),
+    signOn: input.signOn,
+    signOff: input.signOff,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+  const row = await encryptedRow(session.dataKey, "seaService", entry.id, entry);
+  const tx = db.transaction(REACT_WALLET_STORES.seaService, "readwrite");
+  tx.objectStore(REACT_WALLET_STORES.seaService).put(row);
+  await txDone(tx);
+  return entry;
+}
+
+export async function deleteReactWalletSeaServiceEntry(
+  db: IDBDatabase,
+  session: ReactWalletSession,
+  id: string,
+): Promise<void> {
+  if (session.status !== "unlocked") throw new Error("Unlock the React vault before changing sea-service entries.");
+  await getVaultRecord(db);
+  const tx = db.transaction(REACT_WALLET_STORES.seaService, "readwrite");
+  tx.objectStore(REACT_WALLET_STORES.seaService).delete(id);
+  await txDone(tx);
 }
 
 export async function saveReactWalletSetting(

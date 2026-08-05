@@ -1,7 +1,7 @@
 import type { LegacyDocumentType } from "../../legacy/legacyTypes";
 
 export const REACT_WALLET_DATABASE_NAME = "BlueWalletReactDB";
-export const REACT_WALLET_DATABASE_VERSION = 2;
+export const REACT_WALLET_DATABASE_VERSION = 3;
 
 export const REACT_WALLET_STORES = {
   documents: "documents",
@@ -9,6 +9,7 @@ export const REACT_WALLET_STORES = {
   settings: "settings",
   attachments: "attachments",
   security: "security",
+  seaService: "seaService",
 } as const;
 
 export interface ReactWalletAttachment {
@@ -54,6 +55,16 @@ export interface ReactWalletSettings {
   updatedAt: string;
 }
 
+export interface ReactWalletSeaServiceEntry {
+  id: string;
+  vessel: string;
+  rank: string;
+  signOn: string;
+  signOff: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ReactWalletDocumentInput {
   type: LegacyDocumentType;
   title: string;
@@ -85,7 +96,7 @@ export type ReactWalletSortKey = "expiry" | "name" | "category" | "updated";
 
 export interface ReactWalletBackup {
   app: "BlueWallet-Pro React Secure";
-  version: 2;
+  version: 2 | 3;
   exportedAt: string;
   security: ReactWalletVaultRecord;
   encryptedStores: ReactWalletEncryptedBackupStores;
@@ -99,7 +110,7 @@ export interface ReactWalletCryptoEnvelope {
   aad?: string;
 }
 
-export type ReactWalletEncryptedRowKind = "document" | "attachment" | "profile" | "settings";
+export type ReactWalletEncryptedRowKind = "document" | "attachment" | "profile" | "settings" | "seaService";
 
 export interface ReactWalletEncryptedRow {
   id?: string;
@@ -131,6 +142,7 @@ export interface ReactWalletEncryptedBackupStores {
   attachments: ReactWalletEncryptedRow[];
   profile: ReactWalletEncryptedRow[];
   settings: ReactWalletEncryptedRow[];
+  seaService: ReactWalletEncryptedRow[];
 }
 
 export interface ReactWalletSession {

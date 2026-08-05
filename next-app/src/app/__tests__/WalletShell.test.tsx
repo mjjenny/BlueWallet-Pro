@@ -33,7 +33,7 @@ describe("React CRUD wallet shell", () => {
 
     expect(await screen.findByText("Set up React vault PIN")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /skip to documents/i })).toHaveAttribute("href", "#document-workspace");
-    expect(screen.getByText("BlueWalletReactDB v2")).toBeInTheDocument();
+    expect(screen.getByText("BlueWalletReactDB v3")).toBeInTheDocument();
     expect(screen.getByText("Legacy wallet assessment")).toBeInTheDocument();
     expect(screen.getByText("No migration action")).toBeInTheDocument();
     await setUpPin(user);
@@ -150,5 +150,20 @@ describe("React CRUD wallet shell", () => {
     await user.type(screen.getByLabelText("PIN"), "123456");
     await user.click(screen.getByRole("button", { name: /unlock vault/i }));
     expect(await screen.findByText("Document dashboard")).toBeInTheDocument();
+  });
+
+  it("adds persisted sea-service entries from the maritime toolkit", async () => {
+    const user = userEvent.setup();
+    render(<App initialSnapshot={createTestSnapshot()} />);
+
+    await setUpPin(user);
+    await user.type(screen.getByLabelText("Vessel"), "MV Persistent");
+    await user.type(screen.getByLabelText("Rank"), "Chief Officer");
+    await user.type(screen.getByLabelText("Sign on"), "2026-01-01");
+    await user.type(screen.getByLabelText("Sign off"), "2026-01-31");
+    await user.click(screen.getByRole("button", { name: /add sea service/i }));
+
+    expect(await screen.findByText("MV Persistent")).toBeInTheDocument();
+    expect(screen.getAllByText(/31 days/i).length).toBeGreaterThan(0);
   });
 });

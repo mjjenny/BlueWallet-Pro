@@ -469,7 +469,7 @@ export function ReactWalletShell({ legacySnapshot }: { legacySnapshot: LegacyWal
         </div>
         <div className="status-cluster">
           <Badge tone={online ? "good" : "warn"}>{online ? "Online" : "Offline"}</Badge>
-          <Badge tone="info">BlueWalletReactDB v2</Badge>
+          <Badge tone="info">BlueWalletReactDB v3</Badge>
           {wallet.status === "ready" ? <button type="button" className="secondary-action" onClick={wallet.lock}>Lock</button> : null}
         </div>
       </header>
@@ -581,7 +581,12 @@ export function ReactWalletShell({ legacySnapshot }: { legacySnapshot: LegacyWal
         </div>
       </section>
 
-      <MaritimeToolkit documents={wallet.documents} />
+      <MaritimeToolkit
+        documents={wallet.documents}
+        seaService={wallet.seaService}
+        onAddSeaService={wallet.createSeaServiceEntry}
+        onDeleteSeaService={wallet.deleteSeaServiceEntry}
+      />
 
       {showForm ? (
         <DocumentForm

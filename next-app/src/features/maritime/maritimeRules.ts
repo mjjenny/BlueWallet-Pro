@@ -1,5 +1,5 @@
 import { getDocumentValidity } from "../../shared/status/documentStatus";
-import type { ReactWalletDocumentView } from "../react-wallet/reactWalletTypes";
+import type { ReactWalletDocumentView, ReactWalletSeaServiceEntry } from "../react-wallet/reactWalletTypes";
 
 export interface MaritimeRequirement {
   id: string;
@@ -13,14 +13,6 @@ export interface MaritimeRequirementStatus {
   requirement: MaritimeRequirement;
   matched: ReactWalletDocumentView | null;
   status: "ready" | "expiring" | "missing" | "expired";
-}
-
-export interface SeaServiceEntry {
-  id: string;
-  vessel: string;
-  rank: string;
-  signOn: string;
-  signOff: string;
 }
 
 export const MARITIME_REQUIREMENTS: MaritimeRequirement[] = [
@@ -93,7 +85,7 @@ export function getDocumentPacks(documents: ReactWalletDocumentView[]) {
   });
 }
 
-export function getSeaServiceDays(entry: Pick<SeaServiceEntry, "signOn" | "signOff">): number {
+export function getSeaServiceDays(entry: Pick<ReactWalletSeaServiceEntry, "signOn" | "signOff">): number {
   if (!entry.signOn || !entry.signOff || entry.signOff < entry.signOn) return 0;
   const start = new Date(`${entry.signOn}T00:00:00Z`).getTime();
   const end = new Date(`${entry.signOff}T00:00:00Z`).getTime();

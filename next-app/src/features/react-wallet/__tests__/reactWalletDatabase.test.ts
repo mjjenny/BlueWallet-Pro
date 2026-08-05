@@ -2,9 +2,12 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   changeReactWalletPin,
   createReactWalletDocument,
+  createReactWalletSeaServiceEntry,
+  deleteReactWalletSeaServiceEntry,
   exportReactWalletBackup,
   importReactWalletBackup,
   listReactWalletDocuments,
+  listReactWalletSeaService,
   openReactWalletDB,
   removeReactWalletPinAndVault,
   rotateReactWalletDataKey,
@@ -39,11 +42,11 @@ describe("BlueWalletReactDB secure vault", () => {
     await deleteDb(REACT_WALLET_DATABASE_NAME);
   });
 
-  it("creates version 2 stores and never uses the legacy database name", async () => {
+  it("creates version 3 stores and never uses the legacy database name", async () => {
     const db = await openReactWalletDB();
     expect(db.name).toBe("BlueWalletReactDB");
-    expect(db.version).toBe(2);
-    expect(Array.from(db.objectStoreNames)).toEqual(["attachments", "documents", "profile", "security", "settings"]);
+    expect(db.version).toBe(3);
+    expect(Array.from(db.objectStoreNames)).toEqual(["attachments", "documents", "profile", "seaService", "security", "settings"]);
     db.close();
   });
 
@@ -136,7 +139,7 @@ describe("BlueWalletReactDB secure vault", () => {
     await createReactWalletDocument(db, session, { type: "medical", title: "Backup Medical", expiryDate: "2027-01-01" });
     const backup = await exportReactWalletBackup(db);
     expect(backup.app).toBe("BlueWallet-Pro React Secure");
-    expect(backup.version).toBe(2);
+    expect(backup.version).toBe(3);
     expect(backup.encryptedStores.documents).toHaveLength(1);
     expect(JSON.stringify(backup)).not.toContain("Backup Medical");
     db.close();
@@ -147,6 +150,24 @@ describe("BlueWalletReactDB secure vault", () => {
     const restoredSession = await importReactWalletBackup(db, backup, "246810");
     const docs = await listReactWalletDocuments(db, restoredSession);
     expect(docs[0]?.title).toBe("Backup Medical");
+    db.close();
+  });
+
+  it("stores sea-service entries as encrypted rows and includes them in backups", async () => {
+    const db = await openReactWalletDB();
+    const session = await setupReactWalletVault(db, "246810");
+    const entry = await createReactWalletSeaServiceEntry(db, session, {
+      vessel: "MV Secure",
+      rank: "Chief Officer",
+      signOn: "2026-01-01",
+      signOff: "2026-01-31",
+    });
+    expect((await listReactWalletSeaService(db, session))[0]?.vessel).toBe("MV Secure");
+    expect(JSON.stringify(await rawRows(db, REACT_WALLET_STORES.seaService))).not.toContain("MV Secure");
+    const backup = await exportReactWalletBackup(db);
+    expect(backup.encryptedStores.seaService).toHaveLength(1);
+    await deleteReactWalletSeaServiceEntry(db, session, entry.id);
+    expect(await listReactWalletSeaService(db, session)).toEqual([]);
     db.close();
   });
 

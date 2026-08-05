@@ -1,14 +1,13 @@
 import { useMemo, useState } from "react";
 import { Badge } from "../../components/Badge";
 import { formatDate } from "../../shared/dates/dateUtils";
-import type { ReactWalletDocumentView } from "../react-wallet/reactWalletTypes";
+import type { ReactWalletDocumentView, ReactWalletSeaServiceEntry } from "../react-wallet/reactWalletTypes";
 import {
   getDocumentPacks,
   getMaritimeRequirementStatuses,
   getReadyToJoinScore,
   getSeaServiceDays,
   getVaccinationDocuments,
-  type SeaServiceEntry,
 } from "./maritimeRules";
 
 function statusTone(status: string): "good" | "warn" | "bad" | "neutral" {
@@ -18,19 +17,39 @@ function statusTone(status: string): "good" | "warn" | "bad" | "neutral" {
   return "neutral";
 }
 
-export function MaritimeToolkit({ documents }: { documents: ReactWalletDocumentView[] }) {
-  const [seaEntries, setSeaEntries] = useState<SeaServiceEntry[]>([]);
-  const [entry, setEntry] = useState<SeaServiceEntry>({ id: "", vessel: "", rank: "", signOn: "", signOff: "" });
+export function MaritimeToolkit({
+  documents,
+  seaService,
+  onAddSeaService,
+  onDeleteSeaService,
+}: {
+  documents: ReactWalletDocumentView[];
+  seaService: ReactWalletSeaServiceEntry[];
+  onAddSeaService: (input: Pick<ReactWalletSeaServiceEntry, "vessel" | "rank" | "signOn" | "signOff">) => Promise<void>;
+  onDeleteSeaService: (id: string) => Promise<void>;
+}) {
+  const [entry, setEntry] = useState<Pick<ReactWalletSeaServiceEntry, "vessel" | "rank" | "signOn" | "signOff">>({
+    vessel: "",
+    rank: "",
+    signOn: "",
+    signOff: "",
+  });
+  const [message, setMessage] = useState("");
   const statuses = useMemo(() => getMaritimeRequirementStatuses(documents), [documents]);
   const packs = useMemo(() => getDocumentPacks(documents), [documents]);
   const vaccinations = useMemo(() => getVaccinationDocuments(documents), [documents]);
   const score = useMemo(() => getReadyToJoinScore(documents), [documents]);
-  const seaDays = seaEntries.reduce((sum, item) => sum + getSeaServiceDays(item), 0);
+  const seaDays = seaService.reduce((sum, item) => sum + getSeaServiceDays(item), 0);
 
-  function addEntry() {
+  async function addEntry() {
     if (!entry.vessel.trim() || !entry.signOn || !entry.signOff) return;
-    setSeaEntries((current) => [...current, { ...entry, id: crypto.randomUUID?.() ?? String(Date.now()) }]);
-    setEntry({ id: "", vessel: "", rank: "", signOn: "", signOff: "" });
+    setMessage("");
+    try {
+      await onAddSeaService(entry);
+      setEntry({ vessel: "", rank: "", signOn: "", signOff: "" });
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Sea-service entry could not be saved.");
+    }
   }
 
   return (
@@ -94,9 +113,21 @@ export function MaritimeToolkit({ documents }: { documents: ReactWalletDocumentV
             <label><span>Rank</span><input value={entry.rank} onChange={(event) => setEntry({ ...entry, rank: event.target.value })} /></label>
             <label><span>Sign on</span><input type="date" value={entry.signOn} onChange={(event) => setEntry({ ...entry, signOn: event.target.value })} /></label>
             <label><span>Sign off</span><input type="date" value={entry.signOff} onChange={(event) => setEntry({ ...entry, signOff: event.target.value })} /></label>
-            <button type="button" className="secondary-action" onClick={addEntry}>Add sea service</button>
+            <button type="button" className="secondary-action" onClick={() => void addEntry()}>Add sea service</button>
           </div>
-          <p className="muted">{seaEntries.length} entries - {seaDays} days</p>
+          <p className="muted">{seaService.length} entries - {seaDays} days</p>
+          {message ? <p className="muted" aria-live="polite">{message}</p> : null}
+          <div className="sea-service-list">
+            {seaService.map((item) => (
+              <article className="matrix-row" key={item.id}>
+                <div>
+                  <strong>{item.vessel}</strong>
+                  <p className="muted">{item.rank || "Rank not set"} - {getSeaServiceDays(item)} days</p>
+                </div>
+                <button type="button" className="icon-button" aria-label={`Delete ${item.vessel}`} onClick={() => void onDeleteSeaService(item.id)}>x</button>
+              </article>
+            ))}
+          </div>
         </section>
       </div>
     </section>
