@@ -649,3 +649,25 @@ Test the stable-app feature iteration for:
 - Secure Share Preparation: verify quick share/download contains summary metadata only and no scan/file payloads.
 - Offline Recovery Screen: open Settings -> Offline recovery check and verify app shell, storage, recovery steps, and install guidance are understandable on iOS Safari, Android Chrome, and Windows Edge.
 - Accessibility: verify dialog roles, close labels, Escape-to-close, visible controls, keyboard activation of document cards, and no horizontal overflow at phone/tablet/desktop widths.
+
+## Roadmap Items 1 And 20 Verification Addendum
+
+Use Settings -> Real device QA pack for physical-device testing evidence:
+
+- iOS Safari camera permission: verify allow, deny, cancel, scanner modal sizing, and failed-scan/OCR recovery.
+- iOS Safari install/offline launch: install with Share -> Add to Home Screen, open offline, verify stable app loads.
+- iOS Safari backup/restore: export v6 backup, inspect restore preview, import sample data, verify no loss.
+- Android Chrome camera/install: verify camera picker, cancel recovery, install prompt, offline launch, and backup download.
+- Windows Edge PWA/backup: verify install/open PWA, export/import backup, print summary, share summary, and offline reload.
+- Responsive touch layout: verify phone/tablet/desktop no horizontal scrolling and Add, Settings, Reminder Center, QA Pack, and Readiness dialogs fit.
+
+Use Settings -> Release readiness panel for final release status:
+
+- It must show PASS for real-device QA pack complete.
+- It must show PASS for current backup exported.
+- It must show PASS for PIN protection configured.
+- It must show PASS for no expired documents.
+- It must show PASS for core joining documents present.
+- It must show PASS for document quality/risk reviewed.
+- If any item is OPEN, release is not ready unless Jenny formally waives it.
+- Download the readiness report and attach it to the final release evidence bundle.
