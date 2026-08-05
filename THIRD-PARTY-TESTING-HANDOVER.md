@@ -25,7 +25,7 @@ Current test target:
 
 - App copy: `BlueWallet-Pro-stable-app-copy`
 - Branch: `development/stable-app-copy`
-- Current commit: `7023b643099105513648908a98328c71c1fbd465`
+- Current commit: latest `development/stable-app-copy` HEAD
 - Production entry: `index.html`
 - Stable app file: `legacy-root-pwa.html`
 - PWA start URL: `./legacy-root-pwa.html?v=stable`
@@ -45,6 +45,8 @@ Approved UI changes already recorded:
 - Tools/action controls must be readable and non-scrolling: desktop may keep all actions in one row, while phone/tablet widths may use a non-scrolling action grid.
 - Search must span a full row below the tools/actions.
 - No horizontal scrolling is allowed in the category rail or tools/search area.
+- OCR must not freeze the browser tab; failed or slow OCR must leave fields unchanged and allow dismiss/retry/manual entry.
+- The document display window must allocate about 70% of the content space to the scan/document viewer and about 30% to quality/details text on tablet/desktop widths.
 
 The third-party tester must verify that no unapproved UI, animation, layout, theme, or routing changes have been introduced.
 
@@ -132,6 +134,7 @@ The tester must inspect and verify:
    - Backup JSON handling must be reviewed for plaintext exposure and realistic user risk.
    - PIN, auto-lock, biometric registration, and encrypted/unencrypted states must be tested.
    - OCR libraries may load from CDN when OCR is used; document this behavior clearly.
+   - OCR must skip the prior OpenCV contour pass in normal use, downsize large scans before recognition, and recover with a visible message rather than causing browser unresponsiveness.
 
 6. UI lock integrity
    - Ocean animation, helm animation, glass theme, top bar, category row, tools/search row, cards, modals, FAB, and responsive layout must match the stable approved app.
@@ -219,6 +222,7 @@ Test:
 - Search box spans a full row below the tools/actions.
 - No horizontal scrolling in category row or tools/search rows.
 - Document cards, profile strip, modals, FAB, and glass theme remain consistent.
+- Document view modals reserve the majority of the content area for the scan/document image and keep quality/check/version details in a narrower details pane.
 - Text does not overlap, clip, or escape controls.
 
 Evidence:
@@ -358,11 +362,14 @@ Test:
 - OCR does not appear or is limited in Lite mode as designed.
 - OCR runs on image attachment over localhost/HTTPS.
 - First-run OCR library loading behavior is recorded.
+- OCR must downsize large photos before processing and must not trigger a browser "Page Unresponsive" dialog.
+- OCR must skip OpenCV contour analysis in the default flow; the status must not get stuck at contour/layout analysis.
 - OCR failure states are clear and recoverable.
 - Failed OCR leaves fields unchanged and supports retry/manual entry.
 - MRZ sample can be pasted/reviewed if image OCR is unavailable.
 - Apply suggestions updates document fields correctly.
 - Dismiss OCR does not corrupt data.
+- Dismiss/retry during OCR must keep the app inside the wallet page, not crash or navigate away.
 - PDF OCR fallback behavior is documented.
 
 ### 11. PIN, Lock, Auto-Lock, Biometric
