@@ -8,6 +8,7 @@ import { getDocumentValidity } from "../../shared/status/documentStatus";
 import { describeFile, isImageFile, isPdfFile } from "../../shared/files/fileUtils";
 import type { LegacyWalletSnapshot } from "../../app/providers/LegacyDataProvider";
 import { useOnlineStatus } from "../../hooks/useOnlineStatus";
+import { ScannerWorkflow } from "../scanner/ScannerWorkflow";
 import { useReactWallet } from "./ReactWalletProvider";
 import {
   getReactCategoryCounts,
@@ -431,6 +432,7 @@ export function ReactWalletShell({ legacySnapshot }: { legacySnapshot: LegacyWal
   const [filter, setFilter] = useState<ReactWalletStatusFilter>("all");
   const [sort, setSort] = useState<ReactWalletSortKey>("expiry");
   const [showForm, setShowForm] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   const [editing, setEditing] = useState<ReactWalletDocumentView | null>(null);
   const [viewing, setViewing] = useState<ReactWalletDocumentView | null>(null);
   const [message, setMessage] = useState("");
@@ -482,7 +484,10 @@ export function ReactWalletShell({ legacySnapshot }: { legacySnapshot: LegacyWal
       <section className="dashboard">
         <div className="section-title-row">
           <div><p className="eyebrow">React wallet</p><h2>Document dashboard</h2></div>
-          <button type="button" className="primary-action" onClick={() => { setEditing(null); setShowForm(true); }}>Create document</button>
+          <div className="action-cluster">
+            <button type="button" className="secondary-action" onClick={() => setShowScanner(true)}>Scan document</button>
+            <button type="button" className="primary-action" onClick={() => { setEditing(null); setShowForm(true); }}>Create document</button>
+          </div>
         </div>
         <div className="metric-grid">
           {[
@@ -572,6 +577,20 @@ export function ReactWalletShell({ legacySnapshot }: { legacySnapshot: LegacyWal
             else await wallet.createDocument(input, files);
             setShowForm(false);
             setEditing(null);
+          }}
+        />
+      ) : null}
+
+      {showScanner ? (
+        <ScannerWorkflow
+          initialType={category}
+          online={online}
+          onCancel={() => setShowScanner(false)}
+          onSave={async (input, files) => {
+            await wallet.createDocument(input, files);
+            setCategory(input.type);
+            setShowScanner(false);
+            setMessage("Encrypted scan saved.");
           }}
         />
       ) : null}

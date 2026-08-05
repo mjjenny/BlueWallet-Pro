@@ -106,14 +106,35 @@ describe("React CRUD wallet shell", () => {
     expect(screen.getByText("Crew Visa Search Target")).toBeInTheDocument();
   });
 
-  it("does not render OCR, camera, or migration execution controls", async () => {
+  it("renders scanner controls without migration execution controls", async () => {
     const user = userEvent.setup();
     render(<App initialSnapshot={createTestSnapshot()} />);
 
     await setUpPin(user);
-    expect(screen.queryByRole("button", { name: /OCR/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Camera/i })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /scan document/i }));
+    expect(screen.getByRole("dialog", { name: /scan document/i })).toBeInTheDocument();
+    expect(screen.getByText("Camera")).toBeInTheDocument();
+    expect(screen.getByText("OCR text")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /migrate/i })).not.toBeInTheDocument();
+  });
+
+  it("creates an encrypted document from scanned pages and OCR suggestions", async () => {
+    const user = userEvent.setup();
+    render(<App initialSnapshot={createTestSnapshot()} />);
+
+    await setUpPin(user);
+    await user.click(screen.getByRole("button", { name: /scan document/i }));
+    await user.upload(screen.getByLabelText("Import files"), new File(["image"], "passport.png", { type: "image/png" }));
+    await user.type(screen.getByLabelText("OCR text"), [
+      "P<UTOERIKSSON<<ANNA<MARIA<<<<<<<<<<<<<<<<<<<",
+      "L898902C36UTO7408122F3204159ZE184226B<<<<<10",
+    ].join("\n"));
+    await user.click(screen.getByRole("button", { name: /parse ocr/i }));
+    expect(screen.getByDisplayValue("Passport - ERIKSSON ANNA MARIA")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /save encrypted scan/i }));
+
+    expect(await screen.findByText("Passport - ERIKSSON ANNA MARIA")).toBeInTheDocument();
+    expect(screen.getByText("Encrypted scan saved.")).toBeInTheDocument();
   });
 
   it("locks and unlocks with PIN fallback", async () => {
