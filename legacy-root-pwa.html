@@ -2885,14 +2885,14 @@
     }
 
     function filteredList() {
+      const q = searchQ.trim().toLowerCase();
       let list = documents.filter(d => {
         if (activePack) {
           const p = packs.find(x => x.id === activePack);
           if (p) return (p.docIds || []).includes(d.id);
         }
-        return d.type === cat;
+        return q || d.type === cat;
       });
-      const q = searchQ.trim().toLowerCase();
       if (q) {
         list = list.filter(d => queryMatchesDoc(d, q));
       }
@@ -3562,55 +3562,6 @@
             <td>${d.noExpiry ? 'No expiry' : fmt(d.expiryDate)}</td>
             <td>${st.label}</td>
             <td>${esc(d.flagNotes||'')}</td>
-          </tr>`;
-        }).join('');
-        return body || `<tr><td>${esc(label)}</td><td colspan="6">No documents</td></tr>`;
-      }).join('');
-      return `<h1>THE BLUE WALLET — Document Summary</h1>
-        <p>Generated ${new Date().toLocaleString()} · ${documents.length} documents · ${expiryGroupSummary(groups)}</p>
-        <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:12px">
-          <thead><tr><th>Group</th><th>Type</th><th>Title</th><th>Number</th><th>Expiry</th><th>Status</th><th>Flag notes</th></tr></thead>
-          <tbody>${groupRows}</tbody>
-        </table>`;
-    }
-
-    function buildReminderReport() {
-      const groups = getExpiryGroups();
-      const lines = [
-        'Group,Type,Title,Number,Expiry,Status,Days',
-        ...[
-          ['Expired', groups.expired],
-          ['Expiring soon', groups.expiring],
-          ['No expiry', groups.noExpiry],
-          ['Valid', groups.valid]
-        ].flatMap(([group, rows]) => rows.map(d => {
-          const st = status(d);
-          const days = d.noExpiry ? '' : (daysUntil(d.expiryDate) ?? '');
-          return [group, LABELS[d.type]||d.type, d.title, d.number||'', d.noExpiry ? 'No expiry' : fmt(d.expiryDate), st.label, days]
-            .map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',');
-        }))
-      ];
-      return lines.join('\r\n');
-    }
-
-    function buildPrintSheet() {
-      const groups = getExpiryGroups();
-      const groupRows = [
-        ['Expired', groups.expired],
-        ['Expiring soon', groups.expiring],
-        ['No expiry', groups.noExpiry],
-        ['Valid', groups.valid]
-      ].map(([label, rows]) => {
-        const body = rows.map(d => {
-          const st = status(d);
-          return `<tr>
-            <td>${esc(label)}</td>
-            <td>${esc(LABELS[d.type]||d.type)}</td>
-            <td>${esc(d.title)}</td>
-            <td>${esc(d.number||'')}</td>
-            <td>${d.noExpiry ? 'No expiry' : fmt(d.expiryDate)}</td>
-            <td>${st.label}</td>
-            <td>${esc(d.flagNotes||'')}</td>
             <td>${esc(qualitySummary(d))}</td>
             <td>${esc(joiningRisk(d))}</td>
             <td>${esc(d.reminderNote||'')}</td>
@@ -3711,26 +3662,6 @@
       if (!bar) return;
       bar.classList.toggle('show', bulkMode);
       document.getElementById('bulk-count').textContent = selectedIds.size + ' selected';
-    }
-
-    function buildTimelineHtml() {
-      const now = new Date();
-      const months = [];
-      for (let i = 0; i < 12; i++) {
-        const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-        months.push({ y: d.getFullYear(), m: d.getMonth(), label: d.toLocaleString('en', { month: 'short', year: 'numeric' }) });
-      }
-      return '<div class="timeline">' + months.map(mo => {
-        const items = documents.filter(doc => {
-          if (doc.noExpiry || !doc.expiryDate) return false;
-          const e = new Date(doc.expiryDate);
-          return e.getFullYear() === mo.y && e.getMonth() === mo.m;
-        }).map(doc => {
-          const st = status(doc);
-          return `<div class="tl-item ${st.key==='expired'?'bad':(st.key==='expiring'?'warn':'')}">${esc(doc.title)} · ${fmt(doc.expiryDate)}</div>`;
-        }).join('') || '<div class="tl-item" style="color:var(--muted)">—</div>';
-        return `<div class="tl-month"><h4>${mo.label}</h4>${items}</div>`;
-      }).join('') + '</div>';
     }
 
     function buildTimelineHtml() {
