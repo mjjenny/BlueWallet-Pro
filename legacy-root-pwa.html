@@ -1787,6 +1787,8 @@
           <button class="btn btn-ghost" id="btn-reminder-center" style="width:100%;margin-bottom:8px">Reminder center</button>
           <button class="btn btn-ghost" id="btn-download-reminders" style="width:100%;margin-bottom:8px">⬇ Download expiry reminders</button>
           <button class="btn btn-ghost" id="btn-download-summary" style="width:100%;margin-bottom:8px">⬇ Download status summary</button>
+          <button class="btn btn-ghost" id="btn-real-device-qa" style="width:100%;margin-bottom:8px">Real device QA pack</button>
+          <button class="btn btn-ghost" id="btn-release-readiness" style="width:100%;margin-bottom:8px">Release readiness panel</button>
           <button class="btn btn-ghost" id="btn-data-safety" style="width:100%;margin-bottom:8px">Data safety status</button>
           <button class="btn btn-ghost" id="btn-offline-recovery" style="width:100%;margin-bottom:8px">Offline recovery check</button>
           <button class="btn btn-ghost" id="btn-activity-log" style="width:100%">Download activity log</button>
@@ -2707,6 +2709,136 @@
     }
     function openOfflineRecovery() {
       showGeneric('Offline recovery check', buildOfflineRecoveryHtml());
+    }
+    const REAL_DEVICE_QA_KEY = 'bwRealDeviceQa';
+    const REAL_DEVICE_QA_ITEMS = [
+      { id: 'ios-safari-camera', label: 'iOS Safari camera permission', detail: 'Add Document -> Scan with camera prompts correctly, allow/deny/cancel all recover cleanly.' },
+      { id: 'ios-safari-install', label: 'iOS Safari install/offline launch', detail: 'Install from Share -> Add to Home Screen, launch offline, and confirm stable app opens.' },
+      { id: 'ios-safari-backup', label: 'iOS Safari backup and restore', detail: 'Export v6 backup, verify import preview, restore sample data, and confirm no data loss.' },
+      { id: 'android-chrome-camera', label: 'Android Chrome camera and install', detail: 'Camera picker, cancel flow, install prompt, offline launch, and backup download all work.' },
+      { id: 'windows-edge-pwa', label: 'Windows Edge PWA and backup', detail: 'Install/open PWA, export/import backup, print summary, share summary, and offline reload work.' },
+      { id: 'responsive-touch', label: 'Responsive touch layout', detail: 'Phone/tablet/desktop show no horizontal scrolling; Add, Settings, Reminder Center, and Readiness modals fit.' }
+    ];
+    function readRealDeviceQa() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(REAL_DEVICE_QA_KEY) || '{}');
+        return saved && typeof saved === 'object' ? saved : {};
+      } catch (_) { return {}; }
+    }
+    function saveRealDeviceQa(values) {
+      localStorage.setItem(REAL_DEVICE_QA_KEY, JSON.stringify(values || {}));
+    }
+    function realDeviceQaSummary(values = readRealDeviceQa()) {
+      const passed = REAL_DEVICE_QA_ITEMS.filter(item => values[item.id]?.passed).length;
+      return { passed, total: REAL_DEVICE_QA_ITEMS.length, complete: passed === REAL_DEVICE_QA_ITEMS.length };
+    }
+    function buildRealDeviceQaHtml() {
+      const values = readRealDeviceQa();
+      const summary = realDeviceQaSummary(values);
+      const rows = REAL_DEVICE_QA_ITEMS.map(item => {
+        const row = values[item.id] || {};
+        return `<div class="check-item">
+          <div>
+            <div class="cn">${esc(item.label)}</div>
+            <div class="cs">${esc(item.detail)}</div>
+            <textarea data-qa-note="${esc(item.id)}" rows="2" placeholder="Evidence note / device / browser / result" style="width:100%;margin-top:8px">${esc(row.note || '')}</textarea>
+          </div>
+          <label class="sw"><input type="checkbox" data-qa-pass="${esc(item.id)}" ${row.passed ? 'checked' : ''} /><span class="sl"></span></label>
+        </div>`;
+      }).join('');
+      return `
+        <p style="color:var(--muted);margin-bottom:10px">Physical-device QA complete: ${summary.passed}/${summary.total}. This is local-only evidence tracking; it does not upload anything.</p>
+        ${rows}
+        <button class="btn btn-primary" id="generic-export-real-device-qa" style="width:100%;margin-top:12px">Download QA evidence note</button>`;
+    }
+    function bindRealDeviceQaControls() {
+      const values = readRealDeviceQa();
+      document.querySelectorAll('[data-qa-pass]').forEach(input => {
+        input.onchange = () => {
+          const id = input.getAttribute('data-qa-pass');
+          values[id] = Object.assign({}, values[id], { passed: input.checked, at: input.checked ? new Date().toISOString() : '' });
+          saveRealDeviceQa(values);
+        };
+      });
+      document.querySelectorAll('[data-qa-note]').forEach(input => {
+        input.oninput = () => {
+          const id = input.getAttribute('data-qa-note');
+          values[id] = Object.assign({}, values[id], { note: input.value.slice(0, 1000) });
+          saveRealDeviceQa(values);
+        };
+      });
+      document.getElementById('generic-export-real-device-qa').onclick = () => exportRealDeviceQaNote();
+    }
+    function openRealDeviceQaPack() {
+      showGeneric('Real device QA pack', buildRealDeviceQaHtml());
+      bindRealDeviceQaControls();
+    }
+    function exportRealDeviceQaNote() {
+      const values = readRealDeviceQa();
+      const summary = realDeviceQaSummary(values);
+      const lines = [
+        'THE BLUE WALLET real device QA pack',
+        'Generated: ' + new Date().toISOString(),
+        'Physical-device QA complete: ' + summary.passed + '/' + summary.total,
+        '',
+        ...REAL_DEVICE_QA_ITEMS.map(item => {
+          const row = values[item.id] || {};
+          return [
+            item.label,
+            'Result: ' + (row.passed ? 'PASS' : 'OPEN'),
+            'Checked: ' + (row.at || ''),
+            'Evidence: ' + (row.note || '')
+          ].join('\n');
+        }).join('\n\n').split('\n')
+      ];
+      downloadTextFile('blue-wallet-real-device-qa-' + new Date().toISOString().slice(0,10) + '.txt', lines.join('\n'));
+      recordActivity('real-device-qa-exported', { passed: summary.passed, total: summary.total });
+    }
+    function releaseReadinessStatus() {
+      const lastBackup = localStorage.getItem('bwLastBackupExportAt');
+      const backupAgeDays = lastBackup ? Math.floor((Date.now() - new Date(lastBackup).getTime()) / 86400000) : null;
+      const pinOn = localStorage.getItem('bwPinRequired') === '1' || !!localStorage.getItem('bwPinHash');
+      const qa = realDeviceQaSummary();
+      const missing = missingJoiningDocs();
+      const groups = getExpiryGroups();
+      const risky = documents.filter(d => joiningRisk(d) !== 'Ready');
+      const checks = [
+        { label: 'Real-device QA pack complete', pass: qa.complete, detail: qa.passed + '/' + qa.total + ' physical checks passed' },
+        { label: 'Current backup exported', pass: backupAgeDays !== null && backupAgeDays <= 30, detail: backupAgeDays === null ? 'No backup export recorded' : backupAgeDays + ' days since last backup' },
+        { label: 'PIN protection configured', pass: pinOn, detail: pinOn ? 'PIN/lock configured' : 'PIN not configured' },
+        { label: 'No expired documents', pass: groups.expired.length === 0, detail: groups.expired.length + ' expired' },
+        { label: 'Core joining documents present', pass: missing.length === 0, detail: missing.length ? missing.join(', ') : 'Core set present' },
+        { label: 'Document quality/risk reviewed', pass: risky.length === 0, detail: risky.length + ' documents need review' }
+      ];
+      const blockers = checks.filter(check => !check.pass);
+      return { checks, blockers, ready: blockers.length === 0 };
+    }
+    function buildReleaseReadinessHtml() {
+      const status = releaseReadinessStatus();
+      const rows = status.checks.map(check => `<div class="check-item ${check.pass ? 'ok' : 'miss'}">
+        <div><div class="cn">${esc(check.label)}</div><div class="cs">${esc(check.detail)}</div></div>
+        <span class="badge ${check.pass ? 'b-ok' : 'b-bad'}">${check.pass ? 'PASS' : 'OPEN'}</span>
+      </div>`).join('');
+      return `
+        <div class="help-card"><h4>${status.ready ? 'Release ready' : 'Release not ready'}</h4><p>${status.ready ? 'All local readiness checks are green. Final release still needs Jenny approval.' : 'Open blockers must be fixed, completed, or formally waived before stable release.'}</p></div>
+        ${rows}
+        <button class="btn btn-primary" id="generic-export-readiness" style="width:100%;margin-top:12px">Download readiness report</button>`;
+    }
+    function openReleaseReadinessPanel() {
+      showGeneric('Release readiness panel', buildReleaseReadinessHtml());
+      document.getElementById('generic-export-readiness').onclick = () => exportReleaseReadinessReport();
+    }
+    function exportReleaseReadinessReport() {
+      const status = releaseReadinessStatus();
+      const lines = [
+        'THE BLUE WALLET release readiness report',
+        'Generated: ' + new Date().toISOString(),
+        'Decision: ' + (status.ready ? 'READY FOR JENNY APPROVAL' : 'NOT READY'),
+        '',
+        ...status.checks.map(check => `${check.pass ? 'PASS' : 'OPEN'} | ${check.label} | ${check.detail}`)
+      ];
+      downloadTextFile('blue-wallet-release-readiness-' + new Date().toISOString().slice(0,10) + '.txt', lines.join('\n'));
+      recordActivity('release-readiness-exported', { ready: status.ready, blockers: status.blockers.length });
     }
 
     function filteredList() {
@@ -4332,6 +4464,8 @@
         ['btn-seatime', 'Open sea time log'],
         ['btn-vaccines', 'Open vaccines log'],
         ['btn-bulk', 'Select multiple documents'],
+        ['btn-real-device-qa', 'Open real device QA pack'],
+        ['btn-release-readiness', 'Open release readiness panel'],
         ['btn-data-safety', 'Open data safety status'],
         ['btn-reminder-center', 'Open reminder center'],
         ['btn-offline-recovery', 'Open offline recovery check'],
@@ -4436,6 +4570,8 @@
       document.getElementById('btn-ics').onclick = () => exportIcs();
       document.getElementById('btn-download-reminders').onclick = () => exportReminderReport();
       document.getElementById('btn-reminder-center').onclick = () => openReminderCenter();
+      document.getElementById('btn-real-device-qa').onclick = () => openRealDeviceQaPack();
+      document.getElementById('btn-release-readiness').onclick = () => openReleaseReadinessPanel();
       document.getElementById('btn-data-safety').onclick = () => openDataSafetyStatus();
       document.getElementById('btn-offline-recovery').onclick = () => openOfflineRecovery();
       document.getElementById('btn-activity-log').onclick = () => downloadActivityLog();
