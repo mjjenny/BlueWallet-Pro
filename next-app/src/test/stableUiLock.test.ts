@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 
 const repoRoot = path.resolve(process.cwd(), "..");
 
-const STABLE_CSS_SHA256 = "ca593cee9bc121ef1110cfada2edf8d51c1c8d2ba2cb27d05fd73363ce45b810";
+const STABLE_CSS_SHA256 = "e6dcf47a25d8b11a7daca39006984b090142e8898e933588d0018aad7bc92aab";
 const STABLE_LAYOUT_MARKERS_SHA256 = "ceb7d452bcb9d78e347140e99ccde060d011b374aa739b827e2c804ae5b63415";
 
 const STABLE_LAYOUT_MARKERS = [
@@ -62,5 +62,12 @@ describe("stable app UI lock", () => {
     expect(sha256(stableCss(stableHtml))).toBe(STABLE_CSS_SHA256);
     expect(sha256(layoutMarkerSignature(stableHtml))).toBe(STABLE_LAYOUT_MARKERS_SHA256);
   });
-});
 
+  it("keeps every category tab visible in one row without horizontal scrolling", () => {
+    const css = stableCss(readRootFile("legacy-root-pwa.html"));
+
+    expect(css).toContain("overflow-x: hidden");
+    expect(css).toContain("scrollbar-width: none");
+    expect(css).toContain(".cat {\n      display: flex; align-items: center; justify-content: center; gap: 5px;\n      flex: 1 1 0; min-width: 0;");
+  });
+});

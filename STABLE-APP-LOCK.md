@@ -30,3 +30,6 @@ Future development should preserve the stable user experience and add functional
 
 The automated tests include a stable UI lock. If that lock fails, either revert the visual change or record Jenny's explicit approval before updating the lock.
 
+## Approved Visual Changes
+
+- 2026-08-05: Jenny approved changing the category rail so all category tabs stay visible in one row without horizontal scrolling. This approval applies only to the category tab row and does not permit unrelated UI, animation, layout, theme, or routing changes.

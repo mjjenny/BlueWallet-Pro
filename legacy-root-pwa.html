@@ -324,18 +324,18 @@
 
     /* ===== CATEGORY RAIL (no All) ===== */
     .cats {
-      display: flex; flex-wrap: nowrap; gap: 6px;
-      justify-content: flex-start; align-items: stretch;
+      display: flex; flex-wrap: nowrap; gap: clamp(3px, .45vw, 7px);
+      justify-content: stretch; align-items: stretch;
       padding: 2px 0 6px; width: 100%;
-      overflow-x: auto; -webkit-overflow-scrolling: touch;
-      scrollbar-width: thin;
+      overflow-x: hidden; -webkit-overflow-scrolling: auto;
+      scrollbar-width: none;
     }
-    .cats::-webkit-scrollbar { height: 4px; }
+    .cats::-webkit-scrollbar { display: none; height: 0; }
     .cats::-webkit-scrollbar-thumb { background: rgba(94,212,255,.35); border-radius: 4px; }
     .cat {
       display: flex; align-items: center; justify-content: center; gap: 5px;
-      flex: 0 0 auto;
-      padding: 10px 12px; border-radius: 12px; cursor: pointer;
+      flex: 1 1 0; min-width: 0;
+      padding: 10px clamp(4px, .55vw, 10px); border-radius: 12px; cursor: pointer;
       background: var(--glass);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
@@ -351,8 +351,9 @@
     }
     .cat-ico { font-size: 14px; line-height: 1; flex-shrink: 0; }
     .cat-name {
-      font-size: 11px; font-weight: 700; white-space: nowrap; color: #fff;
-      overflow: visible; text-overflow: clip; max-width: none;
+      min-width: 0;
+      font-size: clamp(8px, .72vw, 11px); font-weight: 700; white-space: nowrap; color: #fff;
+      overflow: hidden; text-overflow: ellipsis; max-width: 100%;
       letter-spacing: .02em;
     }
     .cat.active .cat-name { color: var(--accent); }
@@ -367,14 +368,14 @@
     body.app-lite .cat { flex: 1 1 0; min-width: 0; padding: 10px 6px; }
     body.app-lite .cat-name { overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
     @media (min-width: 700px) {
-      .cats { gap: 8px; }
-      .cat { padding: 12px 14px; gap: 7px; border-radius: 14px; }
-      .cat-ico { font-size: 16px; }
-      .cat-name { font-size: 12px; }
-      .cat-n { font-size: 12px; min-width: 20px; height: 20px; }
+      .cats { gap: clamp(4px, .5vw, 8px); }
+      .cat { padding: 12px clamp(5px, .6vw, 10px); gap: clamp(4px, .45vw, 7px); border-radius: 14px; }
+      .cat-ico { font-size: clamp(13px, 1vw, 16px); }
+      .cat-name { font-size: clamp(9px, .72vw, 12px); }
+      .cat-n { font-size: 11px; min-width: 18px; height: 18px; }
     }
     @media (min-width: 1100px) {
-      .cat-name { font-size: 13px; }
+      .cat-name { font-size: clamp(10px, .68vw, 12px); }
     }
 
     /* ===== SECTION HEAD ===== */
@@ -622,10 +623,10 @@
       .profile-meta h2 { font-size: 16px; }
       .pill { font-size: 12px; padding: 4px 10px; }
 
-      .cats { gap: 5px; }
-      .cat { padding: 9px 10px; border-radius: 10px; gap: 4px; }
-      .cat-ico { font-size: 13px; }
-      .cat-name { font-size: 10px; }
+      .cats { gap: 3px; }
+      .cat { padding: 8px 3px; border-radius: 10px; gap: 3px; }
+      .cat-ico { font-size: clamp(11px, 3.1vw, 13px); }
+      .cat-name { font-size: clamp(0px, 2.35vw, 9px); }
       .cat-n { font-size: 10px; min-width: 15px; height: 15px; }
       body.app-lite .cat { padding: 9px 4px; }
       body.app-lite .cat-name { font-size: 9px; }
@@ -650,9 +651,9 @@
         grid-template-columns: 1fr 1fr;
         gap: 12px;
       }
-      .cats { gap: 6px; }
-      .cat { padding: 12px 6px; gap: 5px; }
-      .cat-name { font-size: 11px; }
+      .cats { gap: 4px; }
+      .cat { padding: 11px 4px; gap: 4px; }
+      .cat-name { font-size: clamp(8px, 1.2vw, 11px); }
       .fab { display: none; }
       .top-actions .btn-primary { display: inline-flex; }
     }
@@ -669,11 +670,11 @@
       .profile-photo { width: 76px; height: 76px; }
       .profile-meta h2 { font-size: 20px; }
 
-      .cats { gap: 10px; }
-      .cat { padding: 14px 12px; gap: 8px; border-radius: 14px; }
-      .cat-ico { font-size: 18px; }
-      .cat-name { font-size: 13px; }
-      .cat-n { font-size: 12px; min-width: 20px; height: 20px; }
+      .cats { gap: 6px; }
+      .cat { padding: 14px 7px; gap: 5px; border-radius: 14px; }
+      .cat-ico { font-size: 16px; }
+      .cat-name { font-size: clamp(9px, .7vw, 12px); }
+      .cat-n { font-size: 11px; min-width: 18px; height: 18px; }
 
       .docs {
         display: grid;
