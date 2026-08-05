@@ -377,13 +377,16 @@ Test:
 Test:
 
 - Full backup download.
+- Backup filename and JSON metadata clearly identify the stable backup version.
+- New stable backups include a SHA-256 integrity block.
 - Backup JSON structure and contents.
 - Assess whether sensitive document titles, numbers, notes, or image data are plainly visible.
 - Import backup into clean browser profile.
+- Restore shows a confirmation summary before writing any imported records.
 - Confirm all documents and attachments restore.
 - Confirm profile restores.
 - Confirm packs/logs/sea-time/vaccines/reminders restore.
-- Wrong/corrupt backup file fails cleanly.
+- Wrong/corrupt/tampered backup file fails cleanly before any import write.
 - Duplicate import behavior is documented.
 - Meta transfer exports only intended lightweight metadata.
 - Status summary download works.

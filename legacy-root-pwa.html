@@ -1737,10 +1737,10 @@
         </div>
         <div class="sblock">
           <h3>Download &amp; backup</h3>
-          <p>Export keeps scans private on your device. Import restores a previous file. Meta transfer is lightweight (Full mode).</p>
-          <button class="btn btn-primary" id="btn-export" style="width:100%;margin-bottom:8px">⬇ Download full backup</button>
+          <p>Export keeps scans private on your device. Full backups include a version label and integrity check.</p>
+          <button class="btn btn-primary" id="btn-export" style="width:100%;margin-bottom:8px">⬇ Download full backup v5</button>
           <input type="file" id="import-file" accept=".json" class="hidden" />
-          <button class="btn btn-ghost" id="btn-import" style="width:100%;margin-bottom:8px">⬆ Import backup</button>
+          <button class="btn btn-ghost" id="btn-import" style="width:100%;margin-bottom:8px">⬆ Verify &amp; import backup</button>
           <button class="btn btn-ghost full-only" id="btn-meta-transfer" style="width:100%;margin-bottom:8px">Multi-device meta transfer</button>
           <button class="btn btn-ghost" id="btn-download-summary" style="width:100%">⬇ Download status summary</button>
           <p style="font-size:12px;color:var(--muted);margin-top:10px">Also: open any document → Download scan · Tools → Share / Calendar (.ics in Full).</p>
@@ -2298,6 +2298,112 @@
     function savePacks() { localStorage.setItem('bwPacks', JSON.stringify(packs)); }
     function saveSeatime() { localStorage.setItem('bwSeatime', JSON.stringify(seatime)); }
     function saveVaccines() { localStorage.setItem('bwVaccines', JSON.stringify(vaccines)); }
+    const BACKUP_FORMAT = 'bluewallet-pro-stable-backup';
+    const BACKUP_VERSION = 5;
+    const BACKUP_LABEL = 'Blue Wallet Stable Backup v5';
+    function isPlainObject(value) {
+      return !!value && typeof value === 'object' && !Array.isArray(value);
+    }
+    function canonicalJson(value) {
+      if (Array.isArray(value)) return '[' + value.map(canonicalJson).join(',') + ']';
+      if (isPlainObject(value)) {
+        return '{' + Object.keys(value).sort()
+          .filter(key => value[key] !== undefined)
+          .map(key => JSON.stringify(key) + ':' + canonicalJson(value[key]))
+          .join(',') + '}';
+      }
+      if (typeof value === 'number') return Number.isFinite(value) ? String(value) : 'null';
+      return JSON.stringify(value);
+    }
+    function backupWithoutIntegrity(data) {
+      const copy = JSON.parse(JSON.stringify(data || {}));
+      delete copy.integrity;
+      return copy;
+    }
+    async function sha256Hex(text) {
+      if (!cryptoSubtleOk()) throw new Error('Backup integrity verification needs HTTPS or localhost.');
+      const bytes = new TextEncoder().encode(text);
+      const digest = await crypto.subtle.digest('SHA-256', bytes);
+      return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+    async function signBackup(data) {
+      const unsigned = backupWithoutIntegrity(data);
+      return Object.assign(unsigned, {
+        integrity: {
+          algorithm: 'SHA-256',
+          hash: await sha256Hex(canonicalJson(unsigned)),
+          generatedAt: unsigned.exportedAt
+        }
+      });
+    }
+    async function verifyBackupIntegrity(data) {
+      if (!isPlainObject(data.integrity)) return { verified: false, reason: 'legacy backup has no checksum' };
+      if (data.integrity.algorithm !== 'SHA-256' || typeof data.integrity.hash !== 'string') {
+        throw new Error('Invalid backup integrity block.');
+      }
+      const expected = await sha256Hex(canonicalJson(backupWithoutIntegrity(data)));
+      if (expected !== data.integrity.hash) {
+        throw new Error('Backup integrity check failed. The file may be corrupted or edited.');
+      }
+      return { verified: true, reason: 'SHA-256 checksum verified' };
+    }
+    async function inspectBackup(data) {
+      if (!isPlainObject(data)) throw new Error('Invalid backup file.');
+      const version = Number(data.version || 1);
+      if (!Number.isFinite(version) || version < 1) throw new Error('Invalid backup version.');
+      if (version > BACKUP_VERSION) throw new Error('This backup was created by a newer app version.');
+      if (data.format && data.format !== BACKUP_FORMAT) throw new Error('Unsupported backup format.');
+      if (!Array.isArray(data.documents)) throw new Error('Invalid backup: documents list is missing.');
+      const integrity = await verifyBackupIntegrity(data);
+      const cleanDocs = [];
+      const seenIds = new Set();
+      for (const raw of data.documents) {
+        if (!isPlainObject(raw)) throw new Error('Invalid backup: document entry is malformed.');
+        const doc = sanitizeDoc(normalizeDoc(Object.assign({}, raw)));
+        if (!doc) throw new Error('Invalid backup: document entry could not be read.');
+        if (seenIds.has(doc.id)) throw new Error('Invalid backup: duplicate document id ' + doc.id + '.');
+        seenIds.add(doc.id);
+        cleanDocs.push(doc);
+      }
+      const arrays = ['packs', 'seatime', 'vaccines'];
+      for (const key of arrays) {
+        if (data[key] != null && !Array.isArray(data[key])) throw new Error('Invalid backup: ' + key + ' must be a list.');
+      }
+      const objects = ['profile', 'seafarer', 'reminders', 'settings'];
+      for (const key of objects) {
+        if (data[key] != null && !isPlainObject(data[key])) throw new Error('Invalid backup: ' + key + ' must be an object.');
+      }
+      return {
+        version,
+        label: data.backupVersionLabel || ('Blue Wallet Backup v' + version),
+        exportedAt: data.exportedAt || 'Unknown date',
+        cleanDocs,
+        integrity,
+        counts: {
+          documents: cleanDocs.length,
+          packs: Array.isArray(data.packs) ? data.packs.length : 0,
+          seatime: Array.isArray(data.seatime) ? data.seatime.length : 0,
+          vaccines: Array.isArray(data.vaccines) ? data.vaccines.length : 0
+        }
+      };
+    }
+    function buildRestoreConfirmation(info) {
+      const checked = info.integrity.verified ? 'Integrity: verified' : 'Integrity: legacy structural check only';
+      return [
+        'Restore backup?',
+        '',
+        'Backup: ' + info.label,
+        'Exported: ' + info.exportedAt,
+        checked,
+        'Documents: ' + info.counts.documents,
+        'Packs: ' + info.counts.packs,
+        'Sea time entries: ' + info.counts.seatime,
+        'Vaccines: ' + info.counts.vaccines,
+        '',
+        'This will merge/update matching local records on this device.',
+        'Continue restore?'
+      ].join('\n');
+    }
     function updateStripProfile() {
       const n = document.getElementById('strip-name');
       const r = document.getElementById('strip-rank');
@@ -4256,7 +4362,10 @@
       document.getElementById('btn-export').onclick = async () => {
         if (vaultLocked) { alert('Unlock the vault before exporting.'); return; }
         const data = {
-          version: 4,
+          format: BACKUP_FORMAT,
+          app: 'BlueWallet-Pro Stable',
+          version: BACKUP_VERSION,
+          backupVersionLabel: BACKUP_LABEL,
           exportedAt: new Date().toISOString(),
           documents,
           profile: await getProfile(),
@@ -4273,9 +4382,10 @@
           }
           // PIN hash and WebAuthn credentials intentionally excluded
         };
+        const signed = await signBackup(data);
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: 'application/json' }));
-        a.download = `blue-wallet-backup-${new Date().toISOString().slice(0,10)}.json`;
+        a.href = URL.createObjectURL(new Blob([JSON.stringify(signed, null, 2)], { type: 'application/json' }));
+        a.download = `blue-wallet-stable-backup-v${BACKUP_VERSION}-${new Date().toISOString().slice(0,10)}.json`;
         a.click();
       };
       document.getElementById('btn-import').onclick = () => document.getElementById('import-file').click();
@@ -4283,12 +4393,9 @@
         const f = e.target.files[0]; if (!f) return;
         try {
           const data = JSON.parse(await f.text());
-          if (!Array.isArray(data.documents) || !data.documents.length) throw new Error('Invalid backup (no documents)');
-          if (!confirm(`Import ${data.documents.length} documents?`)) return;
-          for (const raw of data.documents) {
-            let doc = normalizeDoc(raw || {});
-            doc = sanitizeDoc(doc);
-            if (!doc) continue;
+          const backupInfo = await inspectBackup(data);
+          if (!confirm(buildRestoreConfirmation(backupInfo))) return;
+          for (const doc of backupInfo.cleanDocs) {
             await saveDoc(doc);
           }
           if (data.profile && typeof data.profile === 'object') await saveProfile(data.profile);
@@ -4317,7 +4424,7 @@
           loadMeta();
           updateStripProfile();
           render();
-          alert('Import successful!');
+          alert('Restore successful. ' + backupInfo.counts.documents + ' documents verified before import.');
         } catch (err) { alert('Import failed: ' + err.message); }
         e.target.value = '';
       };
