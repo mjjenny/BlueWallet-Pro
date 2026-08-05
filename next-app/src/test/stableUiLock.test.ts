@@ -5,8 +5,8 @@ import { describe, expect, it } from "vitest";
 
 const repoRoot = path.resolve(process.cwd(), "..");
 
-const STABLE_CSS_SHA256 = "b875bfe6f6b611ff7a57732e11e22bc9ee19c82931687ffb81e734bfbef72faa";
-const STABLE_LAYOUT_MARKERS_SHA256 = "330f3239f57f73630c3a8d6a8faab8ee41e8eebd88c3ab0f08ebc732d0b88b72";
+const STABLE_CSS_SHA256 = "654f217b4f7354c722e162258c48b9b00ff56aedad34360d03a5f7a85718c6d2";
+const STABLE_LAYOUT_MARKERS_SHA256 = "0464903a11ac5a69a1c2dc163585b1fc2e50f8b882dde90f6fa60ab71a559190";
 
 const STABLE_LAYOUT_MARKERS = [
   "ocean-bg",
@@ -56,7 +56,7 @@ describe("stable app UI lock", () => {
     expect(rootIndex).toContain("./legacy-root-pwa.html");
     expect(rootIndex).not.toContain("./react-app/index.html");
     expect(manifest.start_url).toBe("./legacy-root-pwa.html?v=stable");
-    expect(worker).toContain("blue-wallet-stable-rollback-v0.10");
+    expect(worker).toContain("blue-wallet-stable-rollback-v0.11");
     expect(worker).toContain('caches.match("./legacy-root-pwa.html")');
   });
 
@@ -125,16 +125,25 @@ describe("stable app UI lock", () => {
     const html = readRootFile("legacy-root-pwa.html");
 
     expect(html).toContain('id="theme-grid"');
-    expect(html).toContain('data-theme-choice="ocean"');
-    expect(html).toContain('data-theme-choice="night"');
-    expect(html).toContain('data-theme-choice="aurora"');
-    expect(html).toContain('data-theme-choice="sunset"');
-    expect(html).toContain('data-theme-choice="current"');
-    expect(html).toContain("const THEME_CHOICES = ['ocean', 'night', 'aurora', 'sunset', 'current'];");
+    ["violet", "indigo", "ocean", "current", "yellow", "sunset", "red", "night", "aurora"].forEach((theme) => {
+      expect(html).toContain(`data-theme-choice="${theme}"`);
+    });
+    expect(html).toContain("const THEME_CHOICES = ['violet', 'indigo', 'ocean', 'current', 'yellow', 'sunset', 'red', 'night', 'aurora'];");
     expect(html).toContain("localStorage.setItem('bwTheme', t);");
+    expect(html).toContain("VIBGYOR violet");
+    expect(html).toContain("VIBGYOR indigo");
+    expect(html).toContain("VIBGYOR blue");
+    expect(html).toContain("VIBGYOR green");
+    expect(html).toContain("VIBGYOR yellow");
+    expect(html).toContain("VIBGYOR orange");
+    expect(html).toContain("VIBGYOR red");
+    expect(css).toContain('html[data-theme="violet"]');
+    expect(css).toContain('html[data-theme="indigo"]');
     expect(css).toContain('html[data-theme="aurora"]');
     expect(css).toContain('html[data-theme="sunset"]');
     expect(css).toContain('html[data-theme="current"]');
+    expect(css).toContain('html[data-theme="yellow"]');
+    expect(css).toContain('html[data-theme="red"]');
     expect(css).toContain(".theme-grid");
     expect(css).toContain(".theme-choice.is-active");
   });

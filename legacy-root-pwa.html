@@ -97,6 +97,66 @@
       --glass: rgba(5, 28, 30, 0.5);
       --glass-border: rgba(90, 232, 220, 0.18);
     }
+    html[data-theme="violet"] {
+      --bg: #10091a;
+      --panel: rgba(42, 20, 70, 0.58);
+      --panel-solid: #1d1230;
+      --panel2: rgba(66, 32, 104, 0.66);
+      --line: rgba(206, 158, 255, 0.22);
+      --accent: #ce9eff;
+      --accent2: #8b5cf6;
+      --text: #fbf7ff;
+      --muted: #c7aee2;
+      --brand-grad: linear-gradient(145deg, #ce9eff, #7c3aed);
+      --brand-shadow: rgba(206, 158, 255, 0.34);
+      --glass: rgba(32, 14, 54, 0.5);
+      --glass-border: rgba(206, 158, 255, 0.2);
+    }
+    html[data-theme="indigo"] {
+      --bg: #070d1f;
+      --panel: rgba(18, 28, 74, 0.58);
+      --panel-solid: #10183d;
+      --panel2: rgba(30, 44, 108, 0.66);
+      --line: rgba(136, 164, 255, 0.22);
+      --accent: #88a4ff;
+      --accent2: #536dfe;
+      --text: #f4f6ff;
+      --muted: #a9b8e6;
+      --brand-grad: linear-gradient(145deg, #88a4ff, #4f46e5);
+      --brand-shadow: rgba(136, 164, 255, 0.32);
+      --glass: rgba(12, 20, 54, 0.5);
+      --glass-border: rgba(136, 164, 255, 0.2);
+    }
+    html[data-theme="yellow"] {
+      --bg: #141104;
+      --panel: rgba(54, 44, 10, 0.58);
+      --panel-solid: #2c2407;
+      --panel2: rgba(86, 70, 14, 0.66);
+      --line: rgba(255, 224, 102, 0.24);
+      --accent: #ffe066;
+      --accent2: #f7b801;
+      --text: #fffbe8;
+      --muted: #d7c78a;
+      --brand-grad: linear-gradient(145deg, #ffe066, #f7b801);
+      --brand-shadow: rgba(255, 224, 102, 0.34);
+      --glass: rgba(42, 34, 6, 0.5);
+      --glass-border: rgba(255, 224, 102, 0.22);
+    }
+    html[data-theme="red"] {
+      --bg: #170707;
+      --panel: rgba(62, 18, 22, 0.58);
+      --panel-solid: #321014;
+      --panel2: rgba(96, 28, 34, 0.66);
+      --line: rgba(255, 120, 128, 0.24);
+      --accent: #ff7880;
+      --accent2: #e63946;
+      --text: #fff5f5;
+      --muted: #daa0a4;
+      --brand-grad: linear-gradient(145deg, #ff7880, #e63946);
+      --brand-shadow: rgba(255, 120, 128, 0.34);
+      --glass: rgba(44, 12, 16, 0.5);
+      --glass-border: rgba(255, 120, 128, 0.22);
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; }
     html, body, button, input, select, textarea {
@@ -190,6 +250,42 @@
     html[data-theme="current"] .ocean-bg .wave { opacity: .5; }
     html[data-theme="current"] .ocean-bg .w1 { animation-duration: 18s; }
     html[data-theme="current"] .ocean-bg .w2 { animation-duration: 24s; }
+    html[data-theme="violet"] body {
+      background-image:
+        radial-gradient(ellipse 110% 62% at 44% -12%, rgba(206,158,255,0.22), transparent 55%),
+        radial-gradient(ellipse 90% 48% at 58% 105%, rgba(124,58,237,0.26), transparent 54%);
+    }
+    html[data-theme="violet"] .ocean-bg { filter: hue-rotate(196deg) saturate(1.22); }
+    html[data-theme="violet"] .ocean-bg .wave { opacity: .5; }
+    html[data-theme="violet"] .ocean-bg .w1 { animation-duration: 14s; }
+    html[data-theme="violet"] .ocean-bg .w2 { animation-duration: 19s; }
+    html[data-theme="indigo"] body {
+      background-image:
+        radial-gradient(ellipse 110% 62% at 42% -12%, rgba(136,164,255,0.22), transparent 55%),
+        radial-gradient(ellipse 90% 48% at 62% 105%, rgba(83,109,254,0.24), transparent 54%);
+    }
+    html[data-theme="indigo"] .ocean-bg { filter: hue-rotate(176deg) saturate(1.18); }
+    html[data-theme="indigo"] .ocean-bg .wave { opacity: .46; }
+    html[data-theme="indigo"] .ocean-bg .w1 { animation-duration: 16s; }
+    html[data-theme="indigo"] .ocean-bg .w2 { animation-duration: 22s; }
+    html[data-theme="yellow"] body {
+      background-image:
+        radial-gradient(ellipse 105% 58% at 50% -12%, rgba(255,224,102,0.18), transparent 55%),
+        radial-gradient(ellipse 85% 44% at 50% 105%, rgba(247,184,1,0.24), transparent 52%);
+    }
+    html[data-theme="yellow"] .ocean-bg { filter: hue-rotate(118deg) saturate(1.05); }
+    html[data-theme="yellow"] .ocean-bg .wave { opacity: .42; }
+    html[data-theme="yellow"] .ocean-bg .w1 { animation-duration: 17s; }
+    html[data-theme="yellow"] .ocean-bg .w2 { animation-duration: 23s; }
+    html[data-theme="red"] body {
+      background-image:
+        radial-gradient(ellipse 105% 58% at 50% -12%, rgba(255,120,128,0.2), transparent 55%),
+        radial-gradient(ellipse 85% 44% at 50% 105%, rgba(230,57,70,0.24), transparent 52%);
+    }
+    html[data-theme="red"] .ocean-bg { filter: hue-rotate(150deg) saturate(1.35); }
+    html[data-theme="red"] .ocean-bg .wave { opacity: .45; }
+    html[data-theme="red"] .ocean-bg .w1 { animation-duration: 13s; }
+    html[data-theme="red"] .ocean-bg .w2 { animation-duration: 18s; }
     @media (prefers-reduced-motion: reduce) {
       .ocean-bg .wave { animation: none !important; }
     }
@@ -1882,11 +1978,15 @@
           <h3>Appearance</h3>
           <p>Choose a sea theme and motion style.</p>
           <div class="theme-grid" id="theme-grid" role="radiogroup" aria-label="Appearance theme">
-            <button type="button" class="theme-choice" data-theme-choice="ocean"><span>🌊</span><span>Ocean Blue<small>Classic swell</small></span></button>
+            <button type="button" class="theme-choice" data-theme-choice="violet"><span>🟣</span><span>Violet Tide<small>VIBGYOR violet</small></span></button>
+            <button type="button" class="theme-choice" data-theme-choice="indigo"><span>🔷</span><span>Indigo Depth<small>VIBGYOR indigo</small></span></button>
+            <button type="button" class="theme-choice" data-theme-choice="ocean"><span>🌊</span><span>Ocean Blue<small>VIBGYOR blue, default</small></span></button>
+            <button type="button" class="theme-choice" data-theme-choice="current"><span>🟢</span><span>Deep Current<small>VIBGYOR green</small></span></button>
+            <button type="button" class="theme-choice" data-theme-choice="yellow"><span>🟡</span><span>Golden Beacon<small>VIBGYOR yellow</small></span></button>
+            <button type="button" class="theme-choice" data-theme-choice="sunset"><span>🟠</span><span>Harbor Sunset<small>VIBGYOR orange</small></span></button>
+            <button type="button" class="theme-choice" data-theme-choice="red"><span>🔴</span><span>Coral Red<small>VIBGYOR red</small></span></button>
             <button type="button" class="theme-choice" data-theme-choice="night"><span>🌑</span><span>Abyssal Night<small>Slow deep water</small></span></button>
             <button type="button" class="theme-choice" data-theme-choice="aurora"><span>✨</span><span>Aurora Watch<small>Bright animated glow</small></span></button>
-            <button type="button" class="theme-choice" data-theme-choice="sunset"><span>🌅</span><span>Harbor Sunset<small>Warm rolling light</small></span></button>
-            <button type="button" class="theme-choice" data-theme-choice="current"><span>🧭</span><span>Deep Current<small>Calm teal motion</small></span></button>
           </div>
         </div>
         <div class="sblock">
@@ -4570,7 +4670,7 @@
       resetIdle();
 
       // Theme
-      const THEME_CHOICES = ['ocean', 'night', 'aurora', 'sunset', 'current'];
+      const THEME_CHOICES = ['violet', 'indigo', 'ocean', 'current', 'yellow', 'sunset', 'red', 'night', 'aurora'];
       function normalizeTheme(theme) {
         if (theme === 'green') return 'ocean';
         return THEME_CHOICES.includes(theme) ? theme : 'ocean';
