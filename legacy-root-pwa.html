@@ -738,6 +738,19 @@
       box-shadow: 0 -16px 56px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.08);
       animation: up .35s cubic-bezier(.22,1,.36,1);
     }
+    .scan-sheet {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .scan-form {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+    }
+    @media (max-width: 559.98px) {
+      .scan-sheet { max-height: 90dvh; }
+    }
     @keyframes up {
       from { opacity: 0; transform: translateY(40px); }
       to { opacity: 1; transform: translateY(0); }
@@ -1050,6 +1063,7 @@
     /* ===== v0.2: camera, update and storage UX ===== */
     .capture-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
     .capture-actions .btn { min-height:46px; }
+    .scan-status { font-size:12px; color:var(--muted); margin-top:8px; min-height:18px; }
     .app-toast {
       position:fixed; left:12px; right:12px; bottom:calc(92px + env(safe-area-inset-bottom, 0px));
       z-index:12000; display:none; align-items:center; gap:10px; padding:12px 14px;
@@ -1350,12 +1364,12 @@
 
   <!-- ADD -->
   <div class="overlay" id="modal-add">
-    <div class="modal">
+    <div class="modal scan-sheet">
       <div class="modal-head">
         <h2 id="modal-title">Add Document</h2>
         <button class="x" id="close-add">✕</button>
       </div>
-      <form class="modal-body" id="form-doc">
+      <form class="modal-body scan-form" id="form-doc">
         <input type="hidden" id="doc-id" />
         <div class="field">
           <label>Document Type *</label>
@@ -1401,8 +1415,8 @@
         <div class="field">
           <label>Scan / Photo *</label>
           <div class="drop" id="drop-zone">
-            <input type="file" id="doc-file" accept="image/*,application/pdf" multiple class="hidden" />
-            <input type="file" id="camera-file" accept="image/*" capture="environment" class="hidden" />
+            <input type="file" id="doc-file" accept="image/*,application/pdf" multiple class="hidden" aria-label="Choose document scans or PDF files" />
+            <input type="file" id="camera-file" accept="image/*" capture="environment" class="hidden" aria-label="Open camera to scan document" />
             <div class="prev" id="file-preview"><img id="preview-img" alt="" /><div class="pn" id="preview-name"></div></div>
             <div class="file-chips" id="file-chips"></div>
             <div id="file-placeholder">
@@ -1415,10 +1429,11 @@
             <button type="button" class="btn btn-primary" id="btn-camera">📷 Scan with camera</button>
             <button type="button" class="btn btn-ghost" id="btn-files">📁 Choose files / PDF</button>
           </div>
+          <div class="scan-status" id="scan-status" role="status" aria-live="polite"></div>
           <p style="font-size:12px;color:var(--muted);margin-top:8px">v0.2 automatically reduces large photos for dependable offline storage while retaining readable document detail.</p>
           <button type="button" class="btn btn-ghost full-only" id="btn-ocr" style="width:100%;margin-top:10px">🔍 Read text from scan (OCR)</button>
           <div id="ocr-panel" class="full-only" style="display:none;margin-top:10px;padding:12px;border-radius:14px;background:rgba(0,0,0,.35);border:1px solid var(--glass-border);text-align:left">
-            <div id="ocr-status" style="font-size:13px;color:var(--muted);margin-bottom:8px"></div>
+            <div id="ocr-status" role="status" aria-live="polite" style="font-size:13px;color:var(--muted);margin-bottom:8px"></div>
             <div id="ocr-suggestions" style="font-size:13px;margin-bottom:8px"></div>
             <pre id="ocr-raw" style="max-height:120px;overflow:auto;font-size:11px;white-space:pre-wrap;color:#b8d4e6;margin:0 0 10px"></pre>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -1621,6 +1636,11 @@
           <div class="help-sec">
             <h3>OCR</h3>
             <p>On Add/Edit after attaching an <strong>image</strong>. Runs layout zones + MRZ + OpenCV when available. Always <strong>review → Apply</strong>. Needs HTTPS or localhost (not <code>file://</code>).</p>
+            <ul>
+              <li>On iOS Safari, camera permission is tested from <strong>Scan with camera</strong> inside Add Document.</li>
+              <li>If camera is cancelled or blocked, the form stays open and no saved document is changed.</li>
+              <li>If OCR fails, fields remain unchanged; retry with a clearer photo or enter details manually.</li>
+            </ul>
           </div>
           <div class="help-sec">
             <h3>Backup</h3>
@@ -2577,6 +2597,37 @@
         document.getElementById('file-placeholder').classList.toggle('hidden', pendingFiles.length > 0);
       });
     }
+    function setScanStatus(message) {
+      const el = document.getElementById('scan-status');
+      if (el) el.textContent = message || '';
+    }
+    function resetScanWorkflow() {
+      pendingFiles = [];
+      renderFileChips();
+      const panel = document.getElementById('ocr-panel');
+      if (panel) panel.style.display = 'none';
+      const status = document.getElementById('ocr-status');
+      if (status) status.textContent = '';
+      const sug = document.getElementById('ocr-suggestions');
+      if (sug) sug.innerHTML = '';
+      const raw = document.getElementById('ocr-raw');
+      if (raw) raw.textContent = '';
+      const preview = document.getElementById('file-preview');
+      if (preview) preview.classList.remove('show');
+      const placeholder = document.getElementById('file-placeholder');
+      if (placeholder) placeholder.classList.remove('hidden');
+      const img = document.getElementById('preview-img');
+      if (img) img.src = '';
+      const name = document.getElementById('preview-name');
+      if (name) name.textContent = '';
+      setScanStatus('');
+      ocrSuggestions = { number: '', expiry: '', issue: '', title: '' };
+    }
+    function cancelAddFlow() {
+      resetScanWorkflow();
+      // Scanner cancel resets transient files before closing the add modal.
+      close('modal-add');
+    }
 
     function render() {
       if (vaultLocked) {
@@ -2754,12 +2805,7 @@
     function openAdd(editId) {
       document.getElementById('form-doc').reset();
       document.getElementById('doc-id').value = '';
-      pendingFiles = [];
-      renderFileChips();
-      document.getElementById('file-preview').classList.remove('show');
-      document.getElementById('file-placeholder').classList.remove('hidden');
-      const op = document.getElementById('ocr-panel'); if (op) op.style.display = 'none';
-      document.getElementById('preview-img').src = '';
+      resetScanWorkflow();
       document.getElementById('doc-no-expiry').checked = false;
       updateNoExp(false);
       const tg0 = document.getElementById('doc-tags'); if (tg0) tg0.value = '';
@@ -3785,9 +3831,10 @@
         status.textContent = 'Review suggestions, then Apply (always verify before saving).';
       } catch (e) {
         console.error(e);
-        status.textContent = 'OCR failed: ' + (e.message || e);
+        status.textContent = 'OCR failed: ' + (e.message || e) + '. Fields were not changed; retry with a clearer photo or enter details manually.';
         sug.innerHTML = '';
         rawEl.textContent = '';
+        recordActivity('ocr-failed', { reason: e.message || e.name || 'unknown' });
       }
     }
 
@@ -4050,8 +4097,8 @@
       document.getElementById('btn-add').onclick = openAddFn;
       document.getElementById('btn-add-empty').onclick = openAddFn;
       document.getElementById('fab-add').onclick = openAddFn;
-      document.getElementById('close-add').onclick = () => close('modal-add');
-      document.getElementById('btn-cancel').onclick = () => close('modal-add');
+      document.getElementById('close-add').onclick = () => cancelAddFlow();
+      document.getElementById('btn-cancel').onclick = () => cancelAddFlow();
       document.getElementById('close-view').onclick = () => { close('modal-view'); viewId = null; };
       document.getElementById('close-profile').onclick = () => close('modal-profile');
       document.getElementById('close-settings').onclick = () => close('modal-settings');
@@ -4410,8 +4457,16 @@
       const fin = document.getElementById('doc-file');
       const cam = document.getElementById('camera-file');
       zone.onclick = () => fin.click();
-      document.getElementById('btn-camera').onclick = e => { e.stopPropagation(); cam.click(); };
-      document.getElementById('btn-files').onclick = e => { e.stopPropagation(); fin.click(); };
+      document.getElementById('btn-camera').onclick = e => {
+        e.stopPropagation();
+        setScanStatus('Opening camera. If Safari asks, allow camera access for this scan.');
+        cam.click();
+      };
+      document.getElementById('btn-files').onclick = e => {
+        e.stopPropagation();
+        setScanStatus('Choose an image or PDF. Cancel returns here without changing the form.');
+        fin.click();
+      };
       zone.ondragover = e => { e.preventDefault(); zone.classList.add('over'); };
       zone.ondragleave = () => zone.classList.remove('over');
       zone.ondrop = async e => {
@@ -4421,30 +4476,46 @@
       };
       fin.onchange = async e => {
         const files = [...e.target.files];
+        if (!files.length) {
+          setScanStatus('No file selected. You can try again or continue editing.');
+          recordActivity('file-picker-cancelled', {});
+        }
         for (const f of files) await handleFile(f);
         fin.value = '';
       };
       cam.onchange = async e => {
         const f = e.target.files && e.target.files[0];
         if (f) await handleFile(f);
+        else {
+          setScanStatus('Camera cancelled or permission was not granted. No data changed.');
+          recordActivity('camera-scan-cancelled', {});
+        }
         cam.value = '';
       };
 
       async function handleFile(file) {
         if (!file) return;
-        if (file.size > 25 * 1024 * 1024) { alert('This file is larger than 25 MB. Reduce it before adding to protect offline storage.'); return; }
-        const originalSize = file.size || 0;
-        file = await optimizeImageFile(file);
-        const data = await toDataURL(file);
-        pendingFiles.push({ data, name: file.name, type: file.type });
-        if (originalSize && file.size < originalSize * 0.8) showAppToast('Photo optimized for offline storage.', null, null);
-        renderFileChips();
-        document.getElementById('file-preview').classList.add('show');
-        document.getElementById('file-placeholder').classList.add('hidden');
-        document.getElementById('preview-name').textContent = pendingFiles.length + ' file(s) selected';
-        if (file.type.startsWith('image/')) {
-          document.getElementById('preview-img').src = data;
-          document.getElementById('preview-img').classList.remove('hidden');
+        try {
+          if (file.size > 25 * 1024 * 1024) { alert('This file is larger than 25 MB. Reduce it before adding to protect offline storage.'); setScanStatus('Scan rejected because the file is larger than 25 MB.'); return; }
+          const originalSize = file.size || 0;
+          file = await optimizeImageFile(file);
+          const data = await toDataURL(file);
+          pendingFiles.push({ data, name: file.name, type: file.type });
+          if (originalSize && file.size < originalSize * 0.8) showAppToast('Photo optimized for offline storage.', null, null);
+          renderFileChips();
+          document.getElementById('file-preview').classList.add('show');
+          document.getElementById('file-placeholder').classList.add('hidden');
+          document.getElementById('preview-name').textContent = pendingFiles.length + ' file(s) selected';
+          setScanStatus(pendingFiles.length + ' scan file(s) ready. Review, run OCR if needed, then save.');
+          recordActivity('scan-added', { name: file.name || 'scan', type: file.type || 'unknown' });
+          if (file.type.startsWith('image/')) {
+            document.getElementById('preview-img').src = data;
+            document.getElementById('preview-img').classList.remove('hidden');
+          }
+        } catch (err) {
+          console.error(err);
+          setScanStatus('Scan could not be read. Try camera again, choose a file, or continue without changing saved data.');
+          alert('Scan failed: ' + (err.message || err.name || err));
         }
       }
 
