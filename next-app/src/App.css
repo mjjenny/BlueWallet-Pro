@@ -5,6 +5,37 @@
   color: var(--text);
 }
 
+* {
+  box-sizing: border-box;
+  scrollbar-color: rgba(94, 212, 255, 0.42) rgba(255, 255, 255, 0.06);
+  scrollbar-width: thin;
+}
+
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(5, 16, 28, 0.72);
+  border-radius: 999px;
+  background: rgba(94, 212, 255, 0.44);
+}
+
+body:has(.modal-backdrop) {
+  overflow: hidden;
+}
+
 .skip-link {
   position: absolute;
   left: 12px;
@@ -201,9 +232,13 @@
   gap: 8px;
   overflow-x: auto;
   overscroll-behavior-x: contain;
-  scrollbar-width: thin;
+  scrollbar-width: none;
   padding: 2px 2px 12px;
   margin: -2px -2px 12px;
+}
+
+.category-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .category-tab {
@@ -514,6 +549,8 @@ select:focus-visible {
 .readonly-callout {
   margin: 14px 0;
   color: var(--muted);
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 .status-list {
@@ -1334,6 +1371,9 @@ select:focus-visible {
 }
 
 .details-modal {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   border-color: var(--glass-border);
   border-radius: 26px 26px 0 0;
   background: rgba(8, 22, 38, 0.74);
@@ -1355,14 +1395,22 @@ select:focus-visible {
 }
 
 .details-head {
+  flex: 0 0 auto;
   z-index: 1;
   background: rgba(6, 16, 28, 0.86);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
 
+.details-body {
+  min-height: 0;
+  overflow: auto;
+}
+
 .scanner-modal {
   width: min(1180px, 100%);
+  max-height: min(760px, calc(100svh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)));
+  overflow: hidden;
 }
 
 .scanner-grid {
@@ -1371,11 +1419,13 @@ select:focus-visible {
 }
 
 .scanner-panel {
+  min-width: 0;
   border-radius: 16px;
   padding: 14px;
   background: rgba(0, 0, 0, 0.22);
-  max-height: calc(92svh - 122px);
+  max-height: calc(min(760px, 100svh) - 142px);
   overflow: auto;
+  scrollbar-gutter: stable;
 }
 
 .scanner-panel textarea {
@@ -1417,8 +1467,62 @@ select:focus-visible {
   }
 
   .stable-topbar {
+    flex-direction: row;
+    align-items: center;
     gap: 10px;
     padding-inline: 14px;
+  }
+
+  .stable-topbar .brand {
+    gap: 10px;
+  }
+
+  .stable-topbar .brand-copy h1 {
+    font-size: 1rem;
+  }
+
+  .stable-topbar .status-cluster {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    margin-left: auto;
+  }
+
+  .stable-topbar .badge-info {
+    display: none;
+  }
+
+  .section-title-row .badge {
+    max-width: 100%;
+    justify-content: center;
+    white-space: normal;
+  }
+
+  .stable-profile-strip {
+    margin-top: 0;
+  }
+
+  .profile-heading {
+    align-items: flex-start;
+  }
+
+  .action-cluster {
+    justify-content: stretch;
+  }
+
+  .action-cluster .primary-action,
+  .action-cluster .secondary-action {
+    flex: 1 1 150px;
+  }
+
+  .security-form {
+    grid-template-columns: 1fr;
+  }
+
+  .security-form label,
+  .security-form button,
+  .security-form input,
+  .readonly-callout {
+    min-width: 0;
   }
 
   .brand-mark {
@@ -1428,15 +1532,54 @@ select:focus-visible {
   }
 
   .brand-copy p {
-    font-size: 0.65rem;
+    display: none;
   }
 
   .scanner-grid {
     grid-template-columns: 1fr;
   }
 
+  .scanner-modal {
+    width: 100%;
+    max-height: calc(100svh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    border-radius: 22px 22px 0 0;
+  }
+
   .scanner-panel {
     max-height: none;
+    overflow: visible;
+  }
+
+  .wallet-app,
+  .stable-shell {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+}
+
+@media (max-width: 420px) {
+  .stable-topbar {
+    min-height: calc(68px + env(safe-area-inset-top));
+    padding-block: calc(10px + env(safe-area-inset-top)) 10px;
+  }
+
+  .stable-shell {
+    padding-top: calc(78px + env(safe-area-inset-top));
+  }
+
+  .brand-mark {
+    width: 42px;
+    height: 42px;
+  }
+
+  .stable-topbar .badge {
+    min-height: 38px;
+    padding-inline: 10px;
+  }
+
+  .profile-photo {
+    width: 58px;
+    height: 58px;
   }
 }
 
