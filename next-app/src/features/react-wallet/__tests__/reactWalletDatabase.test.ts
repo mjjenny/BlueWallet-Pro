@@ -154,7 +154,7 @@ describe("BlueWalletReactDB secure vault", () => {
   });
 
   it("stores sea-service entries as encrypted rows and includes them in backups", async () => {
-    const db = await openReactWalletDB();
+    let db = await openReactWalletDB();
     const session = await setupReactWalletVault(db, "246810");
     const entry = await createReactWalletSeaServiceEntry(db, session, {
       vessel: "MV Secure",
@@ -166,8 +166,23 @@ describe("BlueWalletReactDB secure vault", () => {
     expect(JSON.stringify(await rawRows(db, REACT_WALLET_STORES.seaService))).not.toContain("MV Secure");
     const backup = await exportReactWalletBackup(db);
     expect(backup.encryptedStores.seaService).toHaveLength(1);
+    db.close();
+
+    db = await openReactWalletDB();
+    const reloadedSession = await unlockReactWalletVault(db, "246810");
+    expect((await listReactWalletSeaService(db, reloadedSession))[0]?.vessel).toBe("MV Secure");
+
+    const rotatedSession = await rotateReactWalletDataKey(db, reloadedSession, "246810");
+    expect((await listReactWalletSeaService(db, rotatedSession))[0]?.vessel).toBe("MV Secure");
+
     await deleteReactWalletSeaServiceEntry(db, session, entry.id);
     expect(await listReactWalletSeaService(db, session)).toEqual([]);
+    db.close();
+
+    await deleteDb(REACT_WALLET_DATABASE_NAME);
+    db = await openReactWalletDB();
+    const restoredSession = await importReactWalletBackup(db, backup, "246810");
+    expect((await listReactWalletSeaService(db, restoredSession))[0]?.vessel).toBe("MV Secure");
     db.close();
   });
 
