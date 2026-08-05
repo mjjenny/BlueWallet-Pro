@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 
 const repoRoot = path.resolve(process.cwd(), "..");
 
-const STABLE_CSS_SHA256 = "e6dcf47a25d8b11a7daca39006984b090142e8898e933588d0018aad7bc92aab";
+const STABLE_CSS_SHA256 = "267365a1ccb502bf7fc9bbe4460684bae5a1e4e204c7634cdf1d7970450a7003";
 const STABLE_LAYOUT_MARKERS_SHA256 = "ceb7d452bcb9d78e347140e99ccde060d011b374aa739b827e2c804ae5b63415";
 
 const STABLE_LAYOUT_MARKERS = [
@@ -69,5 +69,15 @@ describe("stable app UI lock", () => {
     expect(css).toContain("overflow-x: hidden");
     expect(css).toContain("scrollbar-width: none");
     expect(css).toContain(".cat {\n      display: flex; align-items: center; justify-content: center; gap: 5px;\n      flex: 1 1 0; min-width: 0;");
+  });
+
+  it("keeps tools on the first row and search full-width on the second row", () => {
+    const css = stableCss(readRootFile("legacy-root-pwa.html"));
+
+    expect(css).toContain("grid-template-columns: repeat(13, minmax(0, 1fr));");
+    expect(css).toContain("overflow-x: hidden");
+    expect(css).toContain(".search-box {\n      grid-column: 1 / -1;\n      order: 2;");
+    expect(css).toContain(".tool-select, .tool-btn {\n      min-width: 0;\n      width: 100%;\n      order: 1;");
+    expect(css).toContain(".view-toggle {\n      display: grid;\n      grid-template-columns: 1fr 1fr;");
   });
 });

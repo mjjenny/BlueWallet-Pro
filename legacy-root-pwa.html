@@ -905,10 +905,18 @@
   
     /* Search / sort / tools */
     .tools-row {
-      display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+      display: grid;
+      grid-template-columns: repeat(13, minmax(0, 1fr));
+      gap: clamp(4px, .6vw, 8px);
+      align-items: stretch;
+      width: 100%;
+      overflow-x: hidden;
     }
     .search-box {
-      flex: 1 1 160px; min-width: 0;
+      grid-column: 1 / -1;
+      order: 2;
+      min-width: 0;
+      width: 100%;
       display: flex; align-items: center; gap: 8px;
       background: var(--glass); border: 1px solid var(--glass-border);
       border-radius: 12px; padding: 10px 12px;
@@ -920,10 +928,24 @@
     }
     .search-box input::placeholder { color: var(--muted); }
     .tool-select, .tool-btn {
+      min-width: 0;
+      width: 100%;
+      order: 1;
       background: var(--glass); border: 1px solid var(--glass-border);
-      color: #fff; border-radius: 12px; padding: 10px 12px; font-size: 13px; font-weight: 600;
+      color: #fff; border-radius: 12px; padding: 10px clamp(5px, .55vw, 12px); font-size: clamp(10px, .78vw, 13px); font-weight: 600;
       cursor: pointer; backdrop-filter: blur(12px);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
+    .view-toggle {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      min-width: 0;
+      order: 1;
+    }
+    .view-toggle .tool-btn { padding-inline: 0; }
     .tool-btn:hover { border-color: var(--accent); }
     .tool-btn.active { background: rgba(94,212,255,.18); border-color: rgba(94,212,255,.5); color: var(--accent); }
 
