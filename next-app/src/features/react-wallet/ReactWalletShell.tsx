@@ -8,6 +8,7 @@ import { getDocumentValidity } from "../../shared/status/documentStatus";
 import { describeFile, isImageFile, isPdfFile } from "../../shared/files/fileUtils";
 import type { LegacyWalletSnapshot } from "../../app/providers/LegacyDataProvider";
 import { useOnlineStatus } from "../../hooks/useOnlineStatus";
+import { MaritimeToolkit } from "../maritime/MaritimeToolkit";
 import { ScannerWorkflow } from "../scanner/ScannerWorkflow";
 import { useReactWallet } from "./ReactWalletProvider";
 import {
@@ -566,6 +567,8 @@ export function ReactWalletShell({ legacySnapshot }: { legacySnapshot: LegacyWal
           <MigrationWizard snapshot={legacySnapshot} />
         </div>
       </section>
+
+      <MaritimeToolkit documents={wallet.documents} />
 
       {showForm ? (
         <DocumentForm

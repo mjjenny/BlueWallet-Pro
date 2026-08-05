@@ -1,0 +1,104 @@
+import { useMemo, useState } from "react";
+import { Badge } from "../../components/Badge";
+import { formatDate } from "../../shared/dates/dateUtils";
+import type { ReactWalletDocumentView } from "../react-wallet/reactWalletTypes";
+import {
+  getDocumentPacks,
+  getMaritimeRequirementStatuses,
+  getReadyToJoinScore,
+  getSeaServiceDays,
+  getVaccinationDocuments,
+  type SeaServiceEntry,
+} from "./maritimeRules";
+
+function statusTone(status: string): "good" | "warn" | "bad" | "neutral" {
+  if (status === "ready") return "good";
+  if (status === "expiring") return "warn";
+  if (status === "expired") return "bad";
+  return "neutral";
+}
+
+export function MaritimeToolkit({ documents }: { documents: ReactWalletDocumentView[] }) {
+  const [seaEntries, setSeaEntries] = useState<SeaServiceEntry[]>([]);
+  const [entry, setEntry] = useState<SeaServiceEntry>({ id: "", vessel: "", rank: "", signOn: "", signOff: "" });
+  const statuses = useMemo(() => getMaritimeRequirementStatuses(documents), [documents]);
+  const packs = useMemo(() => getDocumentPacks(documents), [documents]);
+  const vaccinations = useMemo(() => getVaccinationDocuments(documents), [documents]);
+  const score = useMemo(() => getReadyToJoinScore(documents), [documents]);
+  const seaDays = seaEntries.reduce((sum, item) => sum + getSeaServiceDays(item), 0);
+
+  function addEntry() {
+    if (!entry.vessel.trim() || !entry.signOn || !entry.signOff) return;
+    setSeaEntries((current) => [...current, { ...entry, id: crypto.randomUUID?.() ?? String(Date.now()) }]);
+    setEntry({ id: "", vessel: "", rank: "", signOn: "", signOff: "" });
+  }
+
+  return (
+    <section className="maritime-toolkit" aria-labelledby="maritime-title">
+      <div className="section-title-row">
+        <div>
+          <p className="eyebrow">Maritime toolkit</p>
+          <h2 id="maritime-title">Ready to join</h2>
+        </div>
+        <Badge tone={score >= 80 ? "good" : score >= 50 ? "warn" : "bad"}>{score}%</Badge>
+      </div>
+
+      <div className="maritime-grid">
+        <section className="maritime-panel">
+          <h3>STCW matrix</h3>
+          <div className="matrix-list">
+            {statuses.map((item) => (
+              <article key={item.requirement.id} className="matrix-row">
+                <div>
+                  <strong>{item.requirement.label}</strong>
+                  <p className="muted">{item.matched ? `${item.matched.title} - ${formatDate(item.matched.expiryDate)}` : "Missing"}</p>
+                </div>
+                <Badge tone={statusTone(item.status)}>{item.status}</Badge>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="maritime-panel">
+          <h3>Document packs</h3>
+          <div className="pack-list">
+            {packs.map((pack) => (
+              <article key={pack.id} className="pack-row">
+                <div>
+                  <strong>{pack.label}</strong>
+                  <p className="muted">{pack.ready} of {pack.total} ready</p>
+                </div>
+                <progress value={pack.ready} max={pack.total} aria-label={`${pack.label} readiness`} />
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="maritime-panel">
+          <h3>Vaccination tracker</h3>
+          {vaccinations.length === 0 ? <p className="muted">No vaccination documents saved.</p> : vaccinations.map((document) => (
+            <article className="matrix-row" key={document.id}>
+              <div>
+                <strong>{document.title}</strong>
+                <p className="muted">{formatDate(document.expiryDate)}</p>
+              </div>
+              <Badge tone="info">{document.type}</Badge>
+            </article>
+          ))}
+        </section>
+
+        <section className="maritime-panel">
+          <h3>Sea-service log</h3>
+          <div className="sea-service-form">
+            <label><span>Vessel</span><input value={entry.vessel} onChange={(event) => setEntry({ ...entry, vessel: event.target.value })} /></label>
+            <label><span>Rank</span><input value={entry.rank} onChange={(event) => setEntry({ ...entry, rank: event.target.value })} /></label>
+            <label><span>Sign on</span><input type="date" value={entry.signOn} onChange={(event) => setEntry({ ...entry, signOn: event.target.value })} /></label>
+            <label><span>Sign off</span><input type="date" value={entry.signOff} onChange={(event) => setEntry({ ...entry, signOff: event.target.value })} /></label>
+            <button type="button" className="secondary-action" onClick={addEntry}>Add sea service</button>
+          </div>
+          <p className="muted">{seaEntries.length} entries - {seaDays} days</p>
+        </section>
+      </div>
+    </section>
+  );
+}

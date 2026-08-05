@@ -37,6 +37,8 @@ describe("React CRUD wallet shell", () => {
     expect(screen.getByText("No migration action")).toBeInTheDocument();
     await setUpPin(user);
     expect(screen.getByText("Encrypted")).toBeInTheDocument();
+    expect(screen.getByText("Maritime toolkit")).toBeInTheDocument();
+    expect(screen.getByText("Ready to join")).toBeInTheDocument();
   });
 
   it("creates, views, edits, soft deletes, and undoes a document", async () => {
