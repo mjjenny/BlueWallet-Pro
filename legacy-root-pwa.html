@@ -625,8 +625,12 @@
 
       .cats { gap: 3px; }
       .cat { padding: 8px 3px; border-radius: 10px; gap: 3px; }
-      .cat-ico { font-size: clamp(11px, 3.1vw, 13px); }
-      .cat-name { font-size: clamp(0px, 2.35vw, 9px); }
+      .cat-ico { display: none; }
+      .cat-name { font-size: 0; }
+      .cat-name::after {
+        content: attr(data-short);
+        font-size: clamp(8px, 2.45vw, 9px);
+      }
       .cat-n { font-size: 10px; min-width: 15px; height: 15px; }
       body.app-lite .cat { padding: 9px 4px; }
       body.app-lite .cat-name { font-size: 9px; }
@@ -906,8 +910,8 @@
     /* Search / sort / tools */
     .tools-row {
       display: grid;
-      grid-template-columns: repeat(13, minmax(0, 1fr));
-      gap: clamp(4px, .6vw, 8px);
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 7px;
       align-items: stretch;
       width: 100%;
       overflow-x: hidden;
@@ -932,11 +936,17 @@
       width: 100%;
       order: 1;
       background: var(--glass); border: 1px solid var(--glass-border);
-      color: #fff; border-radius: 12px; padding: 10px clamp(5px, .55vw, 12px); font-size: clamp(10px, .78vw, 13px); font-weight: 600;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff; border-radius: 12px; padding: 8px 7px; font-size: clamp(11px, 3vw, 13px); font-weight: 600;
       cursor: pointer; backdrop-filter: blur(12px);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      line-height: 1.12;
+      text-align: center;
+      overflow: visible;
+      text-overflow: clip;
+      white-space: normal;
     }
     .view-toggle {
       display: grid;
@@ -948,6 +958,32 @@
     .view-toggle .tool-btn { padding-inline: 0; }
     .tool-btn:hover { border-color: var(--accent); }
     .tool-btn.active { background: rgba(94,212,255,.18); border-color: rgba(94,212,255,.5); color: var(--accent); }
+
+    @media (min-width: 700px) {
+      .tools-row {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+      }
+      .tool-select, .tool-btn {
+        font-size: clamp(11px, 1.35vw, 13px);
+        padding-inline: 9px;
+      }
+    }
+
+    @media (min-width: 1180px) {
+      .tools-row {
+        width: min(calc(100vw - 56px), 1500px);
+        max-width: none;
+        margin-left: 50%;
+        transform: translateX(-50%);
+        grid-template-columns: repeat(13, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .tool-select, .tool-btn {
+        font-size: clamp(11px, .74vw, 13px);
+        padding-inline: 8px;
+        white-space: nowrap;
+      }
+    }
 
     /* Lock screen */
     #lock-screen {
@@ -1228,15 +1264,15 @@
 
     <!-- Categories — NO "All" -->
     <div class="cats" id="cats">
-      <div class="cat active" data-cat="passport"><span class="cat-ico">🛂</span><span class="cat-name">PASSPORT</span><span class="cat-n" id="count-passport">0</span></div>
-      <div class="cat" data-cat="cdc"><span class="cat-ico">📘</span><span class="cat-name">CDC</span><span class="cat-n" id="count-cdc">0</span></div>
-      <div class="cat" data-cat="coc"><span class="cat-ico">🎓</span><span class="cat-name">COC</span><span class="cat-n" id="count-coc">0</span></div>
-      <div class="cat" data-cat="visa"><span class="cat-ico">✈️</span><span class="cat-name">VISAS</span><span class="cat-n" id="count-visa">0</span></div>
-      <div class="cat" data-cat="certificate"><span class="cat-ico">📜</span><span class="cat-name">CERTIFICATES</span><span class="cat-n" id="count-certificate">0</span></div>
-      <div class="cat" data-cat="medical"><span class="cat-ico">🏥</span><span class="cat-name">MEDICAL</span><span class="cat-n" id="count-medical">0</span></div>
-      <div class="cat" data-cat="yellowfever"><span class="cat-ico">💉</span><span class="cat-name">YELLOW FEVER</span><span class="cat-n" id="count-yellowfever">0</span></div>
-      <div class="cat" data-cat="contract"><span class="cat-ico">📝</span><span class="cat-name">CONTRACT</span><span class="cat-n" id="count-contract">0</span></div>
-      <div class="cat" data-cat="other"><span class="cat-ico">📄</span><span class="cat-name">OTHER</span><span class="cat-n" id="count-other">0</span></div>
+      <div class="cat active" data-cat="passport"><span class="cat-ico">🛂</span><span class="cat-name" data-short="PASS">PASSPORT</span><span class="cat-n" id="count-passport">0</span></div>
+      <div class="cat" data-cat="cdc"><span class="cat-ico">📘</span><span class="cat-name" data-short="CDC">CDC</span><span class="cat-n" id="count-cdc">0</span></div>
+      <div class="cat" data-cat="coc"><span class="cat-ico">🎓</span><span class="cat-name" data-short="COC">COC</span><span class="cat-n" id="count-coc">0</span></div>
+      <div class="cat" data-cat="visa"><span class="cat-ico">✈️</span><span class="cat-name" data-short="VISA">VISAS</span><span class="cat-n" id="count-visa">0</span></div>
+      <div class="cat" data-cat="certificate"><span class="cat-ico">📜</span><span class="cat-name" data-short="CERT">CERTIFICATES</span><span class="cat-n" id="count-certificate">0</span></div>
+      <div class="cat" data-cat="medical"><span class="cat-ico">🏥</span><span class="cat-name" data-short="MED">MEDICAL</span><span class="cat-n" id="count-medical">0</span></div>
+      <div class="cat" data-cat="yellowfever"><span class="cat-ico">💉</span><span class="cat-name" data-short="YF">YELLOW FEVER</span><span class="cat-n" id="count-yellowfever">0</span></div>
+      <div class="cat" data-cat="contract"><span class="cat-ico">📝</span><span class="cat-name" data-short="CNTR">CONTRACT</span><span class="cat-n" id="count-contract">0</span></div>
+      <div class="cat" data-cat="other"><span class="cat-ico">📄</span><span class="cat-name" data-short="OTHER">OTHER</span><span class="cat-n" id="count-other">0</span></div>
     </div>
 
     

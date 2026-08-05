@@ -33,4 +33,5 @@ The automated tests include a stable UI lock. If that lock fails, either revert 
 ## Approved Visual Changes
 
 - 2026-08-05: Jenny approved changing the category rail so all category tabs stay visible in one row without horizontal scrolling. This approval applies only to the category tab row and does not permit unrelated UI, animation, layout, theme, or routing changes.
-- 2026-08-05: Jenny approved changing the tools row so all action tabs stay on the first row, the search box spans the full second row, and neither row uses horizontal scrolling. This approval applies only to the tools/search row arrangement.
+- 2026-08-05: Jenny approved changing the tools row so action controls are grouped above the search box, the search box spans a full row, and the tools/search area does not use horizontal scrolling. This approval applies only to the tools/search row arrangement.
+- 2026-08-05: Third-party QA reported the first tools-row implementation was not readable at phone/tablet widths. The corrective layout keeps desktop actions in one row, uses a non-scrolling action grid on narrower screens, keeps search full-width below the actions, and preserves no horizontal scrolling. Narrow phone category labels use deliberate short labels instead of accidental clipping.

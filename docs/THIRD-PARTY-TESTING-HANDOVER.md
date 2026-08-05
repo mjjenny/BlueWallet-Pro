@@ -41,8 +41,9 @@ The current stable app UI, animation, layout, visual theme, and production routi
 Approved UI changes already recorded:
 
 - Category tabs must be visible in one row without horizontal scrolling.
-- Tools/action tabs must stay on the first row, with the search box spanning the full second row.
-- No horizontal scrolling is allowed on those two rows.
+- Tools/action controls must be readable and non-scrolling: desktop may keep all actions in one row, while phone/tablet widths may use a non-scrolling action grid.
+- Search must span a full row below the tools/actions.
+- No horizontal scrolling is allowed in the category rail or tools/search area.
 
 The third-party tester must verify that no unapproved UI, animation, layout, theme, or routing changes have been introduced.
 
@@ -212,8 +213,8 @@ Test:
 - Reduced-motion setting disables or minimizes motion where supported.
 - Top bar remains usable on phone, tablet, and desktop.
 - Category tabs all fit in one row with no horizontal scrolling.
-- Tools/action tabs stay on the first row.
-- Search box spans the full second row.
+- Tools/action controls are readable and non-scrolling on phone, tablet, and desktop.
+- Search box spans a full row below the tools/actions.
 - No horizontal scrolling in category row or tools/search rows.
 - Document cards, profile strip, modals, FAB, and glass theme remain consistent.
 - Text does not overlap, clip, or escape controls.
@@ -598,4 +599,3 @@ Do not release based only on automated tests. Release should proceed only after:
 - backup/restore is proven with sample data
 - offline/PWA behavior is proven
 - Jenny approves any UI/UX changes that affect the locked stable app
-
