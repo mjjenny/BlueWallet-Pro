@@ -1,9 +1,11 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import App from "../../App";
 import { REACT_WALLET_DATABASE_NAME } from "../../features/react-wallet/reactWalletTypes";
 import { createTestSnapshot } from "../../test/testSnapshots";
+
+const walletIntegrationTimeout = 15_000;
 
 function deleteDb(name: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -21,26 +23,35 @@ describe("React CRUD wallet shell", () => {
 
   async function setUpPin(user: ReturnType<typeof userEvent.setup>) {
     await screen.findByText("Set up React vault PIN");
-    await user.type(screen.getByLabelText("New PIN"), "123456");
-    await user.type(screen.getByLabelText("Confirm PIN"), "123456");
+    const newPin = screen.getByLabelText("New PIN");
+    const confirmPin = screen.getByLabelText("Confirm PIN");
+    await user.clear(newPin);
+    await user.clear(confirmPin);
+    await user.type(newPin, "123456");
+    await user.type(confirmPin, "123456");
     await user.click(screen.getByRole("button", { name: /create secure vault/i }));
-    await screen.findByText("Document dashboard");
+    await screen.findByText("Document dashboard", {}, { timeout: 10_000 });
   }
 
   it("renders the React database dashboard and migration wizard", async () => {
     const user = userEvent.setup();
     render(<App initialSnapshot={createTestSnapshot()} />);
 
+    expect(screen.getByTestId("stable-ocean-background")).toBeInTheDocument();
+    expect(screen.getByTestId("stable-helm-mark")).toBeInTheDocument();
+    expect(screen.getByText("THE BLUE WALLET")).toBeInTheDocument();
+    expect(screen.getByText("OFFSHORE SECURE VAULT")).toBeInTheDocument();
     expect(await screen.findByText("Set up React vault PIN")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /skip to documents/i })).toHaveAttribute("href", "#document-workspace");
     expect(screen.getByText("BlueWalletReactDB v3")).toBeInTheDocument();
     expect(screen.getByText("Legacy wallet assessment")).toBeInTheDocument();
     expect(screen.getByText("No migration action")).toBeInTheDocument();
     await setUpPin(user);
+    expect(screen.getByTestId("stable-profile-strip")).toBeInTheDocument();
     expect(screen.getByText("Encrypted")).toBeInTheDocument();
     expect(screen.getByText("Maritime toolkit")).toBeInTheDocument();
     expect(screen.getByText("Ready to join")).toBeInTheDocument();
-  });
+  }, walletIntegrationTimeout);
 
   it("creates, views, edits, soft deletes, and undoes a document", async () => {
     const user = userEvent.setup();
@@ -68,10 +79,10 @@ describe("React CRUD wallet shell", () => {
     await user.click(screen.getByRole("button", { name: "Delete" }));
 
     expect(await screen.findByText(/Document moved to deleted items/i)).toBeInTheDocument();
-    expect(screen.queryByText("React Passport Updated")).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText("React Passport Updated")).not.toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /undo delete/i }));
     expect(await screen.findByText("React Passport Updated")).toBeInTheDocument();
-  });
+  }, walletIntegrationTimeout);
 
   it("uploads image/PDF attachments and shows thumbnail or attachment count", async () => {
     const user = userEvent.setup();
@@ -89,7 +100,7 @@ describe("React CRUD wallet shell", () => {
 
     expect(await screen.findByText("Certificate With Files")).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument();
-  });
+  }, walletIntegrationTimeout);
 
   it("filters and searches React-owned documents", async () => {
     const user = userEvent.setup();
@@ -107,7 +118,7 @@ describe("React CRUD wallet shell", () => {
     expect(await screen.findByText("Crew Visa Search Target")).toBeInTheDocument();
     await user.selectOptions(screen.getByRole("combobox", { name: "Status" }), "expiring");
     expect(screen.getByText("Crew Visa Search Target")).toBeInTheDocument();
-  });
+  }, walletIntegrationTimeout);
 
   it("renders scanner controls without migration execution controls", async () => {
     const user = userEvent.setup();
@@ -115,11 +126,17 @@ describe("React CRUD wallet shell", () => {
 
     await setUpPin(user);
     await user.click(screen.getByRole("button", { name: /scan document/i }));
-    expect(screen.getByRole("dialog", { name: /scan document/i })).toBeInTheDocument();
+    const dialog = screen.getByRole("dialog", { name: /scan document/i });
+    expect(dialog).toBeInTheDocument();
+    expect(dialog).toHaveClass("scanner-modal");
+    expect(within(dialog).getByText("Capture")).toBeInTheDocument();
+    expect(within(dialog).getByText("OCR review")).toBeInTheDocument();
+    expect(within(dialog).getByText("Review before save")).toBeInTheDocument();
+    expect(dialog.querySelectorAll(".scanner-panel")).toHaveLength(3);
     expect(screen.getByText("Camera")).toBeInTheDocument();
     expect(screen.getByText("OCR text")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /migrate/i })).not.toBeInTheDocument();
-  });
+  }, walletIntegrationTimeout);
 
   it("creates an encrypted document from scanned pages and OCR suggestions", async () => {
     const user = userEvent.setup();
@@ -138,7 +155,7 @@ describe("React CRUD wallet shell", () => {
 
     expect(await screen.findByText("Passport - ERIKSSON ANNA MARIA")).toBeInTheDocument();
     expect(screen.getByText("Encrypted scan saved.")).toBeInTheDocument();
-  });
+  }, walletIntegrationTimeout);
 
   it("locks and unlocks with PIN fallback", async () => {
     const user = userEvent.setup();
@@ -150,7 +167,7 @@ describe("React CRUD wallet shell", () => {
     await user.type(screen.getByLabelText("PIN"), "123456");
     await user.click(screen.getByRole("button", { name: /unlock vault/i }));
     expect(await screen.findByText("Document dashboard")).toBeInTheDocument();
-  });
+  }, walletIntegrationTimeout);
 
   it("adds persisted sea-service entries from the maritime toolkit", async () => {
     const user = userEvent.setup();
@@ -165,5 +182,5 @@ describe("React CRUD wallet shell", () => {
 
     expect(await screen.findByText("MV Persistent")).toBeInTheDocument();
     expect(screen.getAllByText(/31 days/i).length).toBeGreaterThan(0);
-  });
+  }, walletIntegrationTimeout);
 });

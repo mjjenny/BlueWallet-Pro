@@ -63,6 +63,42 @@ function statusTone(key: string): "good" | "warn" | "bad" | "neutral" {
   return "neutral";
 }
 
+function StableOceanBackground() {
+  return (
+    <div className="ocean-bg" data-testid="stable-ocean-background" aria-hidden="true">
+      {[
+        ["w1", "M0 80 C 180 18 330 132 520 72 C 710 12 860 120 1040 72 C 1210 26 1320 72 1440 48 V220 H0 Z"],
+        ["w2", "M0 92 C 160 130 310 20 500 76 C 690 132 850 12 1040 88 C 1200 148 1320 74 1440 112 V220 H0 Z"],
+        ["w3", "M0 116 C 220 56 320 162 520 102 C 730 40 860 152 1040 98 C 1220 42 1320 116 1440 86 V220 H0 Z"],
+        ["w4", "M0 70 C 210 116 320 20 520 64 C 700 104 850 30 1040 66 C 1210 98 1320 36 1440 62 V180 H0 Z"],
+      ].map(([className, path]) => (
+        <div className={`wave ${className}`} key={className}>
+          <svg viewBox="0 0 1440 240" preserveAspectRatio="none" focusable="false">
+            <path d={path} />
+          </svg>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function HelmMark() {
+  return (
+    <div className="brand-mark" data-testid="stable-helm-mark" aria-hidden="true">
+      <svg viewBox="0 0 64 64" focusable="false">
+        <circle className="helm-rim" cx="32" cy="32" r="22" fill="none" stroke="currentColor" strokeWidth="4" />
+        <circle className="helm-inner" cx="32" cy="32" r="15" fill="none" stroke="currentColor" strokeWidth="2" />
+        <circle className="helm-hub" cx="32" cy="32" r="5" fill="currentColor" />
+        {[0, 45, 90, 135].map((rotation) => (
+          <g className="helm-draw" key={rotation} transform={`rotate(${rotation} 32 32)`}>
+            <path d="M32 6 V20 M32 44 V58" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+          </g>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
 function SecurityBoundaryPanel({ mode }: { mode: "setup" | "locked" }) {
   const wallet = useReactWallet();
   const [pin, setPin] = useState("");
@@ -460,12 +496,16 @@ export function ReactWalletShell({ legacySnapshot }: { legacySnapshot: LegacyWal
   }
 
   return (
-    <main className="wallet-app" id="wallet-main">
+    <main className="wallet-app stable-shell" id="wallet-main">
+      <StableOceanBackground />
       <a className="skip-link" href="#document-workspace">Skip to documents</a>
-      <header className="app-header">
-        <div>
-          <p className="eyebrow">BlueWallet-Pro React</p>
-          <h1>The Blue Wallet</h1>
+      <header className="app-header stable-topbar">
+        <div className="brand">
+          <HelmMark />
+          <div className="brand-copy">
+            <h1>THE BLUE WALLET</h1>
+            <p>OFFSHORE SECURE VAULT</p>
+          </div>
         </div>
         <div className="status-cluster">
           <Badge tone={online ? "good" : "warn"}>{online ? "Online" : "Offline"}</Badge>
@@ -489,9 +529,16 @@ export function ReactWalletShell({ legacySnapshot }: { legacySnapshot: LegacyWal
         </section>
       ) : null}
 
-      <section className="dashboard">
+      <section className="dashboard stable-profile-strip" data-testid="stable-profile-strip">
         <div className="section-title-row">
-          <div><p className="eyebrow">React wallet</p><h2>Document dashboard</h2></div>
+          <div className="profile-heading">
+            <div className="profile-photo" aria-hidden="true">BW</div>
+            <div>
+              <p className="eyebrow">React encrypted vault</p>
+              <h2>Document dashboard</h2>
+              <p className="muted">Private maritime wallet on this device.</p>
+            </div>
+          </div>
           <div className="action-cluster">
             <button type="button" className="secondary-action" onClick={() => setShowScanner(true)}>Scan document</button>
             <button type="button" className="primary-action" onClick={() => { setEditing(null); setShowForm(true); }}>Create document</button>
