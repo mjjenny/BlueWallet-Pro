@@ -274,6 +274,9 @@ Test:
 - Search by title.
 - Search by number.
 - Search by authority.
+- Search by notes and flag notes.
+- Search by expiry month/year, for example `Jan`, `January`, `2026`, and `2026-01`.
+- Search by category label and status terms such as `certificate`, `expired`, `expiring`, and `no expiry`.
 - Sort by expiry.
 - Sort by name.
 - Sort by type.
@@ -294,7 +297,8 @@ Test:
 - Summary print/download renders correctly.
 - Share action works where browser supports Web Share.
 - Share gracefully falls back where unsupported.
-- Calendar export creates valid `.ics` with expiry dates.
+- Calendar export creates valid `.ics` with expiry dates and reminder alarms.
+- Expiry reminder CSV export groups `Expired`, `Expiring soon`, `No expiry`, and `Valid` documents.
 - Timeline opens/closes and displays correct chronological data.
 
 Evidence:
@@ -390,6 +394,8 @@ Test:
 - Duplicate import behavior is documented.
 - Meta transfer exports only intended lightweight metadata.
 - Status summary download works.
+- Local activity log records add/edit/delete/import/export actions without uploading data.
+- Activity log download works and stays local to the device/browser.
 
 ### 13. Lite And Full Mode
 
@@ -409,6 +415,8 @@ Test:
 - Theme toggle.
 - Reminder windows save.
 - Install/Add to Home Screen action.
+- iOS Safari install instructions are explicit and understandable.
+- Data safety status screen shows local storage, PIN, backup, restore, expiry grouping, and activity log status.
 - Export/import settings behavior.
 - Clear all data requires confirmations.
 - Clear all data removes expected local data.
@@ -430,6 +438,17 @@ Test:
 - Private browsing restrictions.
 - Very long document titles/tags/notes.
 - Many documents, at least 100 sample records if practical.
+
+### 16. Accessibility
+
+Test:
+
+- Search, sort, filter, and tool controls expose useful screen-reader labels.
+- Category tabs can be focused and activated with keyboard Enter/Space.
+- Document cards can be focused and activated with keyboard Enter/Space.
+- Close buttons expose a screen-reader label.
+- Tap targets remain practical on phone widths.
+- Text remains readable and does not overlap controls.
 
 ## Build Quality Assessment
 
