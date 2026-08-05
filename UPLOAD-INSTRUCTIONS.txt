@@ -1,0 +1,13 @@
+BLUE WALLET — GITHUB MOBILE UPLOAD
+
+Upload all 8 app files to the ROOT of your BlueWallet-Pro repository:
+index.html
+manifest.json
+service-worker.js
+offline.html
+icon-192.png
+icon-512.png
+icon-maskable-512.png
+apple-touch-icon.png
+
+Do not upload the ZIP itself. Extract it in Files first, then select the eight files together.
