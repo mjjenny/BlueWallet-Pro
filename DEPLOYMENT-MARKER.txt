@@ -1,2 +1,0 @@
-GitHub Pages publish marker for the final stable app with Encrypted Sync Vault.
-Generated 2026-08-06.
