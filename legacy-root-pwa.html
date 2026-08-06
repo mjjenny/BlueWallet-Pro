@@ -3034,9 +3034,12 @@
       return backupInfo;
     }
     const SYNC_TABLE = 'bluewallet_sync_vaults';
+    const SYNC_CHUNK_TABLE = 'bluewallet_sync_vault_chunks';
     const SYNC_CONFIG_KEY = 'bwSyncConfig';
     const SYNC_DEVICE_KEY = 'bwSyncDeviceId';
     const SYNC_ENVELOPE_FORMAT = 'bluewallet-pro-encrypted-sync-v1';
+    const SYNC_CHUNK_FORMAT = 'bluewallet-pro-encrypted-sync-chunked-v1';
+    const SYNC_CHUNK_SIZE = 90000;
     const SYNC_KDF_ITERS = 260000;
     function readSyncConfig() {
       try { return Object.assign({ url:'', anonKey:'', vaultId:'', auto:false, remember:false, passphrase:'' }, JSON.parse(localStorage.getItem(SYNC_CONFIG_KEY) || '{}')); }
@@ -3118,15 +3121,77 @@
       const rows = await res.json();
       return Array.isArray(rows) && rows.length ? rows[0] : null;
     }
+    function splitSyncPayload(envelope) {
+      const payloadText = JSON.stringify(envelope);
+      const chunks = [];
+      for (let i = 0; i < payloadText.length; i += SYNC_CHUNK_SIZE) {
+        chunks.push(payloadText.slice(i, i + SYNC_CHUNK_SIZE));
+      }
+      return { payloadText, chunks };
+    }
+    async function deleteSyncChunks(config) {
+      const base = normalizeSyncUrl(config.url);
+      const vault = encodeURIComponent(String(config.vaultId || '').trim());
+      const res = await fetch(`${base}/rest/v1/${SYNC_CHUNK_TABLE}?vault_id=eq.${vault}`, {
+        method: 'DELETE',
+        headers: syncHeaders(config, { Prefer: 'return=minimal' })
+      });
+      if (!res.ok) throw new Error('Sync chunk cleanup failed: ' + await res.text());
+    }
+    async function upsertSyncChunk(config, body) {
+      const base = normalizeSyncUrl(config.url);
+      const res = await fetch(`${base}/rest/v1/${SYNC_CHUNK_TABLE}?on_conflict=id`, {
+        method: 'POST',
+        headers: syncHeaders(config, { Prefer: 'resolution=merge-duplicates,return=minimal' }),
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) throw new Error('Sync chunk upload failed: ' + await res.text());
+    }
+    async function fetchSyncChunks(config, row) {
+      const base = normalizeSyncUrl(config.url);
+      const vault = encodeURIComponent(String(config.vaultId || '').trim());
+      const res = await fetch(`${base}/rest/v1/${SYNC_CHUNK_TABLE}?vault_id=eq.${vault}&select=chunk_index,payload_text&order=chunk_index.asc`, {
+        headers: syncHeaders(config)
+      });
+      if (!res.ok) throw new Error('Sync chunk read failed: ' + await res.text());
+      const chunks = await res.json();
+      const expected = +(row.payload || {}).chunkCount || 0;
+      if (!Array.isArray(chunks) || chunks.length !== expected) throw new Error('Chunked sync vault is incomplete. Upload from desktop again.');
+      return JSON.parse(chunks.map((chunk) => chunk.payload_text || '').join(''));
+    }
     async function upsertSyncRow(config, envelope) {
       const base = normalizeSyncUrl(config.url);
+      const { payloadText, chunks } = splitSyncPayload(envelope);
+      const useChunks = chunks.length > 1 || payloadText.length > SYNC_CHUNK_SIZE;
+      if (useChunks) {
+        syncStatus(`Uploading encrypted vault in ${chunks.length} protected parts...`);
+        await deleteSyncChunks(config);
+        for (let i = 0; i < chunks.length; i += 1) {
+          await upsertSyncChunk(config, {
+            id: `${String(config.vaultId || '').trim()}:${i}`,
+            vault_id: String(config.vaultId || '').trim(),
+            chunk_index: i,
+            chunk_count: chunks.length,
+            updated_at: new Date().toISOString(),
+            device_id: getSyncDeviceId(),
+            payload_text: chunks[i]
+          });
+          if ((i + 1) % 5 === 0 || i === chunks.length - 1) syncStatus(`Uploaded ${i + 1}/${chunks.length} encrypted parts...`);
+        }
+      }
       const body = {
         id: String(config.vaultId || '').trim(),
         updated_at: new Date().toISOString(),
         device_id: getSyncDeviceId(),
-        payload: envelope
+        payload: useChunks ? {
+          format: SYNC_CHUNK_FORMAT,
+          envelopeFormat: envelope.format,
+          backupExportedAt: envelope.backupExportedAt,
+          chunkCount: chunks.length,
+          payloadLength: payloadText.length
+        } : envelope
       };
-      const res = await fetch(`${base}/rest/v1/${SYNC_TABLE}`, {
+      const res = await fetch(`${base}/rest/v1/${SYNC_TABLE}?on_conflict=id`, {
         method: 'POST',
         headers: syncHeaders(config, { Prefer: 'resolution=merge-duplicates,return=representation' }),
         body: JSON.stringify(body)
@@ -3226,7 +3291,8 @@
         syncStatus('Sync vault already current on this device.', 'ok');
         return false;
       }
-      const backup = await decryptSyncBackup(row.payload, passphrase);
+      const envelope = row.payload && row.payload.format === SYNC_CHUNK_FORMAT ? await fetchSyncChunks(config, row) : row.payload;
+      const backup = await decryptSyncBackup(envelope, passphrase);
       const info = await inspectBackup(backup);
       await applyBackupData(backup, info, { replaceDocuments: true });
       localStorage.setItem('bwLastSyncPullAt', row.updated_at || new Date().toISOString());
