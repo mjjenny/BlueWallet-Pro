@@ -56,7 +56,7 @@ describe("stable app UI lock", () => {
     expect(rootIndex).toContain("./legacy-root-pwa.html");
     expect(rootIndex).not.toContain("./react-app/index.html");
     expect(manifest.start_url).toBe("./legacy-root-pwa.html?v=stable");
-    expect(worker).toContain("blue-wallet-stable-rollback-v0.17");
+    expect(worker).toContain("blue-wallet-stable-rollback-v0.18");
     expect(worker).toContain('caches.match("./legacy-root-pwa.html")');
   });
 

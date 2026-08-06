@@ -42,7 +42,7 @@ describe("stable production rollback contract", () => {
   it("uses the stable service worker cache version and offline fallback", () => {
     const worker = readRootFile("service-worker.js");
 
-    expect(worker).toContain("blue-wallet-stable-rollback-v0.17");
+    expect(worker).toContain("blue-wallet-stable-rollback-v0.18");
     expect(worker).toContain("./legacy-root-pwa.html");
     expect(worker).toContain("./offline.html");
     expect(worker).toContain("keys.filter((key) => key !== CACHE_VERSION)");
@@ -54,12 +54,12 @@ describe("stable production rollback contract", () => {
     const html = readRootFile("legacy-root-pwa.html");
     const worker = readRootFile("service-worker.js");
 
-    expect(html).toContain("const APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.17'");
+    expect(html).toContain("const APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.18'");
     expect(html).toContain("checkForAppUpdate");
     expect(html).toContain("service-worker.js?update-check=");
     expect(html).toContain("New Blue Wallet update available.");
     expect(html).toContain("applyAppUpdate");
-    expect(worker).toContain('const CACHE_VERSION = "blue-wallet-stable-rollback-v0.17"');
+    expect(worker).toContain('const CACHE_VERSION = "blue-wallet-stable-rollback-v0.18"');
   });
 
   it("prints document scans without embedding a scrollable browser viewer", () => {
@@ -68,7 +68,10 @@ describe("stable production rollback contract", () => {
     expect(html).toContain("openCleanPrintWindow");
     expect(html).toContain("openPdfPrintTabs");
     expect(html).toContain("dataUrlToBlobUrl");
-    expect(html).toContain("Use the PDF viewer print icon or press Ctrl+P");
+    expect(html).toContain("Back to Blue Wallet");
+    expect(html).toContain("Share / Print PDF");
+    expect(html).toContain("navigator.share");
+    expect(html).toContain("On iPhone/iPad, tap Share / Print PDF");
     expect(html).toContain("object-fit: contain;");
     expect(html).not.toContain('w.document.write(`<iframe src="${f.data}"');
     expect(html).not.toContain("w.open(file.data");
