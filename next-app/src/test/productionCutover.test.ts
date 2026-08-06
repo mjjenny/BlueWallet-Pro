@@ -42,12 +42,24 @@ describe("stable production rollback contract", () => {
   it("uses the stable service worker cache version and offline fallback", () => {
     const worker = readRootFile("service-worker.js");
 
-    expect(worker).toContain("blue-wallet-stable-rollback-v0.14");
+    expect(worker).toContain("blue-wallet-stable-rollback-v0.15");
     expect(worker).toContain("./legacy-root-pwa.html");
     expect(worker).toContain("./offline.html");
     expect(worker).toContain("keys.filter((key) => key !== CACHE_VERSION)");
     expect(worker).toContain("caches.delete(key)");
     expect(worker.indexOf('caches.match("./legacy-root-pwa.html")')).toBeLessThan(worker.indexOf('caches.match("./offline.html")'));
+  });
+
+  it("keeps the in-app update prompt wired to the live service worker version", () => {
+    const html = readRootFile("legacy-root-pwa.html");
+    const worker = readRootFile("service-worker.js");
+
+    expect(html).toContain("const APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.15'");
+    expect(html).toContain("checkForAppUpdate");
+    expect(html).toContain("service-worker.js?update-check=");
+    expect(html).toContain("New Blue Wallet update available.");
+    expect(html).toContain("applyAppUpdate");
+    expect(worker).toContain('const CACHE_VERSION = "blue-wallet-stable-rollback-v0.15"');
   });
 
   it("pre-caches the stable wallet shell while keeping the React build available", () => {

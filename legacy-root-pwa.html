@@ -1985,7 +1985,7 @@
           </div>
           <div class="help-sec">
             <h3>Install</h3>
-            <p>Settings -> Install / Add to Home Screen. On iOS Safari, use Share -> Add to Home Screen; on Android/desktop, use the browser install prompt when available.</p>
+            <p>Settings -> Install / Add to Home Screen. On iOS Safari, use Share -> Add to Home Screen; on Android/desktop, use the browser install prompt when available. When a new hosted app version is available, tap the in-app Update button; your saved documents stay on this device.</p>
           </div>
         </div>
 
@@ -2171,6 +2171,7 @@
   </div>
 
   <script>
+    const APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.15';
     const DB_NAME = 'SeafarerWalletDB';
     let db;
     let useStorageFallback = false;
@@ -5013,6 +5014,67 @@
       box.classList.add('show');
     }
     function hideAppToast() { document.getElementById('app-toast')?.classList.remove('show'); }
+    const APP_VERSION_RE = /blue-wallet-stable-rollback-v\d+\.\d+/;
+    let pendingUpdateRegistration = null;
+    let pendingUpdateWorker = null;
+    let updateCheckInFlight = false;
+    let lastUpdateCheckAt = 0;
+    function readAppVersionFromText(text) {
+      const match = String(text || '').match(APP_VERSION_RE);
+      return match ? match[0] : '';
+    }
+    async function fetchLiveAppVersion() {
+      const url = './service-worker.js?update-check=' + Date.now();
+      const response = await fetch(url, { cache: 'no-store' });
+      if (!response.ok) throw new Error('Update check failed');
+      return readAppVersionFromText(await response.text());
+    }
+    function promptAppUpdate(message, registration, worker) {
+      pendingUpdateRegistration = registration || pendingUpdateRegistration;
+      pendingUpdateWorker = worker || pendingUpdateWorker;
+      showAppToast(message || 'New Blue Wallet update available.', 'Update', () => applyAppUpdate());
+    }
+    async function applyAppUpdate() {
+      showAppToast('Updating Blue Wallet...', null, null);
+      try {
+        if (pendingUpdateWorker) {
+          pendingUpdateWorker.postMessage({ type: 'SKIP_WAITING' });
+          setTimeout(() => location.reload(), 1200);
+          return;
+        }
+        const registration = pendingUpdateRegistration || await navigator.serviceWorker.getRegistration('./');
+        if (registration) {
+          await registration.update().catch(() => {});
+          const worker = registration.waiting || registration.installing;
+          if (worker) {
+            worker.postMessage({ type: 'SKIP_WAITING' });
+            setTimeout(() => location.reload(), 1200);
+            return;
+          }
+        }
+      } catch (_) {}
+      location.reload();
+    }
+    async function checkForAppUpdate(options = {}) {
+      if (!('serviceWorker' in navigator) || isFileProtocol() || !secureContextOk()) return;
+      const now = Date.now();
+      if (!options.force && now - lastUpdateCheckAt < 60000) return;
+      if (updateCheckInFlight) return;
+      updateCheckInFlight = true;
+      lastUpdateCheckAt = now;
+      try {
+        const liveVersion = await fetchLiveAppVersion();
+        if (liveVersion && liveVersion !== APP_CACHE_VERSION) {
+          const registration = await navigator.serviceWorker.getRegistration('./').catch(() => null);
+          if (registration) await registration.update().catch(() => {});
+          promptAppUpdate('New Blue Wallet update available.', registration, registration && (registration.waiting || registration.installing));
+        }
+      } catch (_) {
+        if (options.force) showAppToast('Could not check for updates. Try again online.', null, null);
+      } finally {
+        updateCheckInFlight = false;
+      }
+    }
     async function updateStorageStatus() {
       const statusEl = document.getElementById('storage-status');
       const fill = document.getElementById('storage-meter-fill');
@@ -5225,7 +5287,10 @@
         try { await syncPullLatest(); }
         catch (err) { syncStatus('Sync pull failed: ' + (err.message || err), 'bad'); alert('Sync pull failed: ' + (err.message || err)); }
       };
-      window.addEventListener('online', () => showAppToast('Internet connection restored. Blue Wallet remains available offline.', null, null));
+      window.addEventListener('online', () => {
+        showAppToast('Internet connection restored. Blue Wallet remains available offline.', null, null);
+        checkForAppUpdate({ force: true });
+      });
       window.addEventListener('offline', () => showAppToast('Offline mode active — your stored documents remain on this device.', null, null));
 
       // Search / sort / filter
@@ -5545,23 +5610,31 @@
       // Production service worker: caches the app shell for vessel/offline use.
       if ('serviceWorker' in navigator && !isFileProtocol() && secureContextOk()) {
         try {
+          let refreshing = false;
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (refreshing) return;
+            refreshing = true;
+            location.reload();
+          });
           const registration = await navigator.serviceWorker.register('./service-worker.js', { scope: './' });
+          pendingUpdateRegistration = registration;
           registration.update().catch(() => {});
           if (registration.waiting) {
-            showAppToast('Blue Wallet v0.2 is ready to install.', 'Update', () => registration.waiting.postMessage({ type:'SKIP_WAITING' }));
+            promptAppUpdate('New Blue Wallet update available.', registration, registration.waiting);
           }
           registration.addEventListener('updatefound', () => {
             const worker = registration.installing;
             if (!worker) return;
             worker.addEventListener('statechange', () => {
               if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-                showAppToast('A new Blue Wallet version is ready.', 'Update', () => worker.postMessage({ type:'SKIP_WAITING' }));
+                promptAppUpdate('New Blue Wallet update available.', registration, worker);
               }
             });
           });
-          let refreshing = false;
-          navigator.serviceWorker.addEventListener('controllerchange', () => {
-            if (refreshing) return; refreshing = true; location.reload();
+          checkForAppUpdate({ force: true });
+          setInterval(() => checkForAppUpdate(), 30 * 60 * 1000);
+          document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) checkForAppUpdate();
           });
         } catch (err) {
           console.warn('Offline service worker registration failed', err);
