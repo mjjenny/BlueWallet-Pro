@@ -31,8 +31,19 @@ describe("stable encrypted sync vault", () => {
     expect(html).toContain("PBKDF2-SHA256");
     expect(html).toContain("AES-GCM");
     expect(html).toContain("const signed = await signBackup(await buildFullBackupData());");
-    expect(html).toContain("payload: envelope");
+    expect(html).toContain("payload: useChunks ? {");
     expect(html).toContain("await applyBackupData(backup, info, { replaceDocuments: true });");
+  });
+
+  it("splits large encrypted vaults into small Supabase chunks", () => {
+    const html = readRootFile("legacy-root-pwa.html");
+
+    expect(html).toContain("const SYNC_CHUNK_TABLE = 'bluewallet_sync_vault_chunks';");
+    expect(html).toContain("const SYNC_CHUNK_FORMAT = 'bluewallet-pro-encrypted-sync-chunked-v1';");
+    expect(html).toContain("function splitSyncPayload(envelope)");
+    expect(html).toContain("async function upsertSyncChunk(config, body)");
+    expect(html).toContain("async function fetchSyncChunks(config, row)");
+    expect(html).toContain("Uploading encrypted vault in");
   });
 
   it("requires explicit sync configuration and includes Supabase setup SQL", () => {
@@ -49,6 +60,8 @@ describe("stable encrypted sync vault", () => {
     expect(existsSync(sqlPath)).toBe(true);
     expect(sql).toContain("create table if not exists public.bluewallet_sync_vaults");
     expect(sql).toContain("payload jsonb not null");
+    expect(sql).toContain("create table if not exists public.bluewallet_sync_vault_chunks");
+    expect(sql).toContain("payload_text text not null");
     expect(sql).toContain("enable row level security");
   });
 });
