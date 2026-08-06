@@ -1942,7 +1942,7 @@
           </div>
           <div class="help-sec">
             <h3>OCR</h3>
-            <p>Use <strong>Read text from scan (OCR)</strong> on Add/Edit after attaching an <strong>image</strong>. OCR uses safe layout zones and MRZ checks where possible. OpenCV contour analysis is skipped for browser stability. Always review suggestions before Apply. OCR needs HTTPS or localhost, not <code>file://</code>.</p>
+            <p>Use <strong>Read text from scan (OCR)</strong> on Add/Edit after attaching JPG, PNG, or PDF files. PDF pages are rendered inside the browser first, then OCR uses enhanced contrast, safe layout zones, and MRZ checks where possible. OpenCV contour analysis is skipped for browser stability. Always review suggestions before Apply. OCR needs HTTPS or localhost, not <code>file://</code>.</p>
             <ul>
               <li>On iOS Safari, camera permission is tested from <strong>Scan with camera</strong> inside Add Document.</li>
               <li>If camera is cancelled or blocked, the form stays open and no saved document is changed.</li>
@@ -1991,7 +1991,7 @@
 
         <div class="help-pane" id="help-faq">
           <details class="faq-item"><summary>Where are files stored?</summary><div class="faq-a">Only on this device in the browser's IndexedDB. Clearing site data removes them unless you exported a backup.</div></details>
-          <details class="faq-item"><summary>Why won't OCR or biometrics work?</summary><div class="faq-a">They need a secure context: HTTPS or localhost. Opening the HTML as <code>file://</code> usually blocks them. OCR also needs its external library to be reachable when you press the OCR button.</div></details>
+          <details class="faq-item"><summary>Why won't OCR or biometrics work?</summary><div class="faq-a">They need a secure context: HTTPS or localhost. Opening the HTML as <code>file://</code> usually blocks them. OCR also needs its external OCR and PDF libraries to be reachable when you press the OCR button.</div></details>
           <details class="faq-item"><summary>Lite and Full use the same data?</summary><div class="faq-a">Yes. One local database; only available controls change. Toggle anytime from the header or Settings.</div></details>
           <details class="faq-item"><summary>Document has no expiry date?</summary><div class="faq-a">Enable "No Expiry Date" when adding or editing. It will not appear in expiry alerts but stays in search, summary, backup, and packs.</div></details>
           <details class="faq-item"><summary>Lost PIN?</summary><div class="faq-a">The app cannot decrypt locked data without the PIN. Restore from a backup after clearing site data only if you accept resetting the local encrypted store.</div></details>
@@ -2171,7 +2171,7 @@
   </div>
 
   <script>
-    const APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.18';
+    const APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.19';
     const DB_NAME = 'SeafarerWalletDB';
     let db;
     let useStorageFallback = false;
@@ -4645,9 +4645,13 @@
 
     let ocrSuggestions = { number: '', expiry: '', issue: '', title: '' };
     let tesseractLoading = null;
+    let tesseractWorkerLoading = null;
+    let pdfjsLoading = null;
     let opencvLoading = null;
     let ocrRunId = 0;
-    const OCR_TIMEOUT_MS = 30000;
+    const OCR_TIMEOUT_MS = 45000;
+    const PDF_OCR_MAX_PAGES = 4;
+    const PDF_OCR_SCALE = 2.35;
 
     function loadTesseract() {
       if (window.Tesseract) return Promise.resolve(window.Tesseract);
@@ -4665,6 +4669,38 @@
         document.head.appendChild(s);
       });
       return tesseractLoading;
+    }
+
+    function loadPdfJs() {
+      if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+      if (pdfjsLoading) return pdfjsLoading;
+      if (!window.isSecureContext) {
+        return Promise.reject(new Error('PDF OCR needs HTTPS or localhost (secure context).'));
+      }
+      pdfjsLoading = import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs').then((pdfjs) => {
+        pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
+        window.pdfjsLib = pdfjs;
+        return pdfjs;
+      }).catch((e) => {
+        pdfjsLoading = null;
+        throw new Error('Could not download PDF reader for OCR. Check network and try again.');
+      });
+      return pdfjsLoading;
+    }
+
+    function getOcrWorker(Tesseract) {
+      if (tesseractWorkerLoading) return tesseractWorkerLoading;
+      tesseractWorkerLoading = Tesseract.createWorker('eng').then(async (worker) => {
+        await worker.setParameters({
+          preserve_interword_spaces: '1',
+          user_defined_dpi: '300'
+        });
+        return worker;
+      }).catch((e) => {
+        tesseractWorkerLoading = null;
+        throw e;
+      });
+      return tesseractWorkerLoading;
     }
 
     function loadOpenCV() {
@@ -4700,10 +4736,10 @@
       });
     }
 
-    function canvasFromImage(img, maxSide = 1400) {
+    function canvasFromImage(img, maxSide = 2200) {
       let w = img.naturalWidth || img.width;
       let h = img.naturalHeight || img.height;
-      const scale = Math.min(2.2, maxSide / Math.max(w, h));
+      const scale = Math.min(2.5, maxSide / Math.max(w, h));
       w = Math.round(w * scale); h = Math.round(h * scale);
       const canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
@@ -4731,21 +4767,95 @@
     function enhanceCanvasInPlace(ctx, w, h) {
       const imageData = ctx.getImageData(0, 0, w, h);
       const d = imageData.data;
-      let min = 255, max = 0;
+      const hist = new Array(256).fill(0);
       for (let i = 0; i < d.length; i += 4) {
-        const g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+        const g = Math.round(0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]);
         d[i] = d[i + 1] = d[i + 2] = g;
-        if (g < min) min = g;
-        if (g > max) max = g;
+        hist[g]++;
       }
-      const range = Math.max(1, max - min);
+      const pixels = Math.max(1, w * h);
+      const percentile = (target) => {
+        let seen = 0;
+        for (let i = 0; i < hist.length; i++) {
+          seen += hist[i];
+          if (seen >= target) return i;
+        }
+        return 255;
+      };
+      const low = percentile(pixels * 0.02);
+      const high = Math.max(low + 32, percentile(pixels * 0.98));
+      const range = Math.max(1, high - low);
       for (let i = 0; i < d.length; i += 4) {
-        let g = ((d[i] - min) / range) * 255;
-        g = g < 140 ? Math.max(0, g * 0.75) : Math.min(255, 200 + (g - 140) * 0.4);
+        let g = ((d[i] - low) / range) * 255;
+        g = ((g - 128) * 1.22) + 136;
+        g = Math.max(0, Math.min(255, g));
         d[i] = d[i + 1] = d[i + 2] = g;
         d[i + 3] = 255;
       }
       ctx.putImageData(imageData, 0, 0);
+    }
+
+    function dataUrlToBytes(dataUrl) {
+      const body = String(dataUrl || '').split(',')[1] || '';
+      const binary = atob(body);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      return bytes;
+    }
+
+    function isPdfFile(file) {
+      return !!file && (
+        file.type === 'application/pdf' ||
+        /\.pdf$/i.test(file.name || '') ||
+        String(file.data || '').startsWith('data:application/pdf')
+      );
+    }
+
+    async function renderPdfPagesForOcr(file, status, stillCurrent) {
+      const pdfjs = await loadPdfJs();
+      if (!stillCurrent()) return [];
+      const data = dataUrlToBytes(file.data);
+      const pdf = await pdfjs.getDocument({ data }).promise;
+      const pageCount = Math.min(pdf.numPages || 0, PDF_OCR_MAX_PAGES);
+      const out = [];
+      for (let pageNo = 1; pageNo <= pageCount; pageNo++) {
+        if (!stillCurrent()) return out;
+        status.textContent = `Preparing PDF page ${pageNo}/${pdf.numPages} for OCR...`;
+        await yieldToBrowser();
+        const page = await pdf.getPage(pageNo);
+        const viewport = page.getViewport({ scale: PDF_OCR_SCALE });
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.ceil(viewport.width);
+        canvas.height = Math.ceil(viewport.height);
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        await page.render({ canvasContext: ctx, viewport }).promise;
+        enhanceCanvasInPlace(ctx, canvas.width, canvas.height);
+        out.push({ canvas, label: `${file.name || 'PDF'} page ${pageNo}`, totalPages: pdf.numPages });
+      }
+      if ((pdf.numPages || 0) > PDF_OCR_MAX_PAGES) {
+        status.textContent = `Prepared first ${PDF_OCR_MAX_PAGES} PDF pages for OCR.`;
+      }
+      return out;
+    }
+
+    async function collectOcrPages(files, status, stillCurrent) {
+      const pages = [];
+      for (const file of files || []) {
+        if (!stillCurrent()) return pages;
+        if (file.type && file.type.startsWith('image/')) {
+          status.textContent = `Preparing image scan for OCR: ${file.name || 'scan'}...`;
+          const img = await loadImageEl(file.data);
+          const { canvas, ctx, w, h } = canvasFromImage(img);
+          enhanceCanvasInPlace(ctx, w, h);
+          pages.push({ canvas, label: file.name || 'image scan', totalPages: 1 });
+        } else if (isPdfFile(file)) {
+          const pdfPages = await renderPdfPagesForOcr(file, status, stillCurrent);
+          pages.push(...pdfPages);
+        }
+      }
+      return pages;
     }
 
     /** Heuristic zones: top title, middle fields, bottom MRZ band */
@@ -4866,12 +4976,15 @@
     }
 
     async function ocrCrop(Tesseract, dataUrl, psm, whitelist) {
+      const worker = await getOcrWorker(Tesseract);
       const cfg = {
         tessedit_pageseg_mode: String(psm),
         preserve_interword_spaces: '1'
       };
       if (whitelist) cfg.tessedit_char_whitelist = whitelist;
-      const r = await Tesseract.recognize(dataUrl, 'eng', { ...cfg });
+      else cfg.tessedit_char_whitelist = '';
+      await worker.setParameters(cfg);
+      const r = await worker.recognize(dataUrl);
       return (r.data && r.data.text) || '';
     }
 
@@ -4974,71 +5087,68 @@
       ocrSuggestions = { number: '', expiry: '', issue: '', title: '' };
       btn.disabled = true;
 
-      const imgFile = pendingFiles.find(f => f.type && f.type.startsWith('image/'));
-      if (!imgFile) {
-        status.textContent = 'Attach an image scan first (PDF OCR is limited — use a photo/JPG).';
+      if (!pendingFiles.length) {
+        status.textContent = 'Attach an image scan or PDF first.';
         sug.innerHTML = '';
         rawEl.textContent = '';
         btn.disabled = false;
         return;
       }
 
-      status.textContent = 'Loading OCR engine…';
+      status.textContent = 'Loading OCR engine...';
       sug.innerHTML = '';
       rawEl.textContent = '';
       try {
         const Tesseract = await withTimeout(loadTesseract(), OCR_TIMEOUT_MS, 'OCR engine took too long to load');
         if (!stillCurrent()) return;
-        status.textContent = 'Layout analysis…';
+        status.textContent = 'Preparing files for OCR...';
         await yieldToBrowser();
-        const img = await loadImageEl(imgFile.data);
+        const pages = await collectOcrPages(pendingFiles, status, stillCurrent);
         if (!stillCurrent()) return;
-        const { canvas, ctx, w, h } = canvasFromImage(img);
-        await yieldToBrowser();
-        enhanceCanvasInPlace(ctx, w, h);
-        const zones = heuristicZones(canvas);
-
-        // 1) MRZ band OCR (bottom) with tight charset
-        status.textContent = 'Reading MRZ zone…';
-        let mrzText = '';
-        try {
-          mrzText = await withTimeout(ocrCrop(Tesseract, zones.bottom, 6, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<'), OCR_TIMEOUT_MS, 'MRZ OCR took too long');
-        } catch (e) {
-          console.warn('MRZ OCR skipped', e);
+        if (!pages.length) {
+          status.textContent = 'No readable image or PDF file found. Attach JPG, PNG, or PDF and try again.';
+          sug.innerHTML = '';
+          rawEl.textContent = '';
+          btn.disabled = false;
+          return;
         }
-        if (!stillCurrent()) return;
-        const mrzLines = (mrzText || '').split(/\n+/);
-        const mrzParsed = parseMrzLines(mrzLines);
 
-        // 2) Heuristic zone OCR
-        status.textContent = 'Reading page zones…';
+        let mrzText = '';
         const zoneTexts = [];
-        for (const [name, url] of [['top', zones.top], ['mid', zones.mid], ['full', zones.full]]) {
+        const pageLabels = [];
+
+        for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
           if (!stillCurrent()) return;
-          status.textContent = 'Reading zone: ' + name + '…';
+          const pageInfo = pages[pageIndex];
+          const zones = heuristicZones(pageInfo.canvas);
+          const prefix = pages.length > 1 ? `Page ${pageIndex + 1}/${pages.length}` : 'Page';
+          pageLabels.push(pageInfo.label);
+
+          status.textContent = `${prefix}: reading MRZ/passport band...`;
           await yieldToBrowser();
           try {
-            const t = await withTimeout(ocrCrop(Tesseract, url, name === 'full' ? 3 : 6), OCR_TIMEOUT_MS, 'OCR took too long on ' + name + ' zone');
-            zoneTexts.push(t);
+            const t = await withTimeout(ocrCrop(Tesseract, zones.bottom, 6, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<'), OCR_TIMEOUT_MS, 'MRZ OCR took too long');
+            if (t) mrzText += '\n' + t;
           } catch (e) {
-            console.warn('OCR zone skipped', name, e);
+            console.warn('MRZ OCR skipped', e);
+          }
+
+          for (const [name, url, psm] of [['top', zones.top, 6], ['mid', zones.mid, 6], ['full', zones.full, 11]]) {
+            if (!stillCurrent()) return;
+            status.textContent = `${prefix}: reading ${name} text...`;
+            await yieldToBrowser();
+            try {
+              const t = await withTimeout(ocrCrop(Tesseract, url, psm), OCR_TIMEOUT_MS, `OCR took too long on ${name} text`);
+              if (t) zoneTexts.push(`--- ${pageInfo.label} ${name} ---\n${t}`);
+            } catch (e) {
+              console.warn('OCR zone skipped', name, e);
+            }
           }
         }
 
-        // 3) OpenCV contour regions are skipped in normal use for browser stability.
-        let cvTexts = [];
-        status.textContent = 'OpenCV contour pass skipped for browser stability.';
-        try {
-          const crops = [];
-          for (let i = 0; i < Math.min(crops.length, 6); i++) {
-            status.textContent = `Contour OCR ${i + 1}/${Math.min(crops.length, 6)}…`;
-            try { cvTexts.push(await ocrCrop(Tesseract, crops[i], 7)); } catch (_) {}
-          }
-        } catch (_) {
-          status.textContent = 'OpenCV skipped — using zones + MRZ…';
-        }
-
-        const combined = [mrzText, ...zoneTexts, ...cvTexts].join('\n');
+        const mrzLines = (mrzText || '').split(/\n+/);
+        const mrzParsed = parseMrzLines(mrzLines);
+        const combined = [mrzText, ...zoneTexts].join('\n');
         let parsed = parseOcrText(combined);
 
         // MRZ overrides when valid (highest confidence for passports)
@@ -5052,16 +5162,16 @@
 
         ocrSuggestions = parsed;
         rawEl.textContent =
+          'Files read: ' + pageLabels.join(', ') + '\n\n' +
           (mrzText ? '--- MRZ ---\n' + mrzText + '\n\n' : '') +
-          (combined.slice(0, 1400) || '(no text detected)');
+          (combined.slice(0, 2400) || '(no text detected)');
         const bits = [];
-        bits.push(`<div style="color:var(--muted);font-size:12px">Layout: heuristic zones + ${mrzParsed ? 'MRZ ✓' : 'no MRZ'} + OpenCV contours</div>`);
-        bits[0] = `<div style="color:var(--muted);font-size:12px">Layout: safe OCR zones + ${mrzParsed ? 'MRZ verified' : 'no MRZ'}; OpenCV contours skipped for browser stability</div>`;
+        bits[0] = `<div style="color:var(--muted);font-size:12px">Layout: enhanced ${pages.length > 1 ? 'PDF/page' : 'scan'} OCR + ${mrzParsed ? 'MRZ verified' : 'no MRZ'}; ${pageLabels.length} page(s) read</div>`;
         if (ocrSuggestions.number) bits.push(`<div>Number: <b style="color:#fff">${esc(ocrSuggestions.number)}</b>${sourceNote==='MRZ'?' <span style="color:var(--ok)">(MRZ)</span>':''}</div>`);
         if (ocrSuggestions.issue) bits.push(`<div>Issue: <b style="color:#fff">${esc(ocrSuggestions.issue)}</b></div>`);
         if (ocrSuggestions.expiry) bits.push(`<div>Expiry: <b style="color:#fff">${esc(ocrSuggestions.expiry)}</b>${sourceNote==='MRZ'?' <span style="color:var(--ok)">(MRZ)</span>':''}</div>`);
         if (ocrSuggestions.title) bits.push(`<div>Title hint: <b style="color:#fff">${esc(ocrSuggestions.title)}</b></div>`);
-        sug.innerHTML = bits.length > 1 ? bits.join('') : '<div style="color:var(--muted)">No clear fields — use raw text below.</div>';
+        sug.innerHTML = bits.length > 1 ? bits.join('') : '<div style="color:var(--muted)">No clear fields - use raw text below.</div>';
         status.textContent = 'Review suggestions, then Apply (always verify before saving).';
       } catch (e) {
         console.error(e);

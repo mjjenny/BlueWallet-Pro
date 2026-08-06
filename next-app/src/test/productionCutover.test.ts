@@ -42,7 +42,7 @@ describe("stable production rollback contract", () => {
   it("uses the stable service worker cache version and offline fallback", () => {
     const worker = readRootFile("service-worker.js");
 
-    expect(worker).toContain("blue-wallet-stable-rollback-v0.18");
+    expect(worker).toContain("blue-wallet-stable-rollback-v0.19");
     expect(worker).toContain("./legacy-root-pwa.html");
     expect(worker).toContain("./offline.html");
     expect(worker).toContain("keys.filter((key) => key !== CACHE_VERSION)");
@@ -54,12 +54,27 @@ describe("stable production rollback contract", () => {
     const html = readRootFile("legacy-root-pwa.html");
     const worker = readRootFile("service-worker.js");
 
-    expect(html).toContain("const APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.18'");
+    expect(html).toContain("const APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.19'");
     expect(html).toContain("checkForAppUpdate");
     expect(html).toContain("service-worker.js?update-check=");
     expect(html).toContain("New Blue Wallet update available.");
     expect(html).toContain("applyAppUpdate");
-    expect(worker).toContain('const CACHE_VERSION = "blue-wallet-stable-rollback-v0.18"');
+    expect(worker).toContain('const CACHE_VERSION = "blue-wallet-stable-rollback-v0.19"');
+  });
+
+  it("supports OCR for both image scans and PDF pages", () => {
+    const html = readRootFile("legacy-root-pwa.html");
+
+    expect(html).toContain("PDF_OCR_MAX_PAGES");
+    expect(html).toContain("PDF_OCR_SCALE");
+    expect(html).toContain("loadPdfJs");
+    expect(html).toContain("pdf.worker.min.mjs");
+    expect(html).toContain("renderPdfPagesForOcr");
+    expect(html).toContain("collectOcrPages");
+    expect(html).toContain("getOcrWorker");
+    expect(html).toContain("Attach an image scan or PDF first.");
+    expect(html).toContain("PDF pages are rendered inside the browser first");
+    expect(html).not.toContain("PDF OCR is limited");
   });
 
   it("prints document scans without embedding a scrollable browser viewer", () => {
