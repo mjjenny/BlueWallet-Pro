@@ -1906,6 +1906,10 @@
               <h4>Meta transfer</h4>
               <p>Full mode -> Settings -> <strong>Multi-device meta transfer</strong>. Profile, packs, logs, and metadata without heavy scan files.</p>
             </div>
+            <div class="help-card">
+              <h4>Encrypted Sync Vault</h4>
+              <p>Optional Supabase sync for desktop/mobile. The full wallet is encrypted locally before upload; use the same vault ID and passphrase on each device.</p>
+            </div>
           </div>
           <div class="help-sec" style="margin-top:14px">
             <h3>Recommended routine</h3>
@@ -1952,6 +1956,7 @@
               <li><strong>Import Backup</strong> - validates structure and integrity, then shows a restore confirmation before applying changes.</li>
               <li><strong>Backup Health</strong> - reminds you when no recent full backup exists.</li>
               <li><strong>Meta transfer</strong> - profile, packs, logs, and metadata without heavy scan blobs.</li>
+              <li><strong>Encrypted Sync Vault</strong> - optional Supabase upload/download of the encrypted full backup for device homogeneity.</li>
             </ul>
           </div>
         </div>
@@ -1991,7 +1996,8 @@
           <details class="faq-item"><summary>Document has no expiry date?</summary><div class="faq-a">Enable "No Expiry Date" when adding or editing. It will not appear in expiry alerts but stays in search, summary, backup, and packs.</div></details>
           <details class="faq-item"><summary>Lost PIN?</summary><div class="faq-a">The app cannot decrypt locked data without the PIN. Restore from a backup after clearing site data only if you accept resetting the local encrypted store.</div></details>
           <details class="faq-item"><summary>Category names look cut off?</summary><div class="faq-a">On narrow screens, compact category codes keep every tab visible in one row.</div></details>
-          <details class="faq-item"><summary>Is anything uploaded online?</summary><div class="faq-a">No document uploads by the app. OCR libraries may load from CDN only when you run OCR on a secure origin; document data remains local.</div></details>
+          <details class="faq-item"><summary>Is anything uploaded online?</summary><div class="faq-a">By default, no document data is uploaded. OCR libraries may load from CDN only when you run OCR on a secure origin. If you explicitly configure Encrypted Sync Vault, the app uploads only an encrypted full-backup payload to your Supabase vault.</div></details>
+          <details class="faq-item"><summary>Can desktop and mobile sync automatically?</summary><div class="faq-a">Yes, if you explicitly configure Encrypted Sync Vault in Settings. The app encrypts the full backup on-device before uploading it to Supabase, then another device can pull and decrypt it with the same vault ID and passphrase.</div></details>
           <details class="faq-item"><summary>Why does search ignore the open category tab?</summary><div class="faq-a">That is intentional. When you type a query, search becomes wallet-wide. Clear the search box to browse one category tab at a time.</div></details>
           <details class="faq-item"><summary>How do I know the final build is ready?</summary><div class="faq-a">Use Full mode -> Release Readiness and Real Device QA Pack, then run the required physical-device checks on iOS Safari, Android Chrome, Windows Chrome, and Windows Edge.</div></details>
         </div>
@@ -2093,6 +2099,30 @@
           <button class="btn btn-ghost" id="btn-offline-recovery" style="width:100%;margin-bottom:8px">Offline recovery check</button>
           <button class="btn btn-ghost" id="btn-activity-log" style="width:100%">Download activity log</button>
           <p style="font-size:12px;color:var(--muted);margin-top:10px">Also: open any document → Download scan · Tools → Share / Calendar (.ics in Full).</p>
+        </div>
+        <div class="sblock full-only">
+          <h3>Encrypted Sync Vault</h3>
+          <p>Optional Supabase sync. The full backup is encrypted on this device before upload, so the cloud stores only unreadable vault data.</p>
+          <div class="field"><label>Supabase project URL</label><input type="url" id="sync-url" placeholder="https://your-project.supabase.co" autocomplete="off" /></div>
+          <div class="field"><label>Supabase anon key</label><input type="password" id="sync-key" placeholder="Paste anon public key" autocomplete="off" /></div>
+          <div class="row">
+            <div class="field"><label>Vault ID</label><input id="sync-vault-id" placeholder="e.g. bluewallet-main" autocomplete="off" /></div>
+            <div class="field"><label>Sync passphrase</label><input type="password" id="sync-passphrase" placeholder="Required to encrypt/decrypt" autocomplete="off" /></div>
+          </div>
+          <div class="toggle">
+            <div><div class="tl">Remember passphrase here</div><div class="ts">Needed for automatic pull on this device. Leave off on shared devices.</div></div>
+            <label class="sw"><input type="checkbox" id="sync-remember" /><span class="sl"></span></label>
+          </div>
+          <div class="toggle">
+            <div><div class="tl">Auto-check on open</div><div class="ts">When saved, the app checks the vault and pulls newer data only when safe.</div></div>
+            <label class="sw"><input type="checkbox" id="sync-auto" /><span class="sl"></span></label>
+          </div>
+          <div class="actions" style="margin-top:10px">
+            <button class="btn btn-ghost" id="btn-sync-save" type="button">Save settings</button>
+            <button class="btn btn-primary" id="btn-sync-upload" type="button">Upload encrypted vault</button>
+          </div>
+          <button class="btn btn-ghost" id="btn-sync-pull" type="button" style="width:100%;margin-top:8px">Pull latest from vault</button>
+          <p id="sync-status" style="font-size:12px;color:var(--muted);margin-top:10px">Sync is off until settings are saved.</p>
         </div>
         <div class="sblock">
           <h3>Offline storage</h3>
@@ -2319,20 +2349,25 @@
         const payload = { ...doc };
         // Avoid writing dual plaintext legacy blobs when encrypting
         const enc = await encryptPayload(payload);
-        return putRaw(enc);
+        const saved = await putRaw(enc);
+        touchLocalChanged('document');
+        return saved;
       }
       // No vault key: store plaintext (PIN not set / not unlocked)
-      return putRaw(doc);
+      const saved = await putRaw(doc);
+      touchLocalChanged('document');
+      return saved;
     }
     function deleteDoc(id) {
       if (useStorageFallback || !db) {
         const rows = fallbackRead('bwFallbackDocuments', []).filter(x => x && x.id !== id);
         fallbackWrite('bwFallbackDocuments', rows);
+        touchLocalChanged('document-delete');
         return Promise.resolve();
       }
       return new Promise((res, rej) => {
         const r = db.transaction('documents','readwrite').objectStore('documents').delete(id);
-        r.onsuccess = () => res();
+        r.onsuccess = () => { touchLocalChanged('document-delete'); res(); };
         r.onerror = () => rej(r.error);
       });
     }
@@ -2412,11 +2447,12 @@
       } else row = { key: 'photo', data };
       if (useStorageFallback || !db) {
         fallbackWrite('bwFallbackProfile', row);
+        touchLocalChanged('profile');
         return;
       }
       return new Promise((res, rej) => {
         const r = db.transaction('profile','readwrite').objectStore('profile').put(row);
-        r.onsuccess = () => res();
+        r.onsuccess = () => { touchLocalChanged('profile'); res(); };
         r.onerror = () => rej(r.error);
       });
     }
@@ -2732,6 +2768,7 @@
     let viewMode = 'list';
     let idleTimer = null, idleMins = 5;
     let activePack = null;
+    let syncApplyingRemote = false;
 
     function normalizeDoc(doc) {
       if (!doc.files) {
@@ -2763,10 +2800,17 @@
       try { vaccines = JSON.parse(localStorage.getItem('bwVaccines')||'[]'); } catch{ vaccines=[]; }
       idleMins = +(localStorage.getItem('bwIdleMins') || 5);
     }
-    function saveSeafarer() { localStorage.setItem('bwSeafarer', JSON.stringify(seafarer)); updateStripProfile(); }
-    function savePacks() { localStorage.setItem('bwPacks', JSON.stringify(packs)); }
-    function saveSeatime() { localStorage.setItem('bwSeatime', JSON.stringify(seatime)); }
-    function saveVaccines() { localStorage.setItem('bwVaccines', JSON.stringify(vaccines)); }
+    function touchLocalChanged(reason = 'local-edit') {
+      if (syncApplyingRemote) return;
+      try {
+        localStorage.setItem('bwLastLocalChangeAt', new Date().toISOString());
+        localStorage.setItem('bwLastLocalChangeReason', reason);
+      } catch (_) {}
+    }
+    function saveSeafarer() { localStorage.setItem('bwSeafarer', JSON.stringify(seafarer)); touchLocalChanged('seafarer'); updateStripProfile(); }
+    function savePacks() { localStorage.setItem('bwPacks', JSON.stringify(packs)); touchLocalChanged('packs'); }
+    function saveSeatime() { localStorage.setItem('bwSeatime', JSON.stringify(seatime)); touchLocalChanged('sea-time'); }
+    function saveVaccines() { localStorage.setItem('bwVaccines', JSON.stringify(vaccines)); touchLocalChanged('vaccines'); }
     const ACTIVITY_LOG_KEY = 'bwActivityLog';
     function readActivityLog() {
       try {
@@ -2919,6 +2963,283 @@
         'This will merge/update matching local records on this device.',
         'Continue restore?'
       ].join('\n');
+    }
+    async function buildFullBackupData() {
+      return {
+        format: BACKUP_FORMAT,
+        app: 'BlueWallet-Pro Stable',
+        version: BACKUP_VERSION,
+        backupVersionLabel: BACKUP_LABEL,
+        exportedAt: new Date().toISOString(),
+        documents,
+        profile: await getProfile(),
+        seafarer: seafarer || {},
+        packs: packs || [],
+        seatime: seatime || [],
+        vaccines: vaccines || [],
+        reminders: getReminders(),
+        settings: {
+          idleMins: +(localStorage.getItem('bwIdleMins') || 0),
+          appMode: localStorage.getItem('bwAppMode') || 'full',
+          theme: localStorage.getItem('bwTheme') || localStorage.getItem('greenVaultTheme') || 'ocean',
+          pinRequired: localStorage.getItem('bwPinRequired') === '1'
+        }
+        // PIN hash, biometric credentials, and sync secrets intentionally excluded
+      };
+    }
+    async function applyBackupData(data, backupInfo, options = {}) {
+      if (vaultLocked) throw new Error('Unlock the vault before restoring or syncing.');
+      syncApplyingRemote = true;
+      try {
+        if (options.replaceDocuments) {
+          const incomingIds = new Set(backupInfo.cleanDocs.map(doc => doc.id));
+          const existingDocs = await getAllDocs();
+          for (const doc of existingDocs) {
+            if (doc && doc.id && !incomingIds.has(doc.id)) await deleteDoc(doc.id);
+          }
+        }
+        for (const doc of backupInfo.cleanDocs) {
+          await saveDoc(doc);
+        }
+        if (data.profile && typeof data.profile === 'object') await saveProfile(data.profile);
+        if (data.seafarer && typeof data.seafarer === 'object') {
+          seafarer = Object.assign({}, seafarer, data.seafarer);
+          saveSeafarer();
+        }
+        if (Array.isArray(data.packs)) { packs = data.packs; savePacks(); }
+        if (Array.isArray(data.seatime)) { seatime = data.seatime; saveSeatime(); }
+        if (Array.isArray(data.vaccines)) { vaccines = data.vaccines; saveVaccines(); }
+        if (data.reminders && typeof data.reminders === 'object') {
+          localStorage.setItem('bwReminders', JSON.stringify({
+            primary: +data.reminders.primary || 183,
+            secondary: +data.reminders.secondary || 90,
+            urgent: +data.reminders.urgent || 30,
+            critical: +data.reminders.critical || 7
+          }));
+        }
+        if (data.settings && typeof data.settings === 'object') {
+          if (data.settings.idleMins != null) localStorage.setItem('bwIdleMins', String(+data.settings.idleMins || 0));
+          if (data.settings.appMode) localStorage.setItem('bwAppMode', data.settings.appMode === 'lite' ? 'lite' : 'full');
+          if (data.settings.theme) localStorage.setItem('bwTheme', String(data.settings.theme));
+        }
+      } finally {
+        syncApplyingRemote = false;
+      }
+      localStorage.setItem('bwLastRestoreAt', new Date().toISOString());
+      documents = (await getAllDocs()).map(d => sanitizeDoc(normalizeDoc(d))).filter(Boolean);
+      await loadProfile();
+      loadMeta();
+      updateStripProfile();
+      render();
+      return backupInfo;
+    }
+    const SYNC_TABLE = 'bluewallet_sync_vaults';
+    const SYNC_CONFIG_KEY = 'bwSyncConfig';
+    const SYNC_DEVICE_KEY = 'bwSyncDeviceId';
+    const SYNC_ENVELOPE_FORMAT = 'bluewallet-pro-encrypted-sync-v1';
+    const SYNC_KDF_ITERS = 260000;
+    function readSyncConfig() {
+      try { return Object.assign({ url:'', anonKey:'', vaultId:'', auto:false, remember:false, passphrase:'' }, JSON.parse(localStorage.getItem(SYNC_CONFIG_KEY) || '{}')); }
+      catch (_) { return { url:'', anonKey:'', vaultId:'', auto:false, remember:false, passphrase:'' }; }
+    }
+    function writeSyncConfig(config) {
+      localStorage.setItem(SYNC_CONFIG_KEY, JSON.stringify(config));
+    }
+    function getSyncDeviceId() {
+      let id = localStorage.getItem(SYNC_DEVICE_KEY);
+      if (!id) {
+        id = 'device-' + uid();
+        localStorage.setItem(SYNC_DEVICE_KEY, id);
+      }
+      return id;
+    }
+    function normalizeSyncUrl(url) {
+      return String(url || '').trim().replace(/\/+$/, '');
+    }
+    function requireSyncConfig(config, passphrase) {
+      if (!cryptoSubtleOk()) throw new Error('Encrypted sync needs HTTPS or localhost.');
+      if (!normalizeSyncUrl(config.url)) throw new Error('Supabase project URL is missing.');
+      if (!String(config.anonKey || '').trim()) throw new Error('Supabase anon key is missing.');
+      if (!String(config.vaultId || '').trim()) throw new Error('Vault ID is missing.');
+      if (!String(passphrase || '').trim()) throw new Error('Sync passphrase is missing.');
+    }
+    function syncStatus(message, tone = 'muted') {
+      const el = document.getElementById('sync-status');
+      if (!el) return;
+      el.textContent = message;
+      el.style.color = tone === 'ok' ? 'var(--ok)' : tone === 'warn' ? 'var(--warn)' : tone === 'bad' ? 'var(--bad)' : 'var(--muted)';
+    }
+    async function deriveSyncKey(passphrase, salt) {
+      const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(String(passphrase)), 'PBKDF2', false, ['deriveKey']);
+      return crypto.subtle.deriveKey(
+        { name: 'PBKDF2', salt, iterations: SYNC_KDF_ITERS, hash: 'SHA-256' },
+        base,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['encrypt', 'decrypt']
+      );
+    }
+    async function encryptSyncBackup(backup, passphrase) {
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const key = await deriveSyncKey(passphrase, salt);
+      const plain = new TextEncoder().encode(JSON.stringify(backup));
+      const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plain);
+      return {
+        format: SYNC_ENVELOPE_FORMAT,
+        crypto: { algorithm: 'AES-GCM', kdf: 'PBKDF2-SHA256', iterations: SYNC_KDF_ITERS, salt: bufToB64(salt), iv: bufToB64(iv) },
+        backupExportedAt: backup.exportedAt,
+        payload: bufToB64(ct)
+      };
+    }
+    async function decryptSyncBackup(envelope, passphrase) {
+      if (!envelope || envelope.format !== SYNC_ENVELOPE_FORMAT) throw new Error('Unsupported sync vault payload.');
+      const meta = envelope.crypto || {};
+      if (meta.algorithm !== 'AES-GCM' || meta.kdf !== 'PBKDF2-SHA256') throw new Error('Unsupported sync encryption settings.');
+      const key = await deriveSyncKey(passphrase, new Uint8Array(b64ToBuf(meta.salt)));
+      const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(b64ToBuf(meta.iv)) }, key, b64ToBuf(envelope.payload));
+      return JSON.parse(new TextDecoder().decode(plain));
+    }
+    function syncHeaders(config, extra = {}) {
+      const anonKey = String(config.anonKey || '').trim();
+      return Object.assign({
+        apikey: anonKey,
+        Authorization: 'Bearer ' + anonKey,
+        'Content-Type': 'application/json'
+      }, extra);
+    }
+    async function fetchSyncRow(config) {
+      const base = normalizeSyncUrl(config.url);
+      const id = encodeURIComponent(String(config.vaultId || '').trim());
+      const res = await fetch(`${base}/rest/v1/${SYNC_TABLE}?id=eq.${id}&select=id,updated_at,device_id,payload`, {
+        headers: syncHeaders(config)
+      });
+      if (!res.ok) throw new Error('Sync read failed: ' + await res.text());
+      const rows = await res.json();
+      return Array.isArray(rows) && rows.length ? rows[0] : null;
+    }
+    async function upsertSyncRow(config, envelope) {
+      const base = normalizeSyncUrl(config.url);
+      const body = {
+        id: String(config.vaultId || '').trim(),
+        updated_at: new Date().toISOString(),
+        device_id: getSyncDeviceId(),
+        payload: envelope
+      };
+      const res = await fetch(`${base}/rest/v1/${SYNC_TABLE}`, {
+        method: 'POST',
+        headers: syncHeaders(config, { Prefer: 'resolution=merge-duplicates,return=representation' }),
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) throw new Error('Sync upload failed: ' + await res.text());
+      const rows = await res.json();
+      return Array.isArray(rows) && rows.length ? rows[0] : body;
+    }
+    function getSyncPassphrase(config) {
+      const input = document.getElementById('sync-passphrase');
+      return (input && input.value) || config.passphrase || '';
+    }
+    function getSyncConfigFromForm() {
+      const saved = readSyncConfig();
+      const pass = (document.getElementById('sync-passphrase') || {}).value || '';
+      const remember = !!(document.getElementById('sync-remember') || {}).checked;
+      return {
+        url: (document.getElementById('sync-url') || {}).value || saved.url || '',
+        anonKey: (document.getElementById('sync-key') || {}).value || saved.anonKey || '',
+        vaultId: (document.getElementById('sync-vault-id') || {}).value || saved.vaultId || '',
+        auto: !!(document.getElementById('sync-auto') || {}).checked,
+        remember,
+        passphrase: remember ? (pass || saved.passphrase || '') : ''
+      };
+    }
+    function populateSyncForm() {
+      const config = readSyncConfig();
+      const set = (id, value) => { const el = document.getElementById(id); if (el) el.value = value || ''; };
+      set('sync-url', config.url);
+      set('sync-key', config.anonKey);
+      set('sync-vault-id', config.vaultId);
+      set('sync-passphrase', config.remember ? config.passphrase : '');
+      const remember = document.getElementById('sync-remember');
+      const auto = document.getElementById('sync-auto');
+      if (remember) remember.checked = !!config.remember;
+      if (auto) auto.checked = !!config.auto;
+      const lastPush = localStorage.getItem('bwLastSyncPushAt');
+      const lastPull = localStorage.getItem('bwLastSyncPullAt');
+      syncStatus(lastPush || lastPull ? `Last sync - push: ${lastPush || 'never'} · pull: ${lastPull || 'never'}` : 'Sync is off until settings are saved.');
+    }
+    function saveSyncSettings() {
+      const config = getSyncConfigFromForm();
+      if (!config.remember) config.passphrase = '';
+      writeSyncConfig(config);
+      syncStatus(config.url && config.anonKey && config.vaultId ? 'Sync settings saved.' : 'Sync settings saved, but URL/key/vault ID are still incomplete.', config.url && config.anonKey && config.vaultId ? 'ok' : 'warn');
+      return config;
+    }
+    async function syncUploadNow() {
+      if (vaultLocked) { alert('Unlock the vault before syncing.'); return; }
+      const config = saveSyncSettings();
+      const passphrase = getSyncPassphrase(config);
+      requireSyncConfig(config, passphrase);
+      syncStatus('Encrypting and uploading full wallet backup...');
+      const signed = await signBackup(await buildFullBackupData());
+      const envelope = await encryptSyncBackup(signed, passphrase);
+      const row = await upsertSyncRow(config, envelope);
+      const at = row.updated_at || new Date().toISOString();
+      localStorage.setItem('bwLastSyncPushAt', at);
+      localStorage.setItem('bwLastSyncPullAt', at);
+      localStorage.setItem('bwLastBackupExportAt', signed.exportedAt);
+      recordActivity('sync-uploaded', { vault: config.vaultId, documents: documents.length });
+      syncStatus('Encrypted sync uploaded: ' + new Date(at).toLocaleString(), 'ok');
+      alert('Encrypted sync uploaded. Open the mobile/desktop app with the same sync settings to pull it.');
+    }
+    async function syncPullLatest(options = {}) {
+      if (vaultLocked) { if (!options.silent) alert('Unlock the vault before syncing.'); return false; }
+      const config = options.useSaved ? readSyncConfig() : saveSyncSettings();
+      const passphrase = getSyncPassphrase(config);
+      requireSyncConfig(config, passphrase);
+      syncStatus('Checking encrypted vault...');
+      const row = await fetchSyncRow(config);
+      if (!row) {
+        syncStatus('No sync vault row found yet. Upload from one device first.', 'warn');
+        if (!options.silent) alert('No sync vault row found yet. Upload from one device first.');
+        return false;
+      }
+      const localChangedAt = Date.parse(localStorage.getItem('bwLastLocalChangeAt') || '0') || 0;
+      const lastPullAt = Date.parse(localStorage.getItem('bwLastSyncPullAt') || '0') || 0;
+      const remoteAt = Date.parse(row.updated_at || '0') || Date.now();
+      const hasLocalData = documents.length || packs.length || seatime.length || vaccines.length;
+      if (options.auto && ((lastPullAt && localChangedAt > lastPullAt) || (!lastPullAt && hasLocalData))) {
+        syncStatus('Newer vault found, but this device has local changes. Use Pull latest manually after backup.', 'warn');
+        return false;
+      }
+      if (!options.silent) {
+        const ok = confirm([
+          'Pull latest encrypted sync vault?',
+          '',
+          'Remote updated: ' + (row.updated_at || 'unknown'),
+          'This will replace local documents, packs, sea-time, vaccines, profile, reminders, and settings with the vault copy.',
+          'Export a backup first if this device has unsynced edits.',
+          '',
+          'Continue?'
+        ].join('\n'));
+        if (!ok) return false;
+      } else if (lastPullAt && remoteAt <= lastPullAt) {
+        syncStatus('Sync vault already current on this device.', 'ok');
+        return false;
+      }
+      const backup = await decryptSyncBackup(row.payload, passphrase);
+      const info = await inspectBackup(backup);
+      await applyBackupData(backup, info, { replaceDocuments: true });
+      localStorage.setItem('bwLastSyncPullAt', row.updated_at || new Date().toISOString());
+      recordActivity('sync-pulled', { vault: config.vaultId, documents: info.counts.documents });
+      syncStatus('Encrypted sync pulled: ' + new Date(row.updated_at || Date.now()).toLocaleString(), 'ok');
+      if (!options.silent) alert('Sync pull complete. Documents: ' + info.counts.documents + ', sea-time: ' + info.counts.seatime + '.');
+      return true;
+    }
+    async function maybeAutoSyncOnOpen() {
+      const config = readSyncConfig();
+      if (!config.auto || !config.remember || !config.passphrase || !config.url || !config.anonKey || !config.vaultId) return;
+      try { await syncPullLatest({ silent: true, auto: true, useSaved: true }); }
+      catch (err) { syncStatus('Auto-sync check failed: ' + (err.message || err), 'warn'); }
     }
     function updateStripProfile() {
       const n = document.getElementById('strip-name');
@@ -4698,6 +5019,7 @@
         render();
         showLockIfNeeded();
         if (appMode === 'full') runOnboarding();
+        maybeAutoSyncOnOpen();
       }
       // idle activity listeners
       ['pointerdown','keydown','touchstart','scroll'].forEach(ev =>
@@ -4820,6 +5142,7 @@
         document.getElementById('pin-required').checked = localStorage.getItem('bwPinRequired') === '1';
         document.getElementById('bio-enabled').checked = localStorage.getItem('bwBio') === '1';
         document.getElementById('idle-mins').value = localStorage.getItem('bwIdleMins') || '5';
+        populateSyncForm();
         updateBioStatus();
         updateStorageStatus();
         document.getElementById('modal-settings').classList.add('show');
@@ -4827,6 +5150,15 @@
 
       document.getElementById('app-toast-close').onclick = hideAppToast;
       document.getElementById('btn-storage-check').onclick = updateStorageStatus;
+      document.getElementById('btn-sync-save').onclick = () => saveSyncSettings();
+      document.getElementById('btn-sync-upload').onclick = async () => {
+        try { await syncUploadNow(); }
+        catch (err) { syncStatus('Sync upload failed: ' + (err.message || err), 'bad'); alert('Sync upload failed: ' + (err.message || err)); }
+      };
+      document.getElementById('btn-sync-pull').onclick = async () => {
+        try { await syncPullLatest(); }
+        catch (err) { syncStatus('Sync pull failed: ' + (err.message || err), 'bad'); alert('Sync pull failed: ' + (err.message || err)); }
+      };
       window.addEventListener('online', () => showAppToast('Internet connection restored. Blue Wallet remains available offline.', null, null));
       window.addEventListener('offline', () => showAppToast('Offline mode active — your stored documents remain on this device.', null, null));
 
@@ -5377,27 +5709,7 @@
 
       document.getElementById('btn-export').onclick = async () => {
         if (vaultLocked) { alert('Unlock the vault before exporting.'); return; }
-        const data = {
-          format: BACKUP_FORMAT,
-          app: 'BlueWallet-Pro Stable',
-          version: BACKUP_VERSION,
-          backupVersionLabel: BACKUP_LABEL,
-          exportedAt: new Date().toISOString(),
-          documents,
-          profile: await getProfile(),
-          seafarer: seafarer || {},
-          packs: packs || [],
-          seatime: seatime || [],
-          vaccines: vaccines || [],
-          reminders: getReminders(),
-          settings: {
-            idleMins: +(localStorage.getItem('bwIdleMins') || 0),
-            appMode: localStorage.getItem('bwAppMode') || 'full',
-            theme: localStorage.getItem('bwTheme') || localStorage.getItem('greenVaultTheme') || 'ocean',
-            pinRequired: localStorage.getItem('bwPinRequired') === '1'
-          }
-          // PIN hash and WebAuthn credentials intentionally excluded
-        };
+        const data = await buildFullBackupData();
         const signed = await signBackup(data);
         localStorage.setItem('bwLastBackupExportAt', data.exportedAt);
         recordActivity('backup-exported', { version: BACKUP_VERSION, documents: documents.length });
@@ -5413,37 +5725,8 @@
           const data = JSON.parse(await f.text());
           const backupInfo = await inspectBackup(data);
           if (!confirm(buildRestoreConfirmation(backupInfo))) return;
-          for (const doc of backupInfo.cleanDocs) {
-            await saveDoc(doc);
-          }
-          if (data.profile && typeof data.profile === 'object') await saveProfile(data.profile);
-          if (data.seafarer && typeof data.seafarer === 'object') {
-            seafarer = Object.assign({}, seafarer, data.seafarer);
-            saveSeafarer();
-          }
-          if (Array.isArray(data.packs)) { packs = data.packs; savePacks(); }
-          if (Array.isArray(data.seatime)) { seatime = data.seatime; saveSeatime(); }
-          if (Array.isArray(data.vaccines)) { vaccines = data.vaccines; saveVaccines(); }
-          if (data.reminders && typeof data.reminders === 'object') {
-            localStorage.setItem('bwReminders', JSON.stringify({
-              primary: +data.reminders.primary || 183,
-              secondary: +data.reminders.secondary || 90,
-              urgent: +data.reminders.urgent || 30,
-              critical: +data.reminders.critical || 7
-            }));
-          }
-          if (data.settings && typeof data.settings === 'object') {
-            if (data.settings.idleMins != null) localStorage.setItem('bwIdleMins', String(+data.settings.idleMins || 0));
-            if (data.settings.appMode) localStorage.setItem('bwAppMode', data.settings.appMode === 'lite' ? 'lite' : 'full');
-            if (data.settings.theme) localStorage.setItem('bwTheme', String(data.settings.theme));
-          }
-          localStorage.setItem('bwLastRestoreAt', new Date().toISOString());
+          await applyBackupData(data, backupInfo);
           recordActivity('backup-restored', { version: backupInfo.version, documents: backupInfo.counts.documents });
-          documents = (await getAllDocs()).map(d => sanitizeDoc(normalizeDoc(d))).filter(Boolean);
-          await loadProfile();
-          loadMeta();
-          updateStripProfile();
-          render();
           alert('Restore successful. ' + backupInfo.counts.documents + ' documents verified before import.');
         } catch (err) { alert('Import failed: ' + err.message); }
         e.target.value = '';
