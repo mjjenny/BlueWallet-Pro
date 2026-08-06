@@ -2171,7 +2171,7 @@
   </div>
 
   <script>
-    const APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.15';
+    const APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.16';
     const DB_NAME = 'SeafarerWalletDB';
     let db;
     let useStorageFallback = false;
@@ -3792,6 +3792,85 @@
         ${history ? `<p><strong style="color:#fff">Version history:</strong></p><ul style="padding-left:18px">${history}</ul>` : '<p><strong style="color:#fff">Version history:</strong> No previous edits recorded.</p>'}
       `;
       document.getElementById('modal-view').classList.add('show');
+    }
+
+    function openCleanPrintWindow(doc, files) {
+      const imageFiles = files.filter(f => !(f.type || '').includes('pdf') && f.data);
+      const pdfFiles = files.filter(f => (f.type || '').includes('pdf') && f.data);
+      if (!imageFiles.length && pdfFiles.length) {
+        pdfFiles.forEach((f, index) => setTimeout(() => printPdfDirect(f), index * 700));
+        return true;
+      }
+      if (!imageFiles.length) return false;
+      const w = window.open('', '_blank');
+      if (!w) {
+        alert('Pop-up blocked. Allow pop-ups for Blue Wallet to print this scan cleanly.');
+        return false;
+      }
+      const pages = imageFiles.map((f, index) => `
+        <section class="page">
+          <img src="${f.data}" alt="${esc(f.name || doc.title || 'scan ' + (index + 1))}">
+        </section>
+      `).join('');
+      w.document.write(`<!doctype html>
+        <html>
+          <head>
+            <title>${esc(doc.title || 'Blue Wallet scan')}</title>
+            <style>
+              @page { margin: 8mm; }
+              html, body { margin: 0; background: #fff; color: #111; }
+              body { font-family: Arial, sans-serif; }
+              .page {
+                break-after: page;
+                min-height: calc(100vh - 16mm);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+              }
+              .page:last-child { break-after: auto; }
+              img {
+                display: block;
+                max-width: 100%;
+                max-height: calc(100vh - 16mm);
+                object-fit: contain;
+              }
+            </style>
+          </head>
+          <body>
+            ${pages}
+            <script>
+              const imgs = Array.from(document.images);
+              Promise.all(imgs.map(img => img.complete ? true : new Promise(resolve => {
+                img.onload = resolve;
+                img.onerror = resolve;
+              }))).then(() => setTimeout(() => {
+                window.focus();
+                window.print();
+              }, 100));
+            <\/script>
+          </body>
+        </html>`);
+      w.document.close();
+      pdfFiles.forEach((f, index) => setTimeout(() => printPdfDirect(f), 900 + index * 700));
+      if (pdfFiles.length) showAppToast('Image scans opened for print. PDF files are opening separately for clean PDF print.', null, null);
+      return true;
+    }
+    function printPdfDirect(file) {
+      const w = window.open(file.data, '_blank');
+      if (!w) {
+        alert('Pop-up blocked. Allow pop-ups for Blue Wallet to print this PDF cleanly.');
+        return false;
+      }
+      setTimeout(() => {
+        try {
+          w.focus();
+          w.print();
+        } catch (_) {
+          showAppToast('PDF opened in a new tab. Use the browser print icon there.', null, null);
+        }
+      }, 900);
+      return true;
     }
 
     function openAdd(editId) {
@@ -5810,15 +5889,11 @@
       document.getElementById('btn-print').onclick = () => {
         const doc = documents.find(d => d.id === viewId);
         if (!doc) return;
-        const files = doc.files?.length ? doc.files : (doc.fileData ? [{ data: doc.fileData, type: doc.fileType }] : []);
+        const files = doc.files?.length ? doc.files : (doc.fileData ? [{ data: doc.fileData, type: doc.fileType, name: doc.fileName }] : []);
         if (!files.length) return;
-        const w = window.open('');
-        files.forEach(f => {
-          if (f.type?.includes('pdf')) w.document.write(`<iframe src="${f.data}" style="width:100%;height:90vh;border:0"></iframe>`);
-          else w.document.write(`<img src="${f.data}" style="max-width:100%">`);
-        });
-        w.document.close();
-        setTimeout(() => w.print(), 400);
+        if (openCleanPrintWindow(doc, files)) {
+          recordActivity('document-printed', { type: LABELS[doc.type] || doc.type, title: doc.title, files: files.length });
+        }
       };
       document.getElementById('btn-edit').onclick = () => { close('modal-view'); openAdd(viewId); };
       document.getElementById('btn-delete').onclick = async () => {
