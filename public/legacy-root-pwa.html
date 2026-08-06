@@ -2171,7 +2171,7 @@
   </div>
 
   <script>
-    const APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.16';
+    const APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.17';
     const DB_NAME = 'SeafarerWalletDB';
     let db;
     let useStorageFallback = false;
@@ -3794,11 +3794,11 @@
       document.getElementById('modal-view').classList.add('show');
     }
 
-    function openCleanPrintWindow(doc, files) {
+    async function openCleanPrintWindow(doc, files) {
       const imageFiles = files.filter(f => !(f.type || '').includes('pdf') && f.data);
       const pdfFiles = files.filter(f => (f.type || '').includes('pdf') && f.data);
       if (!imageFiles.length && pdfFiles.length) {
-        pdfFiles.forEach((f, index) => setTimeout(() => printPdfDirect(f), index * 700));
+        openPdfPrintTabs(doc, pdfFiles);
         return true;
       }
       if (!imageFiles.length) return false;
@@ -3852,24 +3852,63 @@
           </body>
         </html>`);
       w.document.close();
-      pdfFiles.forEach((f, index) => setTimeout(() => printPdfDirect(f), 900 + index * 700));
-      if (pdfFiles.length) showAppToast('Image scans opened for print. PDF files are opening separately for clean PDF print.', null, null);
+      if (pdfFiles.length) {
+        setTimeout(() => openPdfPrintTabs(doc, pdfFiles), 800);
+        showAppToast('Image scans opened for print. PDF files will open separately for clean PDF printing.', null, null);
+      }
       return true;
     }
-    function printPdfDirect(file) {
-      const w = window.open(file.data, '_blank');
-      if (!w) {
-        alert('Pop-up blocked. Allow pop-ups for Blue Wallet to print this PDF cleanly.');
+    function dataUrlToBlobUrl(dataUrl, type = 'application/pdf') {
+      try {
+        const parts = String(dataUrl || '').split(',');
+        const meta = parts[0] || '';
+        const body = parts.slice(1).join(',');
+        const mime = (meta.match(/data:([^;]+)/) || [])[1] || type;
+        const binary = atob(body);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        return URL.createObjectURL(new Blob([bytes], { type: mime }));
+      } catch (_) {
+        return dataUrl;
+      }
+    }
+    function openPdfPrintTabs(doc, pdfFiles) {
+      let opened = 0;
+      pdfFiles.forEach((file, index) => {
+        const w = window.open('', '_blank');
+        if (!w) return;
+        opened++;
+        const title = esc(file.name || doc.title || 'Blue Wallet PDF');
+        w.document.write(`<!doctype html>
+          <html>
+            <head>
+              <title>${title}</title>
+              <style>
+                html, body { margin: 0; height: 100%; background: #f5f5f5; font-family: Arial, sans-serif; }
+                .note { padding: 10px 14px; font-size: 14px; color: #111; background: #fff; border-bottom: 1px solid #ddd; }
+                iframe { display: block; width: 100%; height: calc(100vh - 42px); border: 0; background: #fff; }
+              </style>
+            </head>
+            <body>
+              <div class="note">PDF opened for printing. Use the PDF viewer print icon or press Ctrl+P after the page appears.</div>
+              <iframe title="${title}"></iframe>
+            </body>
+          </html>`);
+        w.document.close();
+        setTimeout(() => {
+          const pdfUrl = String(file.data || '').startsWith('data:') ? dataUrlToBlobUrl(file.data, file.type || 'application/pdf') : file.data;
+          const iframe = w.document.querySelector('iframe');
+          if (iframe) iframe.src = pdfUrl;
+          setTimeout(() => {
+            try { w.focus(); } catch (_) {}
+          }, 300 + index * 150);
+        }, 50 + index * 150);
+      });
+      if (!opened) {
+        alert('Pop-up blocked. Allow pop-ups for Blue Wallet to open this PDF for printing.');
         return false;
       }
-      setTimeout(() => {
-        try {
-          w.focus();
-          w.print();
-        } catch (_) {
-          showAppToast('PDF opened in a new tab. Use the browser print icon there.', null, null);
-        }
-      }, 900);
+      showAppToast('PDF opened in a print-ready tab. Use the PDF viewer print icon or Ctrl+P there.', null, null);
       return true;
     }
 
@@ -5886,12 +5925,12 @@
         });
         recordActivity('document-exported', { type: LABELS[doc.type] || doc.type, title: doc.title, files: files.length });
       };
-      document.getElementById('btn-print').onclick = () => {
+      document.getElementById('btn-print').onclick = async () => {
         const doc = documents.find(d => d.id === viewId);
         if (!doc) return;
         const files = doc.files?.length ? doc.files : (doc.fileData ? [{ data: doc.fileData, type: doc.fileType, name: doc.fileName }] : []);
         if (!files.length) return;
-        if (openCleanPrintWindow(doc, files)) {
+        if (await openCleanPrintWindow(doc, files)) {
           recordActivity('document-printed', { type: LABELS[doc.type] || doc.type, title: doc.title, files: files.length });
         }
       };
