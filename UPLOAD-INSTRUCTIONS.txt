@@ -1,13 +1,12 @@
-BLUE WALLET — GITHUB MOBILE UPLOAD
+BLUE WALLET - PRODUCTION HOSTING
 
-Upload all 8 app files to the ROOT of your BlueWallet-Pro repository:
-index.html
-manifest.json
-service-worker.js
-offline.html
-icon-192.png
-icon-512.png
-icon-maskable-512.png
-apple-touch-icon.png
+Use this production URL for desktop and mobile:
 
-Do not upload the ZIP itself. Extract it in Files first, then select the eight files together.
+https://bluewallet-pro-stable.cl76380.chatgpt.site/legacy-root-pwa.html
+
+GitHub remains the source repository only. GitHub Pages has been retired
+because its deployment path repeatedly stalled. Do not publish production app
+updates through the gh-pages branch or mjjenny.github.io.
+
+Future updates should be made in the stable app copy, tested locally, then
+published through the Cloudflare-backed hosted site.

@@ -6,6 +6,8 @@ This copy is the base for all future development:
 - Base commit: `f8a87f02a4df91c1dd71c46ae566192647ec1da3`
 - Stable production entry: `index.html` opens `./legacy-root-pwa.html`
 - Stable PWA start URL: `./legacy-root-pwa.html?v=stable`
+- Stable production host: `https://bluewallet-pro-stable.cl76380.chatgpt.site/legacy-root-pwa.html`
+- Retired host: GitHub Pages / `mjjenny.github.io` is not a production path.
 
 ## Hard Rule
 
@@ -27,6 +29,8 @@ This includes:
 ## Development Rule
 
 Future development should preserve the stable user experience and add functionality without visual churn. If a requested feature appears to require UI, animation, or layout changes, stop first and ask Jenny for permission before editing those surfaces.
+
+Production deployment must use the Cloudflare-backed hosted site. GitHub remains the source repository, but the retired `gh-pages` / GitHub Pages route must not be used for release or end-user access unless Jenny explicitly re-approves that hosting path.
 
 The automated tests include a stable UI lock. If that lock fails, either revert the visual change or record Jenny's explicit approval before updating the lock.
 
