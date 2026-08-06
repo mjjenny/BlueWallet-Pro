@@ -2171,7 +2171,7 @@
   </div>
 
   <script>
-    const APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.17';
+    const APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.18';
     const DB_NAME = 'SeafarerWalletDB';
     let db;
     let useStorageFallback = false;
@@ -3858,7 +3858,7 @@
       }
       return true;
     }
-    function dataUrlToBlobUrl(dataUrl, type = 'application/pdf') {
+    function dataUrlToBlob(dataUrl, type = 'application/pdf') {
       try {
         const parts = String(dataUrl || '').split(',');
         const meta = parts[0] || '';
@@ -3867,10 +3867,17 @@
         const binary = atob(body);
         const bytes = new Uint8Array(binary.length);
         for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-        return URL.createObjectURL(new Blob([bytes], { type: mime }));
+        return new Blob([bytes], { type: mime });
       } catch (_) {
-        return dataUrl;
+        return null;
       }
+    }
+    function dataUrlToBlobUrl(dataUrl, type = 'application/pdf') {
+      const blob = dataUrlToBlob(dataUrl, type);
+      return blob ? URL.createObjectURL(blob) : dataUrl;
+    }
+    function jsString(value) {
+      return JSON.stringify(String(value || ''));
     }
     function openPdfPrintTabs(doc, pdfFiles) {
       let opened = 0;
@@ -3879,26 +3886,85 @@
         if (!w) return;
         opened++;
         const title = esc(file.name || doc.title || 'Blue Wallet PDF');
+        const filename = String(file.name || doc.title || 'blue-wallet-document').replace(/[\\/:*?"<>|]+/g, '-').trim() || 'blue-wallet-document';
+        const appUrl = location.href;
         w.document.write(`<!doctype html>
           <html>
             <head>
+              <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
               <title>${title}</title>
               <style>
-                html, body { margin: 0; height: 100%; background: #f5f5f5; font-family: Arial, sans-serif; }
-                .note { padding: 10px 14px; font-size: 14px; color: #111; background: #fff; border-bottom: 1px solid #ddd; }
-                iframe { display: block; width: 100%; height: calc(100vh - 42px); border: 0; background: #fff; }
+                * { box-sizing: border-box; }
+                html, body { margin: 0; height: 100%; background: #f5f5f5; color: #111; font-family: Arial, sans-serif; }
+                .bar {
+                  position: sticky; top: 0; z-index: 2;
+                  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+                  padding: calc(env(safe-area-inset-top, 0px) + 10px) 10px 10px;
+                  background: #fff; border-bottom: 1px solid #ddd;
+                }
+                button, a.action {
+                  min-height: 42px; border: 1px solid #0a6b96; border-radius: 10px;
+                  padding: 9px 12px; background: #e8f7ff; color: #06364d;
+                  font-size: 14px; font-weight: 700; text-decoration: none;
+                  display: inline-flex; align-items: center; justify-content: center;
+                }
+                .primary { background: #35bdf2; color: #00151f; border-color: #138ab8; }
+                .note { flex: 1 1 100%; font-size: 13px; line-height: 1.35; color: #333; }
+                iframe { display: block; width: 100%; height: calc(100vh - 128px); border: 0; background: #fff; }
+                @media (max-width: 520px) {
+                  .bar { align-items: stretch; }
+                  button, a.action { flex: 1 1 calc(50% - 6px); }
+                  .note { font-size: 12px; }
+                  iframe { height: calc(100vh - 156px); }
+                }
               </style>
             </head>
             <body>
-              <div class="note">PDF opened for printing. Use the PDF viewer print icon or press Ctrl+P after the page appears.</div>
-              <iframe title="${title}"></iframe>
+              <div class="bar">
+                <button type="button" id="back-wallet">Back to Blue Wallet</button>
+                <button type="button" class="primary" id="share-print">Share / Print PDF</button>
+                <a class="action" id="open-pdf" target="_blank" rel="noopener">Open PDF</a>
+                <div class="note">On iPhone/iPad, tap Share / Print PDF, then choose Print from the share sheet. On desktop, use Ctrl+P or the PDF viewer print icon.</div>
+              </div>
+              <iframe title="${title}" id="pdf-frame"></iframe>
+              <script>
+                const appUrl = ${jsString(appUrl)};
+                const filename = ${jsString(filename.endsWith('.pdf') ? filename : filename + '.pdf')};
+                let pdfUrl = '';
+                document.getElementById('back-wallet').onclick = () => {
+                  try {
+                    if (window.opener && !window.opener.closed) {
+                      window.opener.focus();
+                      window.close();
+                      return;
+                    }
+                  } catch (_) {}
+                  location.href = appUrl;
+                };
+                document.getElementById('share-print').onclick = async () => {
+                  try {
+                    const response = await fetch(pdfUrl);
+                    const blob = await response.blob();
+                    const file = new File([blob], filename, { type: blob.type || 'application/pdf' });
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                      await navigator.share({ files: [file], title: filename });
+                      return;
+                    }
+                  } catch (_) {}
+                  alert('Use Open PDF, then choose Share or Print from your browser/PDF viewer.');
+                };
+              <\/script>
             </body>
           </html>`);
         w.document.close();
         setTimeout(() => {
           const pdfUrl = String(file.data || '').startsWith('data:') ? dataUrlToBlobUrl(file.data, file.type || 'application/pdf') : file.data;
-          const iframe = w.document.querySelector('iframe');
+          const iframe = w.document.getElementById('pdf-frame');
           if (iframe) iframe.src = pdfUrl;
+          const openLink = w.document.getElementById('open-pdf');
+          if (openLink) openLink.href = pdfUrl;
+          try { w.pdfUrl = pdfUrl; } catch (_) {}
+          try { w.document.querySelector('script').insertAdjacentHTML('afterend', `<script>pdfUrl = ${JSON.stringify(pdfUrl)};<\/script>`); } catch (_) {}
           setTimeout(() => {
             try { w.focus(); } catch (_) {}
           }, 300 + index * 150);
