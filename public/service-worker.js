@@ -1,4 +1,4 @@
-const CACHE_VERSION = "blue-wallet-stable-rollback-v0.14";
+const CACHE_VERSION = "blue-wallet-stable-rollback-v0.15";
 const APP_SHELL = [
   "./",
   "./index.html",
