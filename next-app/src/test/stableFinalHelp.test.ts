@@ -22,6 +22,9 @@ describe("stable final Help section", () => {
     expect(html).toContain("Release readiness");
     expect(html).toContain("Real device QA pack");
     expect(html).toContain("iOS Safari, Android Chrome, Windows Chrome, and Windows Edge");
+    expect(html).toContain("Encrypted Sync Vault");
+    expect(html).toContain("The full wallet is encrypted locally before upload");
+    expect(html).toContain("desktop and mobile sync automatically");
   });
 
   it("keeps Help and Appearance controls responsive without horizontal scrolling", () => {

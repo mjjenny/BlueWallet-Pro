@@ -39,9 +39,10 @@ describe("stable backup hardening", () => {
 
     expect(importHandler).toContain("const backupInfo = await inspectBackup(data);");
     expect(importHandler).toContain("if (!confirm(buildRestoreConfirmation(backupInfo))) return;");
-    expect(importHandler).toContain("for (const doc of backupInfo.cleanDocs)");
+    expect(importHandler).toContain("await applyBackupData(data, backupInfo);");
+    expect(html).toContain("for (const doc of backupInfo.cleanDocs)");
     expect(importHandler.indexOf("if (!confirm(buildRestoreConfirmation(backupInfo))) return;")).toBeLessThan(
-      importHandler.indexOf("await saveDoc(doc)"),
+      importHandler.indexOf("await applyBackupData(data, backupInfo);"),
     );
     expect(importHandler).not.toContain("if (!confirm(`Import ${data.documents.length} documents?`)) return;");
   });
