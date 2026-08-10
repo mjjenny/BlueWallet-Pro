@@ -111,8 +111,8 @@
     };
 
     const navItems = document.querySelectorAll('.nav-item');
-    const floatingAddBtn = document.querySelector('.floating-add-button');
-    const backButtons = document.querySelectorAll('.back-button');
+    const floatingAddBtn = document.querySelector('.floating-add-btn, .floating-add-button');
+    const backButtons = document.querySelectorAll('.back-btn, .back-button');
     const documentCards = document.querySelectorAll('.document-card');
     const saveDocumentBtn = document.getElementById('save-document-btn');
     const cancelAddBtn = document.getElementById('cancel-add-btn');
@@ -209,6 +209,7 @@
             floatingAddBtn.style.display = (screenName === 'vault' || screenName === 'packs') ? 'flex' : 'none';
         }
     }
+    window.navigateTo = navigateTo;
 
     // Render Vault Screen
     function renderVault() {
