@@ -19,7 +19,7 @@
             </div>
         </div>
 
-        <!-- Brand Header -->
+        <!-- Brand Header (visible on all screens) -->
         <header class="brand-header">
             <div class="brand-left">
                 <div class="logo-mark">
@@ -55,135 +55,509 @@
             </div>
         </header>
 
-        <!-- Document Vault Hero -->
-        <section class="vault-hero">
-            <h2 class="vault-title">Document Vault</h2>
-            <p class="vault-subtitle">Your important documents. Always with you.</p>
-            
-            <!-- Glass Stats Panel -->
-            <div class="glass-stats-panel">
-                <div class="stat-item">
-                    <span class="stat-value">15</span>
-                    <span class="stat-label">Total</span>
+        <!-- SCREEN: Vault (Home) -->
+        <section id="screen-vault" class="app-screen active" data-screen="vault">
+            <div class="screen-content">
+                <!-- Document Vault Hero -->
+                <section class="vault-hero">
+                    <h2 class="vault-title">Document Vault</h2>
+                    <p class="vault-subtitle">Your important documents. Always with you.</p>
+                    
+                    <!-- Glass Stats Panel -->
+                    <div class="glass-stats-panel">
+                        <div class="stat-item">
+                            <span class="stat-value">15</span>
+                            <span class="stat-label">Total</span>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat-item">
+                            <span class="stat-value expiring">0</span>
+                            <span class="stat-label">Expiring</span>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat-item">
+                            <span class="stat-value expired">1</span>
+                            <span class="stat-label">Expired</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Category Filters (Secondary) -->
+                <section class="category-filters">
+                    <button class="filter-chip active">All</button>
+                    <button class="filter-chip">Passport</button>
+                    <button class="filter-chip">CDC</button>
+                    <button class="filter-chip">COC</button>
+                    <button class="filter-chip">Visa</button>
+                    <button class="filter-chip">Certificates</button>
+                </section>
+
+                <!-- Document Cards -->
+                <section class="documents-list">
+                    <!-- Card 1: Expired -->
+                    <article class="document-card expired" data-doc-id="1" data-doc-title="LAST PASSPORT" data-doc-number="L9886082" data-doc-expiry="15 Jun 2024" data-doc-status="expired">
+                        <div class="card-status-bar"></div>
+                        <div class="card-content">
+                            <div class="card-header">
+                                <h3 class="card-title">LAST PASSPORT</h3>
+                                <div class="status-badge expired">
+                                    <span class="badge-icon">⚠️</span>
+                                    <span class="badge-text">EXPIRED</span>
+                                </div>
+                            </div>
+                            <div class="card-details">
+                                <div class="detail-row">
+                                    <span class="detail-label">Passport No.</span>
+                                    <span class="detail-value">L9886082</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Expiry</span>
+                                    <span class="detail-value expired-text">15 Jun 2024</span>
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <span class="risk-warning">
+                                    <span class="warning-icon">🚨</span>
+                                    Joining risk: expired
+                                </span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Card 2: Valid -->
+                    <article class="document-card valid" data-doc-id="2" data-doc-title="PASSPORT (ACTIVE)" data-doc-number="Z7179776" data-doc-expiry="28 Aug 2033" data-doc-status="valid">
+                        <div class="card-status-bar"></div>
+                        <div class="card-content">
+                            <div class="card-header">
+                                <h3 class="card-title">PASSPORT (ACTIVE)</h3>
+                                <div class="status-badge valid">
+                                    <span class="badge-icon">✓</span>
+                                    <span class="badge-text">Valid</span>
+                                </div>
+                            </div>
+                            <div class="card-details">
+                                <div class="detail-row">
+                                    <span class="detail-label">Passport No.</span>
+                                    <span class="detail-value">Z7179776</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Expiry</span>
+                                    <span class="detail-value valid-text">28 Aug 2033</span>
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <span class="ready-indicator">
+                                    <span class="check-icon">✅</span>
+                                    Ready
+                                </span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Card 3: Valid CDC -->
+                    <article class="document-card valid" data-doc-id="3" data-doc-title="CDC CARD" data-doc-number="IND1234567" data-doc-expiry="10 Mar 2028" data-doc-status="valid">
+                        <div class="card-status-bar"></div>
+                        <div class="card-content">
+                            <div class="card-header">
+                                <h3 class="card-title">CDC CARD</h3>
+                                <div class="status-badge valid">
+                                    <span class="badge-icon">✓</span>
+                                    <span class="badge-text">Valid</span>
+                                </div>
+                            </div>
+                            <div class="card-details">
+                                <div class="detail-row">
+                                    <span class="detail-label">CDC No.</span>
+                                    <span class="detail-value">IND1234567</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Expiry</span>
+                                    <span class="detail-value valid-text">10 Mar 2028</span>
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <span class="ready-indicator">
+                                    <span class="check-icon">✅</span>
+                                    Ready
+                                </span>
+                            </div>
+                        </div>
+                    </article>
+                </section>
+            </div>
+        </section>
+
+        <!-- SCREEN: Document Detail -->
+        <section id="screen-detail" class="app-screen" data-screen="detail">
+            <div class="screen-content">
+                <div class="screen-header">
+                    <button class="back-btn" onclick="navigateTo('vault')">← Back</button>
+                    <h2 class="screen-title">Document Details</h2>
                 </div>
-                <div class="stat-divider"></div>
-                <div class="stat-item">
-                    <span class="stat-value expiring">0</span>
-                    <span class="stat-label">Expiring</span>
-                </div>
-                <div class="stat-divider"></div>
-                <div class="stat-item">
-                    <span class="stat-value expired">1</span>
-                    <span class="stat-label">Expired</span>
+                <div class="detail-view">
+                    <div class="detail-preview-placeholder">
+                        <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <polyline points="21 15 16 10 5 21"/>
+                        </svg>
+                        <span>Document Preview</span>
+                    </div>
+                    <div class="detail-info">
+                        <div class="detail-field">
+                            <label>Title</label>
+                            <span id="detail-title">PASSPORT (ACTIVE)</span>
+                        </div>
+                        <div class="detail-field">
+                            <label>Document Number</label>
+                            <span id="detail-number">Z7179776</span>
+                        </div>
+                        <div class="detail-field">
+                            <label>Expiry Date</label>
+                            <span id="detail-expiry">28 Aug 2033</span>
+                        </div>
+                        <div class="detail-field">
+                            <label>Status</label>
+                            <span id="detail-status" class="status-valid">Valid</span>
+                        </div>
+                        <div class="detail-field">
+                            <label>Quality Check</label>
+                            <span class="quality-ok">✓ Passed</span>
+                        </div>
+                        <div class="detail-field">
+                            <label>Last Updated</label>
+                            <span>12 Jan 2025, 10:30 AM</span>
+                        </div>
+                    </div>
+                    <div class="detail-actions">
+                        <button class="action-btn primary">Edit</button>
+                        <button class="action-btn secondary">Print</button>
+                        <button class="action-btn secondary">Download</button>
+                        <button class="action-btn secondary">Share</button>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- Category Filters (Secondary) -->
-        <section class="category-filters">
-            <button class="filter-chip active">All</button>
-            <button class="filter-chip">Passport</button>
-            <button class="filter-chip">CDC</button>
-            <button class="filter-chip">COC</button>
-            <button class="filter-chip">Visa</button>
-            <button class="filter-chip">Certificates</button>
+        <!-- SCREEN: Add Document -->
+        <section id="screen-add" class="app-screen" data-screen="add">
+            <div class="screen-content">
+                <div class="screen-header">
+                    <button class="back-btn" onclick="navigateTo('vault')">← Back</button>
+                    <h2 class="screen-title">Add Document</h2>
+                </div>
+                <form class="add-form">
+                    <div class="form-group">
+                        <label for="add-category">Category</label>
+                        <select id="add-category" class="form-select">
+                            <option value="">Select category...</option>
+                            <option value="passport">Passport</option>
+                            <option value="cdc">CDC</option>
+                            <option value="coc">COC</option>
+                            <option value="visa">Visa</option>
+                            <option value="certificate">Certificate</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="add-title">Title</label>
+                        <input type="text" id="add-title" class="form-input" placeholder="e.g., Passport">
+                    </div>
+                    <div class="form-group">
+                        <label for="add-number">Document Number</label>
+                        <input type="text" id="add-number" class="form-input" placeholder="e.g., A1234567">
+                    </div>
+                    <div class="form-group">
+                        <label for="add-expiry">Expiry Date</label>
+                        <input type="date" id="add-expiry" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Scan / Upload</label>
+                        <div class="upload-placeholder">
+                            <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                            <span>Tap to scan or upload</span>
+                            <small>OCR will be applied automatically</small>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="action-btn secondary" onclick="navigateTo('vault')">Cancel</button>
+                        <button type="submit" class="action-btn primary">Save Document</button>
+                    </div>
+                </form>
+            </div>
         </section>
 
-        <!-- Document Cards -->
-        <section class="documents-list">
-            <!-- Card 1: Expired -->
-            <article class="document-card expired">
-                <div class="card-status-bar"></div>
-                <div class="card-content">
-                    <div class="card-header">
-                        <h3 class="card-title">LAST PASSPORT</h3>
-                        <div class="status-badge expired">
-                            <span class="badge-icon">⚠️</span>
-                            <span class="badge-text">EXPIRED</span>
+        <!-- SCREEN: Timeline -->
+        <section id="screen-timeline" class="app-screen" data-screen="timeline">
+            <div class="screen-content">
+                <div class="screen-header">
+                    <h2 class="screen-title">Timeline</h2>
+                </div>
+                <div class="timeline-list">
+                    <div class="timeline-item certificate">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-date">15 Jan 2025</div>
+                            <h4 class="timeline-title">STCW Certificate Issued</h4>
+                            <p class="timeline-desc">Basic Safety Training completed</p>
                         </div>
                     </div>
-                    <div class="card-details">
-                        <div class="detail-row">
-                            <span class="detail-label">Passport No.</span>
-                            <span class="detail-value">L9886082</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Expiry</span>
-                            <span class="detail-value expired-text">15 Jun 2024</span>
+                    <div class="timeline-item sea-time">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-date">01 Dec 2024 - 10 Jan 2025</div>
+                            <h4 class="timeline-title">Sea Time Logged</h4>
+                            <p class="timeline-desc">MV Ocean Star - 41 days</p>
                         </div>
                     </div>
-                    <div class="card-footer">
-                        <span class="risk-warning">
-                            <span class="warning-icon">🚨</span>
-                            Joining risk: expired
-                        </span>
+                    <div class="timeline-item vaccine">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-date">20 Nov 2024</div>
+                            <h4 class="timeline-title">Yellow Fever Vaccine</h4>
+                            <p class="timeline-desc">Valid until 20 Nov 2034</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item reminder">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-date">Upcoming: 15 Feb 2025</div>
+                            <h4 class="timeline-title">Medical Renewal Due</h4>
+                            <p class="timeline-desc">ENG-1 Medical Certificate</p>
+                        </div>
                     </div>
                 </div>
-            </article>
+            </div>
+        </section>
 
-            <!-- Card 2: Valid -->
-            <article class="document-card valid">
-                <div class="card-status-bar"></div>
-                <div class="card-content">
-                    <div class="card-header">
-                        <h3 class="card-title">PASSPORT (ACTIVE)</h3>
-                        <div class="status-badge valid">
-                            <span class="badge-icon">✓</span>
-                            <span class="badge-text">Valid</span>
+        <!-- SCREEN: Vaccines -->
+        <section id="screen-vaccines" class="app-screen" data-screen="vaccines">
+            <div class="screen-content">
+                <div class="screen-header">
+                    <h2 class="screen-title">Vaccination Log</h2>
+                </div>
+                <div class="vaccine-list">
+                    <div class="vaccine-card valid">
+                        <div class="vaccine-header">
+                            <h4>Yellow Fever</h4>
+                            <span class="vaccine-status valid">Valid</span>
+                        </div>
+                        <div class="vaccine-details">
+                            <div class="vaccine-row">
+                                <span class="vaccine-label">Date Administered:</span>
+                                <span>20 Nov 2024</span>
+                            </div>
+                            <div class="vaccine-row">
+                                <span class="vaccine-label">Valid Until:</span>
+                                <span class="valid-text">20 Nov 2034</span>
+                            </div>
+                            <div class="vaccine-row">
+                                <span class="vaccine-label">Clinic:</span>
+                                <span>Maritime Health Center</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="card-details">
-                        <div class="detail-row">
-                            <span class="detail-label">Passport No.</span>
-                            <span class="detail-value">Z7179776</span>
+                    <div class="vaccine-card valid">
+                        <div class="vaccine-header">
+                            <h4>Hepatitis A</h4>
+                            <span class="vaccine-status valid">Valid</span>
                         </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Expiry</span>
-                            <span class="detail-value valid-text">28 Aug 2033</span>
+                        <div class="vaccine-details">
+                            <div class="vaccine-row">
+                                <span class="vaccine-label">Date Administered:</span>
+                                <span>15 Mar 2023</span>
+                            </div>
+                            <div class="vaccine-row">
+                                <span class="vaccine-label">Valid Until:</span>
+                                <span class="valid-text">15 Mar 2033</span>
+                            </div>
+                            <div class="vaccine-row">
+                                <span class="vaccine-label">Clinic:</span>
+                                <span>Port Health Services</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="card-footer">
-                        <span class="ready-indicator">
-                            <span class="check-icon">✅</span>
-                            Ready
-                        </span>
+                    <div class="vaccine-card expired">
+                        <div class="vaccine-header">
+                            <h4>Tetanus Booster</h4>
+                            <span class="vaccine-status expired">Expired</span>
+                        </div>
+                        <div class="vaccine-details">
+                            <div class="vaccine-row">
+                                <span class="vaccine-label">Date Administered:</span>
+                                <span>10 Jan 2015</span>
+                            </div>
+                            <div class="vaccine-row">
+                                <span class="vaccine-label">Valid Until:</span>
+                                <span class="expired-text">10 Jan 2025</span>
+                            </div>
+                            <div class="vaccine-alert">
+                                <span>⚠️ Renewal required</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </article>
+            </div>
+        </section>
 
-            <!-- Additional placeholder cards for scroll demo -->
-            <article class="document-card valid">
-                <div class="card-status-bar"></div>
-                <div class="card-content">
-                    <div class="card-header">
-                        <h3 class="card-title">CDC CARD</h3>
-                        <div class="status-badge valid">
-                            <span class="badge-icon">✓</span>
-                            <span class="badge-text">Valid</span>
+        <!-- SCREEN: Packs -->
+        <section id="screen-packs" class="app-screen" data-screen="packs">
+            <div class="screen-content">
+                <div class="screen-header">
+                    <h2 class="screen-title">Document Packs</h2>
+                </div>
+                <div class="packs-list">
+                    <div class="pack-card">
+                        <div class="pack-header">
+                            <h4>STCW Complete Pack</h4>
+                            <span class="pack-progress">85%</span>
                         </div>
+                        <div class="pack-progress-bar">
+                            <div class="progress-fill" style="width: 85%"></div>
+                        </div>
+                        <div class="pack-summary">
+                            <span class="summary-ready">✓ 12 documents ready</span>
+                            <span class="summary-missing">⚠️ 2 documents missing</span>
+                        </div>
+                        <div class="pack-documents">
+                            <span class="doc-tag ready">BST</span>
+                            <span class="doc-tag ready">PSSR</span>
+                            <span class="doc-tag ready">FPFF</span>
+                            <span class="doc-tag ready">PSA</span>
+                            <span class="doc-tag missing">COCT</span>
+                            <span class="doc-tag missing">RAVIP</span>
+                        </div>
+                        <button class="pack-action-btn">Review Pack</button>
                     </div>
-                    <div class="card-details">
-                        <div class="detail-row">
-                            <span class="detail-label">CDC No.</span>
-                            <span class="detail-value">IND1234567</span>
+                    <div class="pack-card">
+                        <div class="pack-header">
+                            <h4>Visa Travel Pack</h4>
+                            <span class="pack-progress">100%</span>
                         </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Expiry</span>
-                            <span class="detail-value valid-text">10 Mar 2028</span>
+                        <div class="pack-progress-bar">
+                            <div class="progress-fill" style="width: 100%"></div>
                         </div>
+                        <div class="pack-summary">
+                            <span class="summary-ready">✓ 6 documents ready</span>
+                            <span class="summary-missing" style="display:none"></span>
+                        </div>
+                        <div class="pack-documents">
+                            <span class="doc-tag ready">Passport</span>
+                            <span class="doc-tag ready">Visa</span>
+                            <span class="doc-tag ready">CDC</span>
+                            <span class="doc-tag ready">Medical</span>
+                        </div>
+                        <button class="pack-action-btn">Export Pack</button>
                     </div>
-                    <div class="card-footer">
-                        <span class="ready-indicator">
-                            <span class="check-icon">✅</span>
-                            Ready
-                        </span>
+                    <div class="pack-card">
+                        <div class="pack-header">
+                            <h4>Medical Pack</h4>
+                            <span class="pack-progress">67%</span>
+                        </div>
+                        <div class="pack-progress-bar">
+                            <div class="progress-fill" style="width: 67%"></div>
+                        </div>
+                        <div class="pack-summary">
+                            <span class="summary-ready">✓ 4 documents ready</span>
+                            <span class="summary-missing">⚠️ 2 documents missing</span>
+                        </div>
+                        <div class="pack-documents">
+                            <span class="doc-tag ready">ENG-1</span>
+                            <span class="doc-tag ready">Vaccines</span>
+                            <span class="doc-tag missing">Blood Test</span>
+                            <span class="doc-tag missing">X-Ray</span>
+                        </div>
+                        <button class="pack-action-btn">Review Pack</button>
                     </div>
                 </div>
-            </article>
+            </div>
+        </section>
+
+        <!-- SCREEN: Profile -->
+        <section id="screen-profile" class="app-screen" data-screen="profile">
+            <div class="screen-content">
+                <div class="screen-header">
+                    <h2 class="screen-title">Profile & Settings</h2>
+                </div>
+                <div class="profile-section">
+                    <div class="profile-card">
+                        <div class="profile-avatar">
+                            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <circle cx="12" cy="8" r="4"/>
+                                <path d="M20 21a8 8 0 1 0-16 0"/>
+                            </svg>
+                        </div>
+                        <div class="profile-info">
+                            <h3>Capt. John Doe</h3>
+                            <p>Rank: Chief Officer</p>
+                            <p class="profile-subtle">Nationality: Indian</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h4 class="settings-heading">Sync & Backup</h4>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <span>🔄 Last Sync</span>
+                        </div>
+                        <div class="setting-value">Today, 8:30 AM</div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <span>☁️ Cloud Backup</span>
+                        </div>
+                        <div class="setting-value enabled">Enabled ✓</div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <span>💾 Local Backup</span>
+                        </div>
+                        <div class="setting-value">15 documents</div>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h4 class="settings-heading">Appearance</h4>
+                    <div class="setting-item">
+                        <div class="setting-label">Theme</div>
+                        <div class="setting-value">
+                            <select class="theme-select">
+                                <option>Deep Ocean (Default)</option>
+                                <option>Light</option>
+                                <option>High Contrast</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h4 class="settings-heading">Security</h4>
+                    <div class="setting-item">
+                        <div class="setting-label">🔒 PIN Protection</div>
+                        <div class="setting-value enabled">Enabled ✓</div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">🔐 Encryption</div>
+                        <div class="setting-value">AES-256</div>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h4 class="settings-heading">About</h4>
+                    <div class="setting-item">
+                        <div class="setting-label">Version</div>
+                        <div class="setting-value">blue-wallet-stable-rollback-v0.19</div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">Build</div>
+                        <div class="setting-value">Prototype Build</div>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- Floating Add Button -->
-        <button class="floating-add-btn" aria-label="Add Document">
+        <button class="floating-add-btn" aria-label="Add Document" onclick="navigateTo('add')">
             <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.5">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
                 <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -192,33 +566,33 @@
 
         <!-- Bottom Navigation -->
         <nav class="bottom-nav">
-            <a href="#" class="nav-item active">
+            <a href="#" class="nav-item active" data-screen="vault">
                 <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="3" y="3" width="18" height="18" rx="2"/>
                     <line x1="9" y1="3" x2="9" y2="21"/>
                 </svg>
                 <span class="nav-label">Vault</span>
             </a>
-            <a href="#" class="nav-item">
+            <a href="#" class="nav-item" data-screen="timeline">
                 <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="10"/>
                     <polyline points="12 6 12 12 16 14"/>
                 </svg>
                 <span class="nav-label">Timeline</span>
             </a>
-            <a href="#" class="nav-item">
+            <a href="#" class="nav-item" data-screen="vaccines">
                 <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                 </svg>
                 <span class="nav-label">Vaccines</span>
             </a>
-            <a href="#" class="nav-item">
+            <a href="#" class="nav-item" data-screen="packs">
                 <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
                 </svg>
                 <span class="nav-label">Packs</span>
             </a>
-            <a href="#" class="nav-item">
+            <a href="#" class="nav-item" data-screen="profile">
                 <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                     <circle cx="12" cy="7" r="4"/>
