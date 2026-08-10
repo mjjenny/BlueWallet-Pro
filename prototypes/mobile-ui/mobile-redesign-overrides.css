@@ -1,6 +1,7 @@
 ﻿/* ============================================
    THE BLUE - Mobile UI Redesign Prototype
    Grok Visual Standard: Premium Offshore Wallet
+   Enhanced: Moonlit Ocean Atmosphere
    ============================================ */
 
 * {
@@ -11,25 +12,26 @@
 
 :root {
     /* Color Palette - Deep Ocean Theme */
-    --ocean-black: #0a0e14;
-    --ocean-navy: #0d1520;
-    --ocean-deep: #121f2e;
+    --ocean-black: #05080c;
+    --ocean-navy: #0a111a;
+    --ocean-deep: #0f1c2e;
     --ocean-surface: #1a2d3f;
-    --glass-bg: rgba(26, 45, 63, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.1);
+    --moonlit-blue: rgba(0, 150, 255, 0.08);
+    --glass-bg: rgba(20, 35, 55, 0.65);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-border-strong: rgba(255, 255, 255, 0.15);
     
     /* Status Colors */
-    --danger-red: #ff3b30;
-    --warning-orange: #ff9500;
-    --success-green: #34c759;
-    --brand-blue: #0066ff;
+    --danger-red: #ff453a;
+    --warning-orange: #ff9f0a;
+    --success-green: #30d158;
+    --brand-blue: #007aff;
     --electric-blue: #00d4ff;
-    --cyan-accent: #00bcd4;
     
     /* Text Colors */
     --text-primary: #ffffff;
-    --text-secondary: rgba(255, 255, 255, 0.7);
-    --text-tertiary: rgba(255, 255, 255, 0.5);
+    --text-secondary: rgba(255, 255, 255, 0.65);
+    --text-tertiary: rgba(255, 255, 255, 0.45);
     
     /* Spacing */
     --safe-area-top: env(safe-area-inset-top, 44px);
@@ -53,9 +55,10 @@ body {
     min-height: 100vh;
     position: relative;
     background: 
-        radial-gradient(ellipse at top, rgba(0, 212, 255, 0.03) 0%, transparent 50%),
-        radial-gradient(ellipse at bottom, rgba(0, 102, 255, 0.05) 0%, transparent 50%),
-        linear-gradient(180deg, var(--ocean-black) 0%, var(--ocean-navy) 100%);
+        radial-gradient(ellipse at 20% 10%, rgba(0, 150, 255, 0.06) 0%, transparent 40%),
+        radial-gradient(ellipse at 80% 30%, rgba(0, 100, 200, 0.04) 0%, transparent 35%),
+        radial-gradient(ellipse at 50% 80%, rgba(0, 80, 150, 0.05) 0%, transparent 50%),
+        linear-gradient(180deg, var(--ocean-black) 0%, var(--ocean-navy) 40%, var(--ocean-deep) 100%);
     overflow-x: hidden;
     padding-bottom: calc(var(--safe-area-bottom) + 80px);
 }
@@ -85,20 +88,22 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    padding: 16px 20px 24px;
-    background: linear-gradient(180deg, rgba(13, 21, 32, 0.8) 0%, transparent 100%);
+    padding: 20px 20px 28px;
+    background: linear-gradient(180deg, rgba(5, 8, 12, 0.9) 0%, transparent 100%);
+    position: relative;
 }
 
 .brand-left {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
 }
 
 .logo-mark {
-    width: 48px;
-    height: 48px;
+    width: 52px;
+    height: 52px;
     flex-shrink: 0;
+    filter: drop-shadow(0 4px 12px rgba(0, 212, 255, 0.3));
 }
 
 .logo-mark svg {
@@ -112,33 +117,37 @@ body {
 }
 
 .brand-title {
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 700;
-    letter-spacing: 0.5px;
+    letter-spacing: 1.5px;
     color: var(--text-primary);
     line-height: 1.2;
+    text-transform: uppercase;
 }
 
 .brand-subtitle {
     font-size: 12px;
     color: var(--text-secondary);
     font-weight: 400;
-    margin-top: 2px;
+    margin-top: 3px;
+    letter-spacing: 0.3px;
 }
 
 .offline-pill {
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 12px;
-    background: rgba(255, 59, 48, 0.15);
-    border: 1px solid rgba(255, 59, 48, 0.3);
+    padding: 7px 13px;
+    background: rgba(255, 69, 58, 0.12);
+    border: 1px solid rgba(255, 69, 58, 0.25);
     border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
+    font-size: 10px;
+    font-weight: 700;
     color: var(--danger-red);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.8px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 .offline-icon {
@@ -147,14 +156,14 @@ body {
 
 /* Vault Hero Section */
 .vault-hero {
-    padding: 0 20px 24px;
+    padding: 0 20px 28px;
 }
 
 .vault-title {
-    font-size: 28px;
+    font-size: 30px;
     font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     letter-spacing: -0.5px;
 }
 
@@ -162,7 +171,7 @@ body {
     font-size: 14px;
     color: var(--text-secondary);
     font-weight: 400;
-    line-height: 1.4;
+    line-height: 1.5;
 }
 
 /* Glass Stats Panel */
@@ -170,16 +179,17 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-top: 20px;
-    padding: 20px;
+    margin-top: 24px;
+    padding: 24px 20px;
     background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
-    border-radius: 16px;
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 1px solid var(--glass-border-strong);
+    border-radius: 20px;
     box-shadow: 
-        0 8px 32px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        0 12px 40px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15),
+        0 0 60px rgba(0, 150, 255, 0.05);
 }
 
 .stat-item {
@@ -190,7 +200,7 @@ body {
 }
 
 .stat-value {
-    font-size: 28px;
+    font-size: 32px;
     font-weight: 700;
     color: var(--text-primary);
     line-height: 1;
@@ -206,11 +216,11 @@ body {
 }
 
 .stat-label {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-tertiary);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 500;
+    letter-spacing: 0.8px;
+    font-weight: 600;
 }
 
 .stat-divider {
@@ -270,14 +280,15 @@ body {
 .document-card {
     position: relative;
     background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
-    border-radius: 16px;
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 1px solid var(--glass-border-strong);
+    border-radius: 20px;
     overflow: hidden;
     box-shadow: 
-        0 4px 24px rgba(0, 0, 0, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        0 4px 20px rgba(0, 0, 0, 0.2);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -302,7 +313,7 @@ body {
 }
 
 .card-content {
-    padding: 16px;
+    padding: 18px;
     padding-left: 20px;
 }
 
@@ -310,38 +321,38 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
 }
 
 .card-title {
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 600;
     color: var(--text-primary);
-    letter-spacing: 0.3px;
+    letter-spacing: 0.5px;
 }
 
 .status-badge {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 4px 10px;
-    border-radius: 12px;
+    gap: 5px;
+    padding: 5px 11px;
+    border-radius: 14px;
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.6px;
 }
 
 .status-badge.expired {
-    background: rgba(255, 59, 48, 0.15);
+    background: rgba(255, 69, 58, 0.15);
     color: var(--danger-red);
-    border: 1px solid rgba(255, 59, 48, 0.3);
+    border: 1px solid rgba(255, 69, 58, 0.35);
 }
 
 .status-badge.valid {
-    background: rgba(52, 199, 89, 0.15);
+    background: rgba(48, 209, 88, 0.15);
     color: var(--success-green);
-    border: 1px solid rgba(52, 199, 89, 0.3);
+    border: 1px solid rgba(48, 209, 88, 0.35);
 }
 
 .badge-icon {
@@ -416,10 +427,10 @@ body {
 /* Floating Add Button */
 .floating-add-btn {
     position: fixed;
-    bottom: calc(var(--safe-area-bottom) + 90px);
+    bottom: calc(var(--safe-area-bottom) + 95px);
     right: 20px;
-    width: 56px;
-    height: 56px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     background: linear-gradient(135deg, var(--electric-blue) 0%, var(--brand-blue) 100%);
     border: none;
@@ -429,20 +440,22 @@ body {
     justify-content: center;
     cursor: pointer;
     box-shadow: 
-        0 8px 24px rgba(0, 102, 255, 0.4),
-        0 0 0 4px rgba(0, 102, 255, 0.1);
+        0 10px 30px rgba(0, 122, 255, 0.5),
+        0 0 0 5px rgba(0, 122, 255, 0.15),
+        0 0 40px rgba(0, 212, 255, 0.3);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     z-index: 100;
 }
 
 .floating-add-btn:active {
-    transform: scale(0.95);
+    transform: scale(0.94);
 }
 
 .floating-add-btn:hover {
     box-shadow: 
-        0 12px 32px rgba(0, 102, 255, 0.5),
-        0 0 0 6px rgba(0, 102, 255, 0.15);
+        0 14px 40px rgba(0, 122, 255, 0.6),
+        0 0 0 7px rgba(0, 122, 255, 0.2),
+        0 0 50px rgba(0, 212, 255, 0.4);
 }
 
 /* Bottom Navigation */
@@ -456,11 +469,12 @@ body {
     display: flex;
     justify-content: space-around;
     align-items: center;
-    padding: 12px 8px calc(12px + var(--safe-area-bottom));
-    background: rgba(10, 14, 20, 0.95);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-top: 1px solid var(--glass-border);
+    padding: 14px 6px calc(14px + var(--safe-area-bottom));
+    background: rgba(5, 8, 12, 0.95);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border-top: 1px solid var(--glass-border-strong);
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.4);
     z-index: 1000;
 }
 
@@ -468,14 +482,18 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
-    padding: 8px 12px;
+    gap: 5px;
+    padding: 8px 10px;
     text-decoration: none;
     color: var(--text-tertiary);
-    transition: color 0.2s ease;
-    min-width: 44px;
-    min-height: 44px;
+    transition: color 0.2s ease, transform 0.15s ease;
+    min-width: 48px;
+    min-height: 48px;
     justify-content: center;
+}
+
+.nav-item:active {
+    transform: scale(0.92);
 }
 
 .nav-item.active {
@@ -485,11 +503,12 @@ body {
 .nav-item svg {
     stroke: currentColor;
     transition: stroke 0.2s ease;
+    stroke-width: 2.2;
 }
 
 .nav-label {
     font-size: 10px;
-    font-weight: 500;
+    font-weight: 600;
     letter-spacing: 0.3px;
 }
 
