@@ -114,3 +114,33 @@ This is a **visual prototype only** for design review.
 ---
 
 *Last updated: 2026-08-10*
+
+## Acceptance Checklist
+
+### Responsive Testing
+- [ ] 390px viewport: no horizontal overflow
+- [ ] 320px viewport: no horizontal overflow
+- [ ] Desktop preview centers correctly
+
+### Navigation
+- [ ] Bottom nav usable on all screens
+- [ ] All 7 screens reachable via bottom nav
+- [ ] Detail screen opens from document card tap
+- [ ] Add flow opens from floating + button
+- [ ] Back behavior works consistently
+
+### Interactions
+- [ ] Theme selector changes visual theme (prototype alert)
+- [ ] Search/filter changes visible cards (if implemented)
+- [ ] Document cards are readable at 390px
+- [ ] Touch targets are at least 44px
+
+### Safety
+- [ ] Stable app files untouched
+- [ ] Only prototype folder modified
+- [ ] No data persistence logic added
+- [ ] No service worker modifications
+
+---
+
+*Last updated: 2026-08-10*
