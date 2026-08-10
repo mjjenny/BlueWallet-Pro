@@ -554,3 +554,6 @@ body {
         border-radius: 0 0 40px 40px;
     }
 }
+/* Screen Visibility Rules */
+.app-screen { display: none; }
+.app-screen.active { display: block; }
