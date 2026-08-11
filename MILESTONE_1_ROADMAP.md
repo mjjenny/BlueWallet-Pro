@@ -265,7 +265,41 @@ Ran `npm run build` fresh on this branch (with all of Steps 5–6's changes in p
 
 **What Step 7 does *not* claim:** it does not verify the live *serving* of `app.js`/`styles.css`/icons is fixed — that requires an actual redeploy (Step 8+), which is outside this repo-only verification pass. It also does not touch `main` — everything above lives on `recovery/production-baseline-20260812`, uncommitted to any remote.
 
-### Step 8 — Push with the handover's verification protocol
+### Step 8 — Push with the handover's verification protocol ⛔ BLOCKED (2026-08-12) — needs Jenny
+
+Per the handover's mandatory verification protocol, raw output only, no claims:
+
+```text
+$ git remote -v
+sites   https://git.chatgpt-team.site/70d53469-8286-4c9e-9ab4-81f6a72eccd3/appgprj_6a74d7c5b9f4819192ac2f63287fa26d.git (fetch)
+sites   https://git.chatgpt-team.site/70d53469-8286-4c9e-9ab4-81f6a72eccd3/appgprj_6a74d7c5b9f4819192ac2f63287fa26d.git (push)
+
+$ git ls-remote --heads sites
+(no output; timed out after 100s -- consistent with the handover's own note that this
+timed out after 94107ms in the original handover session)
+
+$ git push sites recovery/production-baseline-20260812
+remote: Authentication required
+fatal: Authentication failed for 'https://git.chatgpt-team.site/70d53469-8286-4c9e-9ab4-81f6a72eccd3/appgprj_6a74d7c5b9f4819192ac2f63287fa26d.git/'
+EXIT=128
+
+$ GIT_TERMINAL_PROMPT=0 git push sites recovery/production-baseline-20260812
+(hung, no output, killed after 60s timeout -- credential.helper is "manager" (Git
+Credential Manager), which appears to need an interactive browser/GUI login this
+sandbox cannot complete)
+```
+
+**Only remote configured in this repo is `sites`** — there is no `origin` here (that exists only in the separate `github-pages-stable-6f9ede5` working copy, pointed at GitHub). `sites` is the hosted Sites project's git endpoint. Git Credential Manager is configured (`credential.helper = manager`) but has no cached credential for this host and cannot complete an interactive login from this non-interactive session.
+
+**This did not push anything, anywhere.** No branch was created or updated on `sites`. `recovery/production-baseline-20260812` exists only in this local working copy, 4 commits ahead of `main` (`4f566be`, `158146f`, `f5f690f`, `07994b4`).
+
+**What needs to happen, Jenny's call:**
+
+1. Run `git push sites recovery/production-baseline-20260812` yourself from a terminal on your machine where Git Credential Manager can pop up its login flow, or
+2. Supply a way for a future session to authenticate to `git.chatgpt-team.site` (a token via a secure channel, not pasted into chat), or
+3. If a GitHub push is preferred instead/also, an `origin` remote pointing at `mjjenny/BlueWallet-Pro` would need to be added here and authenticated similarly.
+
+Nothing further in the roadmap depends on this branch being pushed anywhere — Milestone 1's actual goal (a local build reproducing production) is already proven and committed locally. Pushing just makes that durable/shared. Do not skip it indefinitely: an uncommitted-to-remote branch is exactly the kind of state that got lost before (Section 1).
 
 Raw output required for all four, no summaries:
 
