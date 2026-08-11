@@ -153,6 +153,7 @@
     let activeCategoryFilter = 'all';
     let activeStatusFilter = 'all';
     let activeAddStep = 0;
+    let activeTourStep = 0;
 
     // DOM Elements
     const screens = {
@@ -258,6 +259,28 @@
             });
         });
 
+        document.querySelectorAll('[data-open-print-guide]').forEach(button => {
+            button.addEventListener('click', () => openModal('print-guide'));
+        });
+
+        document.querySelectorAll('[data-open-walkthrough]').forEach(button => {
+            button.addEventListener('click', () => {
+                activeTourStep = 0;
+                renderTourStep();
+                openModal('walkthrough-modal');
+            });
+        });
+
+        document.querySelectorAll('[data-close-modal]').forEach(button => {
+            button.addEventListener('click', () => closeModals());
+        });
+
+        document.querySelectorAll('.prototype-modal').forEach(modal => {
+            modal.addEventListener('click', event => {
+                if (event.target === modal) closeModals();
+            });
+        });
+
         document.querySelectorAll('[data-pack-toggle]').forEach(button => {
             button.addEventListener('click', () => {
                 const card = button.closest('.pack-card');
@@ -284,6 +307,7 @@
         });
 
         setupAddFlow();
+        setupWalkthrough();
 
         documentCards.forEach(card => {
             card.addEventListener('click', () => {
@@ -375,6 +399,9 @@
                 <div class="card-status-bar"></div>
                 <div class="card-content">
                     <div class="card-header">
+                        <div class="doc-thumb ${doc.category}" aria-hidden="true">
+                            <span>${getDocumentGlyph(doc.category)}</span>
+                        </div>
                         <div class="card-title-group">
                             <h3 class="card-title">${doc.title}</h3>
                             <div class="card-status-badge ${doc.status}">
@@ -535,6 +562,56 @@
         }, 2200);
     }
 
+    function openModal(id) {
+        const modal = document.getElementById(id);
+        if (!modal) return;
+        modal.hidden = false;
+        document.body.classList.add('modal-open');
+        const focusTarget = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        if (focusTarget) focusTarget.focus();
+    }
+
+    function closeModals() {
+        document.querySelectorAll('.prototype-modal').forEach(modal => {
+            modal.hidden = true;
+        });
+        document.body.classList.remove('modal-open');
+    }
+
+    function setupWalkthrough() {
+        const back = document.getElementById('tour-back');
+        const next = document.getElementById('tour-next');
+        if (back) {
+            back.addEventListener('click', () => {
+                activeTourStep = Math.max(0, activeTourStep - 1);
+                renderTourStep();
+            });
+        }
+        if (next) {
+            next.addEventListener('click', () => {
+                const steps = document.querySelectorAll('.walkthrough-step');
+                if (activeTourStep >= steps.length - 1) {
+                    closeModals();
+                    return;
+                }
+                activeTourStep += 1;
+                renderTourStep();
+            });
+        }
+        renderTourStep();
+    }
+
+    function renderTourStep() {
+        const steps = Array.from(document.querySelectorAll('.walkthrough-step'));
+        const back = document.getElementById('tour-back');
+        const next = document.getElementById('tour-next');
+        steps.forEach((step, index) => {
+            step.classList.toggle('active', index === activeTourStep);
+        });
+        if (back) back.disabled = activeTourStep === 0;
+        if (next) next.textContent = activeTourStep === steps.length - 1 ? 'Done' : 'Next';
+    }
+
     function getStatusLabel(status) {
         const labels = {
             expired: 'EXPIRED',
@@ -556,6 +633,17 @@
             return '<path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>';
         }
         return '<path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>';
+    }
+
+    function getDocumentGlyph(category) {
+        const glyphs = {
+            passport: 'PP',
+            cdc: 'CD',
+            coc: 'CO',
+            visa: 'VS',
+            certificates: 'CT'
+        };
+        return glyphs[category] || 'DC';
     }
 
     // Render Timeline

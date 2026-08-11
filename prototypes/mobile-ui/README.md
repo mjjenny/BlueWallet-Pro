@@ -11,6 +11,7 @@ This prototype demonstrates a **premium mobile-first UI/UX redesign** for BlueWa
 - **Strong brand identity**: Wave/ocean logo mark with "THE BLUE" wordmark
 - **Status-first design**: Clear visual hierarchy using color (red/green/blue)
 - **Mobile-native**: Bottom navigation, floating actions, touch-friendly targets
+- **Review-safe prototype**: All changes stay inside `prototypes/mobile-ui/`
 
 ## Files in This Directory
 
@@ -48,8 +49,11 @@ This prototype demonstrates a **premium mobile-first UI/UX redesign** for BlueWa
 ### 4. Status-First Document Cards
 - **Expired card**: Red left border, red badge, warning icon, risk message
 - **Valid card**: Green left border, green badge, check icon, ready message
+- **Expiring card**: Amber left border, renewal reminder message
+- **Missing card**: Neutral warning state for pack gaps
 - Spacious layout with clear hierarchy
 - Glass effect with subtle shadows
+- Prototype document thumbnails to test the Grok-style card hierarchy
 
 ### 5. Floating Add Button
 - Circular electric blue button
@@ -80,6 +84,12 @@ Five main app sections (NOT document categories):
   4. Review
 - Next, Back, Cancel, and Save controls are wired for prototype navigation
 
+### 9. Guided Review Modes
+- Header Tour button opens a walkthrough modal
+- Print button opens a mobile print guidance modal
+- Prototype feedback uses a non-blocking toast instead of browser alerts
+- Card and screen entry animations are enabled when motion is allowed
+
 ## Color Palette
 
 | Color | Usage | Hex |
@@ -98,6 +108,7 @@ Five main app sections (NOT document categories):
 - **Safe areas**: Respects iOS safe-area-inset
 - **Touch targets**: Minimum 44x44px
 - **Overflow**: Designed for 390px and 320px mobile review with no horizontal page scroll
+- **Bottom spacing**: Extra scroll room keeps the nav and floating add button from covering review content
 
 ## How to Preview
 
@@ -155,7 +166,8 @@ This is a **visual prototype only** for design review.
 - [ ] Search/filter changes visible cards
 - [ ] Empty state appears when no cards match
 - [ ] Add wizard moves through all 4 steps
-- [ ] Detail action buttons show prototype feedback
+- [ ] Detail Print opens mobile print guidance
+- [ ] Header Tour opens the walkthrough modal
 - [ ] Document cards are readable at 390px
 - [ ] Touch targets are at least 44px
 

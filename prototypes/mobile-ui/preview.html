@@ -53,6 +53,7 @@
                 <span class="offline-icon">📴</span>
                 <span class="offline-text">OFFLINE</span>
             </div>
+            <button class="walkthrough-btn" type="button" data-open-walkthrough>Tour</button>
         </header>
 
         <!-- SCREEN: Vault (Home) -->
@@ -279,7 +280,7 @@
                     </div>
                     <div class="detail-actions">
                         <button class="action-btn primary" type="button" data-action-feedback="Edit would open the stable edit form after approval.">Edit</button>
-                        <button class="action-btn secondary" type="button" data-action-feedback="Mobile print should open share/print guidance instead of a dead page.">Print</button>
+                        <button class="action-btn secondary" type="button" data-open-print-guide>Print</button>
                         <button class="action-btn secondary" type="button" data-action-feedback="Download would export this document attachment.">Download</button>
                         <button class="action-btn secondary" type="button" data-action-feedback="Share would prepare a secure export pack.">Share</button>
                     </div>
@@ -669,6 +670,44 @@
         </button>
 
         <div id="prototype-toast" class="prototype-toast" hidden role="status" aria-live="polite"></div>
+
+        <div id="print-guide" class="prototype-modal" hidden role="dialog" aria-modal="true" aria-labelledby="print-guide-title">
+            <div class="prototype-modal-card">
+                <button class="modal-close" type="button" data-close-modal aria-label="Close">Close</button>
+                <h2 id="print-guide-title">Mobile Print Guide</h2>
+                <p>On mobile, printing should stay inside a guided path instead of opening a dead blank tab.</p>
+                <ol class="guide-steps">
+                    <li>Open the document from the vault.</li>
+                    <li>Tap Print.</li>
+                    <li>Use the native share sheet or Save to Files path.</li>
+                    <li>Return to THE BLUE with a clear Done button.</li>
+                </ol>
+                <button class="action-btn primary" type="button" data-close-modal>Done</button>
+            </div>
+        </div>
+
+        <div id="walkthrough-modal" class="prototype-modal" hidden role="dialog" aria-modal="true" aria-labelledby="walkthrough-title">
+            <div class="prototype-modal-card">
+                <button class="modal-close" type="button" data-close-modal aria-label="Close">Close</button>
+                <h2 id="walkthrough-title">Prototype Walkthrough</h2>
+                <div class="walkthrough-step active" data-tour-step="0">
+                    <strong>Vault first</strong>
+                    <span>Search and filters keep the document list focused without changing the stable data model.</span>
+                </div>
+                <div class="walkthrough-step" data-tour-step="1">
+                    <strong>Status-first cards</strong>
+                    <span>Expired, expiring, valid, and missing states are visible before opening a document.</span>
+                </div>
+                <div class="walkthrough-step" data-tour-step="2">
+                    <strong>Thumb navigation</strong>
+                    <span>Bottom navigation handles the main mobile areas while desktop can keep the current stable layout.</span>
+                </div>
+                <div class="walkthrough-actions">
+                    <button id="tour-back" class="action-btn secondary" type="button">Back</button>
+                    <button id="tour-next" class="action-btn primary" type="button">Next</button>
+                </div>
+            </div>
+        </div>
 
         <!-- Bottom Navigation -->
         <nav class="bottom-nav">
