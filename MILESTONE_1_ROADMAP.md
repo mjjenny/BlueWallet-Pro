@@ -248,9 +248,22 @@ if($('#cancel'))$('#cancel').onclick=()=>{modal=false;render()};if($('#form'))$(
 
 Ran `npm test` end-to-end: lint → build → both tests pass. Lint failures will now fail CI/local `npm test` runs instead of silently passing, as they did before this step (the handover's original observation — "npm test passed because it does not run the lint command" — no longer holds).
 
-### Step 7 — Verify reproducibility
+### Step 7 — Verify reproducibility ✅ DONE (2026-08-12) — MILESTONE 1 CLOSED
 
-Run `npm run build`, then hash `dist/client/legacy-root-pwa.html` against the live hash. They must match apart from the intended Step 5 service-worker change. **This is the step that actually closes the milestone** — until a local build reproduces production, the source of truth is not re-established.
+Ran `npm run build` fresh on this branch (with all of Steps 5–6's changes in place), then re-downloaded every deployed asset fresh from production (a new download, not reused from Step 2/3, to rule out a stale local copy) and diffed against `dist/client/`:
+
+| File | Result |
+|---|---|
+| `legacy-root-pwa.html` | **Identical** to production, except the Cloudflare bot-challenge token (`__CF$cv$params`, randomized per HTTP request by the CDN — confirmed present and different-valued on *every* fetch of the same URL, including two production fetches of each other; not part of the served file). With that line excluded: byte-for-byte identical. |
+| `index.html` | Same — identical apart from the same CF token line. |
+| `offline.html` | Same — identical apart from the same CF token line. |
+| `manifest.json` | Byte-identical, no exclusion needed. |
+| `service-worker.js` | **Differs from production, exactly as intended**: `CACHE_VERSION` `v0.26` → `v0.27`, and `./styles.css` / `./app.js` removed from `APP_SHELL`. This is the Step 5 change, not a reproducibility gap. |
+| `app.js`, `styles.css`, `favicon.svg`, and all 4 icon files | Correct real content in `dist/client/` (re-confirmed from Step 5's build check). Production still serves the HTML fallback for these seven routes — expected, since that's the stale-deployed-bundle issue Step 5 diagnosed, not something a local build can fix. |
+
+**This closes Milestone 1.** A build from this repository now reproduces what is live in production, byte-for-byte, modulo one documented CDN-injected non-determinism and the two intentional Step 5 changes. The repo is once again a trustworthy source of truth for the deployed app. Final `npm test`: lint clean, build succeeds, 2/2 tests pass.
+
+**What Step 7 does *not* claim:** it does not verify the live *serving* of `app.js`/`styles.css`/icons is fixed — that requires an actual redeploy (Step 8+), which is outside this repo-only verification pass. It also does not touch `main` — everything above lives on `recovery/production-baseline-20260812`, uncommitted to any remote.
 
 ### Step 8 — Push with the handover's verification protocol
 
