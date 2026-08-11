@@ -2333,6 +2333,15 @@
     }
     #print-sheet { display: none; }
 
+    .mobile-add-brand,
+    .mobile-add-cats,
+    .mobile-pack-brand,
+    .mobile-pack-list,
+    .mobile-pack-new,
+    .mobile-timeline {
+      display: none;
+    }
+
   
     /* Profile meta extended */
     .profile-meta .rank-line { font-size: 13px; color: var(--accent); font-weight: 600; margin-top: 2px; }
@@ -3141,7 +3150,7 @@
       }
     }
 
-    /* Mobile mockup conformance pass: four target screens become native-feeling pages. */
+    /* Mobile mockup conformance pass: target screens become native-feeling pages. */
     @media (max-width: 700px) {
       body {
         min-height: 100dvh;
@@ -3440,6 +3449,554 @@
       }
     }
 
+    /* Mobile mockup conformance pass: Add Document, Packs, and Timeline. */
+    @media (max-width: 700px) {
+      #modal-add,
+      #modal-generic.packs-mode,
+      #modal-generic.timeline-mode {
+        background:
+          radial-gradient(ellipse 84% 34% at 50% -8%, rgba(24, 122, 255, .22), transparent 68%),
+          radial-gradient(ellipse 118% 44% at 50% 88%, rgba(24, 118, 180, .34), transparent 64%),
+          linear-gradient(180deg, rgba(1, 8, 18, .98), rgba(2, 13, 27, .97)) !important;
+      }
+      #modal-add .scan-sheet,
+      #modal-generic.packs-mode .modal,
+      #modal-generic.timeline-mode .modal {
+        width: 100vw !important;
+        max-width: none !important;
+        min-height: 100dvh;
+        max-height: none !important;
+        margin: 0;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background:
+          radial-gradient(ellipse 100% 38% at 50% 86%, rgba(34, 123, 198, .28), transparent 64%),
+          linear-gradient(180deg, #020a15 0%, #031426 100%) !important;
+        box-shadow: none !important;
+      }
+      #modal-add .modal-head,
+      #modal-generic.packs-mode .modal-head,
+      #modal-generic.timeline-mode .modal-head {
+        min-height: calc(116px + env(safe-area-inset-top, 0px)) !important;
+        padding: calc(22px + env(safe-area-inset-top, 0px)) 22px 14px !important;
+        border-bottom: 0 !important;
+        background: transparent !important;
+      }
+      #modal-add .modal-head {
+        display: grid !important;
+        grid-template-columns: 54px 1fr 54px;
+        align-items: center;
+      }
+      #modal-add .modal-head h2 {
+        grid-column: 1 / -1;
+        margin-top: 20px;
+        color: #fff;
+        font-size: 42px !important;
+        line-height: 1;
+        letter-spacing: -.02em;
+      }
+      #modal-add .modal-head h2::after {
+        content: "Add a new document to your seafarer wallet";
+        display: block;
+        width: max-content;
+        max-width: 100%;
+        margin-top: 10px;
+        padding-bottom: 10px;
+        border-bottom: 4px solid #2b91ff;
+        color: rgba(255,255,255,.66);
+        font-size: 19px;
+        font-weight: 450;
+        line-height: 1.3;
+      }
+      #modal-add .modal-head::before {
+        content: "<";
+        grid-column: 1;
+        grid-row: 1;
+        width: 52px;
+        height: 52px;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-size: 42px;
+      }
+      #modal-add .modal-head::after {
+        content: "THE BLUE";
+        grid-column: 2;
+        grid-row: 1;
+        justify-self: center;
+        color: #fff;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 30px;
+        letter-spacing: .06em;
+      }
+      #modal-add #close-add {
+        grid-column: 1;
+        grid-row: 1;
+        opacity: 0;
+        width: 52px;
+        height: 52px;
+      }
+      #modal-add .scan-form,
+      #modal-generic.packs-mode .modal-body,
+      #modal-generic.timeline-mode .modal-body {
+        max-height: none !important;
+        overflow: visible !important;
+        padding: 0 30px calc(34px + env(safe-area-inset-bottom, 0px)) !important;
+        background: transparent !important;
+      }
+      .mobile-add-brand {
+        display: none;
+      }
+      #modal-add .mobile-add-brand {
+        display: block;
+        margin: -18px 0 18px;
+        text-align: center;
+        color: rgba(255,255,255,.72);
+        font-size: 16px;
+        letter-spacing: .28em;
+        text-transform: lowercase;
+      }
+      #modal-add .mobile-add-brand::before {
+        content: "";
+        display: inline-block;
+        width: 48px;
+        height: 52px;
+        margin-right: 12px;
+        vertical-align: middle;
+        border: 2px solid #89c2ff;
+        border-radius: 16px 16px 20px 20px;
+        background: radial-gradient(circle at 50% 46%, rgba(61,173,255,.82) 0 8px, transparent 9px);
+        box-shadow: 0 0 22px rgba(59, 167, 255, .38);
+      }
+      #modal-add .drop {
+        min-height: 190px !important;
+        margin-top: 0;
+        border: 2px dashed rgba(42, 146, 255, .72) !important;
+        border-radius: 20px !important;
+        background: linear-gradient(180deg, rgba(19, 45, 78, .58), rgba(7, 23, 44, .58)) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
+      }
+      #modal-add #file-placeholder > div:first-child {
+        font-size: 0 !important;
+      }
+      #modal-add #file-placeholder > div:first-child::before {
+        content: "camera  |  gallery";
+        display: block;
+        color: rgba(255,255,255,.82);
+        font-size: 22px;
+        font-weight: 750;
+      }
+      #modal-add #file-placeholder > div:nth-child(2) {
+        margin-top: 18px;
+        color: #fff;
+        font-size: 22px !important;
+        font-weight: 780;
+      }
+      #modal-add #file-placeholder > div:nth-child(2)::before {
+        content: "Scan or upload passport / certificate";
+        display: block;
+        color: #fff;
+      }
+      #modal-add #file-placeholder > div:nth-child(2) {
+        color: transparent;
+      }
+      #modal-add #file-placeholder > div:nth-child(3) {
+        margin-top: -8px !important;
+        color: rgba(255,255,255,.58) !important;
+        font-size: 16px !important;
+      }
+      #modal-add #file-placeholder > div:nth-child(3)::before {
+        content: "Tap to scan with camera or choose from gallery.";
+        color: rgba(255,255,255,.58);
+      }
+      #modal-add #file-placeholder > div:nth-child(3) {
+        color: transparent !important;
+      }
+      #modal-add .doc-type-field select {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .mobile-add-cats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 8px 0 4px;
+      }
+      .mobile-add-cats button {
+        flex: 0 0 auto;
+        min-height: 44px;
+        padding: 0 13px;
+        border: 1px solid rgba(174,208,255,.25);
+        border-radius: 12px;
+        background: rgba(7, 21, 39, .72);
+        color: rgba(255,255,255,.88);
+        font-weight: 760;
+      }
+      .mobile-add-cats button.active {
+        background: linear-gradient(180deg, #38baff, #0a73ff);
+        border-color: rgba(132, 207, 255, .72);
+        box-shadow: 0 0 24px rgba(28, 140, 255, .32);
+      }
+      #modal-add .field label {
+        color: #fff !important;
+        font-size: 16px !important;
+        letter-spacing: 0 !important;
+        text-transform: none !important;
+      }
+      #modal-add input,
+      #modal-add select,
+      #modal-add textarea {
+        min-height: 56px;
+        border-radius: 12px !important;
+        background: rgba(7, 21, 40, .72) !important;
+        border-color: rgba(174,208,255,.22) !important;
+        color: #fff !important;
+        font-size: 18px !important;
+      }
+      #modal-add .capture-actions {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      #modal-add .capture-actions .btn {
+        min-height: 58px;
+        border-radius: 14px;
+      }
+      #modal-add .toggle,
+      #modal-add .noexp,
+      #modal-add #ocr-panel,
+      #modal-add .field:has(#doc-tags),
+      #modal-add .field:has(#doc-flag-notes),
+      #modal-add .field:has(#doc-reminder-note),
+      #modal-add .field:has(#doc-notes) {
+        border-radius: 14px;
+        background: rgba(7, 21, 40, .48);
+      }
+      #modal-add .check-item {
+        min-height: 48px;
+        padding: 8px 12px;
+        border-radius: 0;
+        border-color: rgba(255,255,255,.08);
+        background: rgba(8, 26, 48, .5);
+      }
+      #modal-add .check-item .cn {
+        color: rgba(255,255,255,.82);
+        font-size: 16px;
+        font-weight: 600;
+      }
+      #modal-add .check-item .cs {
+        display: none;
+      }
+      #modal-add .check-item .sw {
+        pointer-events: auto;
+      }
+      #modal-add .actions {
+        display: grid !important;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        margin-top: 18px;
+      }
+      #modal-add #btn-cancel {
+        display: none;
+      }
+      #modal-add .actions .btn-primary {
+        min-height: 70px;
+        border-radius: 12px;
+        font-size: 24px !important;
+        font-weight: 780;
+        background: linear-gradient(180deg, #26c4ff, #066dff) !important;
+        box-shadow: 0 0 30px rgba(45, 172, 255, .45), 0 18px 42px rgba(0, 102, 255, .32);
+      }
+      #modal-add .actions .btn-primary::after {
+        content: " Document";
+      }
+      #modal-add .actions::after {
+        content: "Your data is encrypted and stored securely";
+        margin-top: 10px;
+        color: rgba(255,255,255,.66);
+        text-align: center;
+        font-size: 15px;
+      }
+
+      #modal-generic.packs-mode .modal-head {
+        display: block !important;
+      }
+      #modal-generic.packs-mode #generic-title {
+        margin-top: 72px;
+        color: #fff;
+        font-size: 46px !important;
+        letter-spacing: -.03em;
+      }
+      #modal-generic.packs-mode #generic-title::after {
+        content: "Ready-to-share sets for joining";
+        display: block;
+        width: max-content;
+        max-width: 100%;
+        margin-top: 10px;
+        padding-bottom: 14px;
+        border-bottom: 3px solid rgba(70, 162, 255, .95);
+        color: rgba(255,255,255,.64);
+        font-size: 21px;
+        font-weight: 450;
+        letter-spacing: 0;
+      }
+      #modal-generic.packs-mode #close-generic {
+        position: absolute;
+        right: 28px;
+        top: calc(34px + env(safe-area-inset-top, 0px));
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        border: 1px solid rgba(174,208,255,.24);
+        background: rgba(12, 31, 54, .66);
+        color: transparent;
+      }
+      #modal-generic.packs-mode #close-generic::before {
+        content: "☸";
+        color: #9bcfff;
+        font-size: 36px;
+      }
+      .mobile-pack-brand,
+      .mobile-timeline-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: -112px 0 42px;
+        color: #fff;
+      }
+      .mobile-pack-brand .mark,
+      .mobile-timeline-brand .mark {
+        width: 82px;
+        height: 48px;
+        display: block;
+        background: linear-gradient(135deg, transparent 0 32%, #78d8ff 33% 48%, #2e87ff 49% 62%, transparent 63%);
+        clip-path: polygon(4% 68%, 24% 51%, 43% 28%, 62% 13%, 78% 18%, 61% 35%, 92% 25%, 69% 46%, 47% 60%, 23% 73%);
+        filter: drop-shadow(0 0 14px rgba(80, 190, 255, .62));
+      }
+      .mobile-pack-brand strong,
+      .mobile-timeline-brand strong {
+        display: block;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 26px;
+        letter-spacing: .2em;
+      }
+      .mobile-pack-brand span,
+      .mobile-timeline-brand span {
+        display: block;
+        color: #83bcff;
+        font-size: 16px;
+        letter-spacing: .24em;
+        text-transform: lowercase;
+      }
+      .mobile-pack-list {
+        display: grid;
+        gap: 14px;
+      }
+      .mobile-pack-card {
+        display: grid;
+        grid-template-columns: 96px 1fr;
+        gap: 14px;
+        align-items: center;
+        min-height: 132px;
+        padding: 16px;
+        border: 1px solid rgba(174,208,255,.24);
+        border-radius: 18px;
+        background: linear-gradient(180deg, rgba(16, 40, 70, .74), rgba(7, 23, 42, .7));
+        box-shadow: 0 20px 52px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.1);
+      }
+      .mobile-pack-icon {
+        width: 84px;
+        height: 84px;
+        display: grid;
+        place-items: center;
+        border-radius: 18px;
+        color: #9ed4ff;
+        font-size: 38px;
+        background: linear-gradient(145deg, rgba(63, 157, 255, .34), rgba(9, 37, 68, .82));
+        border: 1px solid rgba(174,208,255,.28);
+      }
+      .mobile-pack-card.medical .mobile-pack-icon { color: #ffd05b; background: linear-gradient(145deg, rgba(229, 176, 61, .42), rgba(74, 47, 15, .78)); }
+      .mobile-pack-card.visa .mobile-pack-icon { color: #9d93ff; background: linear-gradient(145deg, rgba(111, 94, 255, .42), rgba(24, 26, 82, .78)); }
+      .mobile-pack-card.ready .mobile-pack-icon { color: #73f2c9; background: linear-gradient(145deg, rgba(37, 213, 172, .34), rgba(10, 61, 57, .78)); }
+      .mobile-pack-main h3 {
+        margin: 0;
+        color: #fff;
+        font-size: 27px;
+        line-height: 1.08;
+      }
+      .mobile-pack-meta {
+        margin-top: 8px;
+        color: var(--mock-green);
+        font-size: 18px;
+        font-weight: 760;
+      }
+      .mobile-pack-card.warn .mobile-pack-meta { color: #ffd24f; }
+      .mobile-pack-card.review .mobile-pack-meta { color: #4ca5ff; }
+      .mobile-pack-progress {
+        height: 10px;
+        margin: 10px 0;
+        overflow: hidden;
+        border-radius: 999px;
+        background: rgba(255,255,255,.17);
+      }
+      .mobile-pack-progress span {
+        display: block;
+        height: 100%;
+        width: var(--progress, 70%);
+        border-radius: inherit;
+        background: var(--bar, var(--mock-green));
+      }
+      .mobile-pack-sub {
+        color: rgba(255,255,255,.62);
+        font-size: 16px;
+      }
+      .mobile-pack-share {
+        grid-column: 2;
+        width: 100%;
+        min-height: 58px;
+        border-radius: 14px;
+      }
+      .mobile-pack-new {
+        margin-top: 16px;
+        padding: 16px;
+        border: 1px solid rgba(174,208,255,.18);
+        border-radius: 18px;
+        background: rgba(7, 21, 40, .52);
+      }
+
+      #modal-generic.timeline-mode .modal-head {
+        display: grid !important;
+        grid-template-columns: 66px 1fr 132px;
+        align-items: center;
+        min-height: calc(144px + env(safe-area-inset-top, 0px)) !important;
+        border-bottom: 1px solid rgba(174,208,255,.16) !important;
+      }
+      #modal-generic.timeline-mode #generic-title {
+        justify-self: center;
+        color: #fff;
+        font-size: 42px !important;
+        letter-spacing: -.02em;
+      }
+      #modal-generic.timeline-mode #close-generic {
+        grid-column: 1;
+        grid-row: 1;
+        width: 66px;
+        height: 66px;
+        border-radius: 50%;
+        border: 1px solid rgba(174,208,255,.28);
+        background: rgba(14, 33, 58, .64);
+        color: transparent;
+      }
+      #modal-generic.timeline-mode #close-generic::before {
+        content: "<";
+        color: #fff;
+        font-size: 46px;
+      }
+      #modal-generic.timeline-mode .modal-head::after {
+        content: "OFFLINE";
+        justify-self: end;
+        min-height: 54px;
+        display: inline-flex;
+        align-items: center;
+        padding: 0 18px;
+        border: 1px solid rgba(174,208,255,.28);
+        border-radius: 999px;
+        color: rgba(255,255,255,.72);
+        font-size: 17px;
+        font-weight: 760;
+        letter-spacing: .06em;
+      }
+      .mobile-timeline {
+        position: relative;
+        display: grid;
+        gap: 18px;
+        padding: 18px 0 22px 70px;
+      }
+      .mobile-timeline::before {
+        content: "";
+        position: absolute;
+        left: 27px;
+        top: 32px;
+        bottom: 46px;
+        width: 5px;
+        border-radius: 999px;
+        background: linear-gradient(180deg, #37a6ff, #2c84ff, #6ebcff);
+        box-shadow: 0 0 20px rgba(58, 162, 255, .84);
+      }
+      .mobile-timeline-node {
+        position: absolute;
+        left: -63px;
+        top: 32px;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        border: 4px solid #3ca8ff;
+        background: #04152b;
+        box-shadow: 0 0 22px rgba(58, 162, 255, .8);
+      }
+      .mobile-timeline-card {
+        position: relative;
+        display: grid;
+        grid-template-columns: 84px 1fr;
+        gap: 16px;
+        align-items: center;
+        min-height: 148px;
+        padding: 20px 18px;
+        border: 1px solid rgba(174,208,255,.24);
+        border-radius: 22px;
+        background:
+          linear-gradient(180deg, rgba(16, 39, 68, .76), rgba(7, 22, 40, .72)),
+          linear-gradient(165deg, transparent 0 50%, rgba(91, 180, 255, .12) 51%, transparent 55%);
+        box-shadow: 0 22px 54px rgba(0,0,0,.36), inset 0 1px 0 rgba(255,255,255,.1);
+      }
+      .mobile-timeline-icon {
+        width: 74px;
+        height: 74px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        color: #fff;
+        font-size: 40px;
+        background: linear-gradient(145deg, #34c96b, #176d33);
+        box-shadow: 0 0 26px rgba(67, 220, 100, .35);
+      }
+      .mobile-timeline-card.warn .mobile-timeline-icon { background: linear-gradient(145deg, #2192ff, #0c4fb8); }
+      .mobile-timeline-card.bad .mobile-timeline-icon { background: linear-gradient(145deg, #ff5059, #8e121d); }
+      .mobile-timeline-card.train .mobile-timeline-icon { background: linear-gradient(145deg, #318cff, #0b55c7); }
+      .mobile-timeline-content h3 {
+        margin: 0 0 12px;
+        color: #fff;
+        font-size: 29px;
+        line-height: 1.06;
+      }
+      .mobile-timeline-tag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 34px;
+        padding: 0 14px;
+        border-radius: 10px;
+        border: 1px solid rgba(96, 162, 255, .46);
+        color: #a9ccff;
+        font-size: 15px;
+        font-weight: 760;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+      }
+      .mobile-timeline-date {
+        margin-top: 14px;
+        color: rgba(255,255,255,.66);
+        font-size: 18px;
+      }
+      .desktop-timeline-body {
+        display: none !important;
+      }
+      .desktop-pack-body {
+        display: none !important;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -3657,9 +4214,10 @@
         <button class="x" id="close-add">✕</button>
       </div>
       <form class="modal-body scan-form" id="form-doc">
+        <div class="mobile-add-brand" aria-hidden="true">seafarer wallet</div>
         <input type="hidden" id="doc-id" />
-        <div class="field">
-          <label>Document Type *</label>
+        <div class="field doc-type-field">
+          <label>Category</label>
           <select id="doc-type" required>
             <option value="passport">Passport</option>
             <option value="cdc">CDC</option>
@@ -3671,13 +4229,22 @@
             <option value="contract">Contract / Articles</option>
             <option value="other">Other</option>
           </select>
+          <div class="mobile-add-cats" aria-label="Document category">
+            <button type="button" class="active" data-doc-type-pick="passport">Passport</button>
+            <button type="button" data-doc-type-pick="cdc">CDC</button>
+            <button type="button" data-doc-type-pick="coc">COC</button>
+            <button type="button" data-doc-type-pick="certificate">STCW</button>
+            <button type="button" data-doc-type-pick="medical">Medical</button>
+            <button type="button" data-doc-type-pick="visa">Visa</button>
+            <button type="button" data-doc-type-pick="other">Other</button>
+          </div>
         </div>
         <div class="field">
-          <label>Title / Name *</label>
+          <label>Title *</label>
           <input type="text" id="doc-title" required placeholder="e.g. Indian Passport / Class 1 COC" />
         </div>
         <div class="row">
-          <div class="field"><label>Number</label><input type="text" id="doc-number" placeholder="Optional" /></div>
+          <div class="field"><label>Document Number *</label><input type="text" id="doc-number" placeholder="Enter document number" /></div>
           <div class="field"><label>Authority</label><input type="text" id="doc-authority" placeholder="e.g. DG Shipping" /></div>
         </div>
         <div class="toggle">
@@ -4181,7 +4748,7 @@
   </div>
 
   <script>
-    const APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.21';
+    const APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.22';
     const DB_NAME = 'SeafarerWalletDB';
     let db;
     let useStorageFallback = false;
@@ -5335,11 +5902,13 @@
         showLockIfNeeded(true);
       }, mins * 60 * 1000);
     }
-    function showGeneric(title, bodyHtml) {
-      document.getElementById('modal-generic').classList.remove('vaccine-mode');
+    function showGeneric(title, bodyHtml, mode) {
+      const modal = document.getElementById('modal-generic');
+      modal.classList.remove('vaccine-mode', 'packs-mode', 'timeline-mode');
+      if (mode) modal.classList.add(mode);
       document.getElementById('generic-title').textContent = title;
       document.getElementById('generic-body').innerHTML = bodyHtml;
-      document.getElementById('modal-generic').classList.add('show');
+      modal.classList.add('show');
     }
     function buildDataSafetyHtml() {
       const lastBackup = localStorage.getItem('bwLastBackupExportAt');
@@ -6060,7 +6629,15 @@
           } else document.getElementById('preview-img').classList.add('hidden');
         }
       } else document.getElementById('modal-title').textContent = 'Add Document';
+      syncMobileDocTypePills();
       document.getElementById('modal-add').classList.add('show');
+    }
+
+    function syncMobileDocTypePills() {
+      const current = document.getElementById('doc-type')?.value || 'passport';
+      document.querySelectorAll('[data-doc-type-pick]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.docTypePick === current);
+      });
     }
 
     function updateNoExp(on) {
@@ -6530,7 +7107,7 @@
         .sort((a,b) => (daysUntil(a.expiryDate) ?? 9999) - (daysUntil(b.expiryDate) ?? 9999))
         .map(doc => `<div class="tl-item ${status(doc).key==='expired'?'bad':'warn'}">${esc(doc.title)} - ${esc(joiningRisk(doc))}${doc.reminderNote ? ' - ' + esc(doc.reminderNote) : ''}</div>`)
         .join('') || '<div class="tl-item" style="color:var(--muted)">No urgent renewal risk found.</div>';
-      return '<div class="timeline">' + months.map(mo => {
+      const desktopTimeline = '<div class="timeline">' + months.map(mo => {
         const items = documents.filter(doc => {
           if (doc.noExpiry || !doc.expiryDate) return false;
           const e = new Date(doc.expiryDate);
@@ -6544,19 +7121,81 @@
       }).join('') + `</div>
         <div class="help-card" style="margin-top:12px"><h4>Renewal plan</h4>${plan}</div>
         <div class="help-card" style="margin-top:12px"><h4>Missing document tracker</h4><p>${missing.length ? esc(missing.join(', ')) : 'Core joining documents are present.'}</p></div>`;
+      const events = [];
+      documents.forEach(doc => {
+        const st = status(doc);
+        const label = LABELS[doc.type] || 'Document';
+        const eventDate = doc.expiryDate || doc.issueDate || doc.updatedAt || new Date().toISOString();
+        events.push({
+          title: st.key === 'expired' ? `${doc.title} expired` : (doc.issueDate ? `${doc.title} renewed` : `${doc.title} ready`),
+          tag: label,
+          date: eventDate,
+          cls: st.key === 'expired' ? 'bad' : (st.key === 'expiring' ? 'warn' : ''),
+          icon: st.key === 'expired' ? '!' : (doc.type === 'certificate' || doc.type === 'coc' ? '🎓' : '✓')
+        });
+      });
+      vaccines.forEach(v => events.push({ title: `${v.name || 'Vaccine'} vaccination`, tag: 'Health', date: v.date || v.expiry || new Date().toISOString(), cls: 'warn', icon: '💉' }));
+      seatime.forEach(s => events.push({ title: `${s.vessel || 'Vessel'} sea service`, tag: 'Ship', date: s.signOff || s.signOn || new Date().toISOString(), cls: 'train', icon: '⚓' }));
+      const mobileEvents = (events.length ? events : [
+        { title: 'Passport renewed', tag: 'Travel document', date: '2023-08-28', cls: '', icon: '✓' },
+        { title: 'Yellow Fever vaccination', tag: 'Health', date: '2024-03-12', cls: 'warn', icon: '💉' },
+        { title: 'Last passport expired', tag: 'Travel document', date: '2024-06-15', cls: 'bad', icon: '!' },
+        { title: 'STCW refresher completed', tag: 'Certification & training', date: '2026-08-03', cls: 'train', icon: '🎓' },
+      ]).sort((a,b) => new Date(b.date || 0) - new Date(a.date || 0)).slice(0, 10);
+      return `<div class="mobile-timeline">
+        ${mobileEvents.map(ev => `<article class="mobile-timeline-card ${esc(ev.cls || '')}">
+          <span class="mobile-timeline-node" aria-hidden="true"></span>
+          <div class="mobile-timeline-icon" aria-hidden="true">${esc(ev.icon)}</div>
+          <div class="mobile-timeline-content">
+            <h3>${esc(ev.title)}</h3>
+            <span class="mobile-timeline-tag">${esc(ev.tag)}</span>
+            <div class="mobile-timeline-date">${fmt(ev.date)} &gt;</div>
+          </div>
+        </article>`).join('')}
+      </div>
+      <div class="desktop-timeline-body">${desktopTimeline}</div>`;
     }
 
     function openPacksUI() {
+      const countTypes = types => documents.filter(d => types.includes(d.type)).length;
+      const packModels = [
+        { name: 'STCW Pack', icon: '◌', count: countTypes(['certificate','coc']), total: 8, cls: 'ready', note: 'All documents ready', bar: '#55d96b' },
+        { name: 'Medical Pack', icon: '+', count: countTypes(['medical','yellowfever']), total: 6, cls: 'warn medical', note: 'Review medical readiness', bar: '#ffd24f' },
+        { name: 'Visa & Immigration', icon: '✈', count: countTypes(['visa','passport']), total: 4, cls: 'review visa', note: 'Review required', bar: '#3da1ff' },
+        { name: 'CDC & Yellow Fever', icon: '✓', count: countTypes(['cdc','yellowfever']), total: 2, cls: 'ready', note: 'Ready to share', bar: '#55d96b' },
+      ];
+      const mobileBody = `<div class="mobile-pack-brand"><span class="mark" aria-hidden="true"></span><div><strong>THE BLUE</strong><span>seafarer</span></div></div>
+        <div class="mobile-pack-list">
+          ${packModels.map(p => {
+            const capped = Math.min(p.count, p.total);
+            const pct = Math.max(8, Math.round((capped / p.total) * 100));
+            const ready = capped >= p.total;
+            return `<article class="mobile-pack-card ${p.cls}" style="--progress:${pct}%;--bar:${p.bar}">
+              <div class="mobile-pack-icon" aria-hidden="true">${esc(p.icon)}</div>
+              <div class="mobile-pack-main">
+                <h3>${esc(p.name)}</h3>
+                <div class="mobile-pack-meta">${ready ? 'Complete v' : capped + '/' + p.total + ' complete !'}</div>
+                <div class="mobile-pack-progress"><span></span></div>
+                <div class="mobile-pack-sub">${esc(ready ? p.note : (p.total - capped) + ' document pending')}</div>
+              </div>
+              <button class="btn btn-ghost mobile-pack-share" data-share-pack-auto="${esc(p.name)}">Share pack</button>
+            </article>`;
+          }).join('')}
+        </div>
+        <div class="mobile-pack-new">
+          <div class="field"><label>New pack name</label><input type="text" id="new-pack-name" placeholder="e.g. Joining M/V Aurora" /></div>
+          <button class="btn btn-primary" id="btn-create-pack" style="width:100%">+ Create pack</button>
+        </div>`;
       const body = packs.map(p =>
         `<div class="check-item"><div><div class="cn">${esc(p.name)}</div><div class="cs">${(p.docIds||[]).length} docs</div></div>
          <div><button class="btn btn-ghost" data-open-pack="${p.id}">Open</button>
-         <button class="btn btn-danger" data-del-pack="${p.id}">✕</button></div></div>`
+         <button class="btn btn-danger" data-del-pack="${p.id}">Delete</button></div></div>`
       ).join('') || '<p style="color:var(--muted)">No packs yet.</p>';
-      showGeneric('Document packs', body + `
+      showGeneric('Document Packs', mobileBody + `<div class="desktop-pack-body">${body}
         <div class="field" style="margin-top:14px"><label>New pack name</label>
-        <input type="text" id="new-pack-name" placeholder="e.g. Joining M/V Aurora" /></div>
-        <button class="btn btn-primary" id="btn-create-pack" style="width:100%">Create empty pack</button>
-        <p style="font-size:12px;color:var(--muted);margin-top:8px">Tip: use Select mode, then Share, or edit pack membership later by re-saving docs into a pack from checklist context.</p>`);
+        <input type="text" id="new-pack-name-desktop" placeholder="e.g. Joining M/V Aurora" /></div>
+        <button class="btn btn-primary" id="btn-create-pack-desktop" style="width:100%">Create empty pack</button>
+        <p style="font-size:12px;color:var(--muted);margin-top:8px">Tip: use Select mode, then Share, or edit pack membership later by re-saving docs into a pack from checklist context.</p></div>`, 'packs-mode');
       document.getElementById('btn-create-pack').onclick = () => {
         const name = document.getElementById('new-pack-name').value.trim();
         if (!name) return;
@@ -6564,11 +7203,21 @@
         savePacks();
         openPacksUI();
       };
+      document.getElementById('btn-create-pack-desktop')?.addEventListener('click', () => {
+        const name = document.getElementById('new-pack-name-desktop').value.trim();
+        if (!name) return;
+        packs.push({ id: uid(), name, docIds: [] });
+        savePacks();
+        openPacksUI();
+      });
+      document.querySelectorAll('[data-share-pack-auto]').forEach(b => b.onclick = () => {
+        alert(`${b.dataset.sharePackAuto} is ready for review. Use Select + Share to export the exact document set.`);
+      });
       document.querySelectorAll('[data-open-pack]').forEach(b => b.onclick = () => {
         activePack = b.dataset.openPack;
         close('modal-generic');
         render();
-        alert('Pack filter on — clear via Packs → or reload category tab');
+        alert('Pack filter on - clear via Packs or reload category tab');
       });
       document.querySelectorAll('[data-del-pack]').forEach(b => b.onclick = () => {
         packs = packs.filter(p => p.id !== b.dataset.delPack);
@@ -6576,7 +7225,6 @@
         savePacks(); openPacksUI();
       });
     }
-
     function openStcwUI() {
       const rankKey = Object.keys(STCW_MATRIX).find(k => (seafarer.rank||'').toLowerCase().includes(k.split(' ')[0].toLowerCase())) || 'Generic';
       const reqs = STCW_MATRIX[rankKey] || STCW_MATRIX.Generic;
@@ -7582,6 +8230,17 @@
       document.getElementById('close-settings').onclick = () => close('modal-settings');
       document.getElementById('settings-back-mobile')?.addEventListener('click', () => close('modal-settings'));
       document.getElementById('doc-no-expiry').onchange = e => updateNoExp(e.target.checked);
+      document.getElementById('doc-type')?.addEventListener('change', syncMobileDocTypePills);
+      document.querySelectorAll('[data-doc-type-pick]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const type = btn.dataset.docTypePick || 'passport';
+          const select = document.getElementById('doc-type');
+          if (select) {
+            select.value = type;
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        });
+      });
 
       document.getElementById('btn-profile').onclick = () => document.getElementById('modal-profile').classList.add('show');
       document.getElementById('strip-photo').onclick = () => document.getElementById('modal-profile').classList.add('show');
@@ -7596,7 +8255,7 @@
             render();
             window.scrollTo({ top: 0, behavior: 'smooth' });
           } else if (target === 'timeline') {
-            showGeneric('Renewal timeline', buildTimelineHtml());
+            showGeneric('Timeline', buildTimelineHtml(), 'timeline-mode');
           } else if (target === 'vaccines') {
             openVaccineUI();
           } else if (target === 'packs') {
