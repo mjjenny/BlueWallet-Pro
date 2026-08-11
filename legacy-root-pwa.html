@@ -3997,6 +3997,200 @@
       }
     }
 
+    /* Mobile Vault refinement: categories stay in Vault, primary nav stays app-level. */
+    @media (max-width: 700px) {
+      .topbar {
+        position: relative;
+        min-height: calc(156px + env(safe-area-inset-top, 0px)) !important;
+      }
+      .top-actions {
+        position: absolute !important;
+        right: 132px !important;
+        bottom: 18px !important;
+        width: auto !important;
+        margin: 0 !important;
+        display: flex !important;
+        gap: 8px !important;
+      }
+      .top-actions > :not(#btn-mode) {
+        display: none !important;
+      }
+      .top-actions #btn-mode {
+        display: inline-flex !important;
+        width: auto !important;
+        min-width: 70px !important;
+        min-height: 34px !important;
+        padding: 0 14px !important;
+        border-radius: 999px !important;
+        font-size: 12px !important;
+        letter-spacing: .08em;
+        background: rgba(14, 29, 49, .72) !important;
+      }
+      .brand {
+        grid-template-columns: minmax(0, 1fr) auto !important;
+        align-items: end !important;
+      }
+      .brand > div:last-of-type {
+        min-width: 0;
+      }
+      .offline-pill-live {
+        min-width: 104px;
+        justify-content: center;
+      }
+      .main {
+        gap: 18px !important;
+        padding-bottom: calc(146px + env(safe-area-inset-bottom, 0px)) !important;
+      }
+      .profile-strip {
+        order: 0 !important;
+      }
+      .cats {
+        order: 1 !important;
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+        width: 100%;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        border: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+      }
+      .cat {
+        min-width: 0 !important;
+        min-height: 64px !important;
+        padding: 9px 8px !important;
+        display: grid !important;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 7px !important;
+        border-radius: 16px !important;
+        background: rgba(8, 24, 44, .72) !important;
+        border: 1px solid rgba(174,208,255,.16) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+      }
+      .cat.active {
+        border-color: rgba(83, 199, 255, .82) !important;
+        background: linear-gradient(135deg, rgba(38, 148, 216, .7), rgba(8, 31, 56, .82)) !important;
+        box-shadow: 0 0 22px rgba(54, 190, 255, .28), inset 0 1px 0 rgba(255,255,255,.18);
+      }
+      .cat-ico {
+        display: inline-grid !important;
+        width: 24px;
+        justify-items: center;
+        font-size: 18px !important;
+      }
+      .cat-name {
+        min-width: 0 !important;
+        max-width: 100% !important;
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        color: rgba(255,255,255,.9);
+        font-size: 11px !important;
+        line-height: 1.05 !important;
+        text-align: left !important;
+        justify-content: flex-start !important;
+        letter-spacing: 0 !important;
+      }
+      .cat-name::after {
+        content: none !important;
+      }
+      .cat-n {
+        display: grid !important;
+        margin-left: 0 !important;
+        min-width: 22px !important;
+        height: 22px !important;
+        font-size: 12px !important;
+      }
+      .section-head {
+        order: 2 !important;
+        display: block !important;
+        margin: 2px 0 -4px !important;
+      }
+      .section-head h3 {
+        font-size: 23px !important;
+      }
+      .docs,
+      .empty {
+        order: 3 !important;
+      }
+      .tools-row,
+      .bulk-bar {
+        display: none !important;
+      }
+      .fab {
+        display: grid !important;
+        right: 24px !important;
+        bottom: calc(116px + env(safe-area-inset-bottom, 0px)) !important;
+        z-index: 27 !important;
+      }
+      #modal-add .scan-sheet {
+        height: 100dvh !important;
+        min-height: 100dvh !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+      }
+      #modal-add .modal-head {
+        flex: 0 0 auto;
+        min-height: calc(106px + env(safe-area-inset-top, 0px)) !important;
+        padding-bottom: 8px !important;
+      }
+      #modal-add .modal-head h2 {
+        margin-top: 14px !important;
+        font-size: clamp(32px, 10vw, 40px) !important;
+      }
+      #modal-add .modal-head h2::after {
+        font-size: clamp(16px, 4.8vw, 19px) !important;
+      }
+      #modal-add .scan-form {
+        flex: 1 1 auto;
+        overflow-y: auto !important;
+        padding: 0 30px calc(112px + env(safe-area-inset-bottom, 0px)) !important;
+      }
+      #modal-add .drop {
+        min-height: 160px !important;
+      }
+      #modal-add .capture-actions {
+        grid-template-columns: 1fr !important;
+      }
+      #modal-add .row {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      #modal-add .actions {
+        position: sticky;
+        bottom: 0;
+        padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+        background: linear-gradient(180deg, transparent, rgba(2, 10, 21, .96) 32%);
+      }
+    }
+    @media (max-width: 380px) {
+      .cats {
+        gap: 8px !important;
+      }
+      .cat {
+        min-height: 58px !important;
+        padding: 8px 6px !important;
+      }
+      .cat-ico {
+        display: none !important;
+      }
+      .cat-name {
+        font-size: 10px !important;
+        text-align: center !important;
+        justify-content: center !important;
+      }
+      #modal-add .row {
+        grid-template-columns: 1fr !important;
+      }
+      #modal-add .scan-form {
+        padding-inline: 22px !important;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -4201,9 +4395,9 @@
   <nav class="mobile-bottom-nav" aria-label="Mobile primary navigation">
     <button type="button" class="active" data-mobile-nav="vault"><b>□</b><span>Vault</span></button>
     <button type="button" data-mobile-nav="timeline"><b>◷</b><span>Timeline</span></button>
-    <button type="button" data-mobile-nav="vaccines"><b>＋</b><span>Vaccines</span></button>
     <button type="button" data-mobile-nav="packs"><b>▱</b><span>Packs</span></button>
     <button type="button" data-mobile-nav="profile"><b>♙</b><span>Profile</span></button>
+    <button type="button" data-mobile-nav="settings"><b>&#9881;</b><span>Settings</span></button>
   </nav>
 
   <!-- ADD -->
@@ -4748,7 +4942,7 @@
   </div>
 
   <script>
-    const APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.22';
+    const APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.23';
     const DB_NAME = 'SeafarerWalletDB';
     let db;
     let useStorageFallback = false;
@@ -8262,6 +8456,8 @@
             openPacksUI();
           } else if (target === 'profile') {
             document.getElementById('modal-profile').classList.add('show');
+          } else if (target === 'settings') {
+            document.getElementById('modal-settings').classList.add('show');
           }
         };
       });
