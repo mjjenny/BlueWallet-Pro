@@ -11,6 +11,7 @@
             id: 1,
             title: 'LAST PASSPORT',
             type: 'Passport',
+            category: 'passport',
             number: 'L9886082',
             expiry: '2024-06-15',
             status: 'expired',
@@ -22,6 +23,7 @@
             id: 2,
             title: 'PASSPORT (ACTIVE)',
             type: 'Passport',
+            category: 'passport',
             number: 'Z7179776',
             expiry: '2033-08-28',
             status: 'valid',
@@ -33,6 +35,7 @@
             id: 3,
             title: 'CDC',
             type: 'CDC',
+            category: 'cdc',
             number: 'CDC-2024-8891',
             expiry: '2026-03-10',
             status: 'valid',
@@ -44,12 +47,61 @@
             id: 4,
             title: 'STCW BASIC TRAINING',
             type: 'Certificate',
+            category: 'certificates',
             number: 'STCW-BT-2023-445',
             expiry: '2028-01-20',
             status: 'valid',
             quality: 'Excellent',
             notes: 'All modules completed',
             versions: ['v1.0']
+        },
+        {
+            id: 5,
+            title: 'COC CHIEF OFFICER',
+            type: 'COC',
+            category: 'coc',
+            number: 'COC-IND-7719',
+            expiry: '2027-12-12',
+            status: 'valid',
+            quality: 'Good',
+            notes: 'Flag endorsement checked',
+            versions: ['v1.0']
+        },
+        {
+            id: 6,
+            title: 'USA C1-D VISA',
+            type: 'Visa',
+            category: 'visa',
+            number: '20231847850001',
+            expiry: '2028-07-02',
+            status: 'valid',
+            quality: 'Good',
+            notes: 'Ready for travel pack',
+            versions: ['v1.0']
+        },
+        {
+            id: 7,
+            title: 'MEDICAL FITNESS',
+            type: 'Certificate',
+            category: 'certificates',
+            number: 'MED-2026-041',
+            expiry: '2026-10-14',
+            status: 'expiring',
+            quality: 'Needs review',
+            notes: 'Renewal reminder should be surfaced',
+            versions: ['v1.0']
+        },
+        {
+            id: 8,
+            title: 'DANGEROUS CARGO ENDORSEMENT',
+            type: 'Certificate',
+            category: 'certificates',
+            number: 'Missing',
+            expiry: '',
+            status: 'missing',
+            quality: 'Not uploaded',
+            notes: 'Required for tanker joining pack',
+            versions: []
         }
     ];
 
@@ -98,6 +150,9 @@
     // State Management
     let currentScreen = 'vault';
     let selectedDocument = null;
+    let activeCategoryFilter = 'all';
+    let activeStatusFilter = 'all';
+    let activeAddStep = 0;
 
     // DOM Elements
     const screens = {
@@ -116,6 +171,10 @@
     const documentCards = document.querySelectorAll('.document-card');
     const saveDocumentBtn = document.getElementById('save-document-btn');
     const cancelAddBtn = document.getElementById('cancel-add-btn');
+    const searchInput = document.getElementById('vault-search');
+    const clearSearchBtn = document.getElementById('clear-search');
+    const resetFiltersBtn = document.getElementById('reset-filters');
+    const toast = document.getElementById('prototype-toast');
 
     // Initialize
     function init() {
@@ -157,7 +216,7 @@
 
         if (saveDocumentBtn) {
             saveDocumentBtn.addEventListener('click', () => {
-                alert('Prototype: Document would be saved here. No real data is stored.');
+                showFeedback('Prototype only: document would be saved here.');
                 navigateTo('vault');
             });
         }
@@ -165,6 +224,67 @@
 
     // Event Listeners
     function setupEventListeners() {
+        if (searchInput) {
+            searchInput.addEventListener('input', () => {
+                if (clearSearchBtn) clearSearchBtn.hidden = searchInput.value.length === 0;
+                renderVault();
+            });
+        }
+
+        if (clearSearchBtn) {
+            clearSearchBtn.addEventListener('click', clearSearch);
+        }
+
+        if (resetFiltersBtn) {
+            resetFiltersBtn.addEventListener('click', resetVaultFilters);
+        }
+
+        document.querySelectorAll('[data-filter]').forEach(chip => {
+            chip.addEventListener('click', () => {
+                const filterType = chip.dataset.filter;
+                const filterValue = chip.dataset.value || 'all';
+                if (filterType === 'category') activeCategoryFilter = filterValue;
+                if (filterType === 'status') activeStatusFilter = filterValue;
+                document.querySelectorAll(`[data-filter="${filterType}"]`).forEach(peer => {
+                    peer.classList.toggle('active', peer === chip);
+                });
+                renderVault();
+            });
+        });
+
+        document.querySelectorAll('[data-action-feedback]').forEach(button => {
+            button.addEventListener('click', () => {
+                showFeedback(button.dataset.actionFeedback);
+            });
+        });
+
+        document.querySelectorAll('[data-pack-toggle]').forEach(button => {
+            button.addEventListener('click', () => {
+                const card = button.closest('.pack-card');
+                if (card) card.classList.toggle('expanded');
+            });
+        });
+
+        const addForm = document.querySelector('.add-form');
+        if (addForm) {
+            addForm.addEventListener('submit', event => event.preventDefault());
+        }
+
+        document.addEventListener('click', event => {
+            const choice = event.target.closest('.choice-card');
+            if (choice) {
+                document.querySelectorAll('.choice-card').forEach(card => card.classList.remove('selected'));
+                choice.classList.add('selected');
+            }
+
+            const packAction = event.target.closest('.pack-action-btn');
+            if (packAction) {
+                showFeedback(`${packAction.textContent.trim()} is prototype-only in this concept.`);
+            }
+        });
+
+        setupAddFlow();
+
         documentCards.forEach(card => {
             card.addEventListener('click', () => {
                 const docId = parseInt(card.dataset.docId);
@@ -214,10 +334,44 @@
     // Render Vault Screen
     function renderVault() {
         const cardsContainer = document.querySelector('.document-cards');
+        const emptyState = document.getElementById('empty-state');
         if (!cardsContainer) return;
 
-        cardsContainer.innerHTML = mockDocuments.map(doc => `
-            <div class="document-card ${doc.status}" data-doc-id="${doc.id}" tabindex="0" role="button" aria-label="View ${doc.title}">
+        const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+        const filteredDocuments = mockDocuments.filter(doc => {
+            const searchText = [
+                doc.title,
+                doc.type,
+                doc.category,
+                doc.number,
+                doc.status,
+                doc.notes
+            ].join(' ').toLowerCase();
+            const categoryMatch = activeCategoryFilter === 'all' || doc.category === activeCategoryFilter;
+            const statusMatch = activeStatusFilter === 'all' || doc.status === activeStatusFilter;
+            const queryMatch = !query || searchText.includes(query);
+            return categoryMatch && statusMatch && queryMatch;
+        });
+
+        if (emptyState) {
+            emptyState.hidden = filteredDocuments.length > 0;
+        }
+
+        cardsContainer.innerHTML = filteredDocuments.map(doc => {
+            const isExpired = doc.status === 'expired';
+            const isExpiring = doc.status === 'expiring';
+            const isMissing = doc.status === 'missing';
+            const statusText = getStatusLabel(doc.status);
+            const expiryText = doc.expiry ? formatDate(doc.expiry) : 'No file uploaded';
+            const footerText = isExpired
+                ? 'Joining risk: expired'
+                : isExpiring
+                    ? 'Renewal needed soon'
+                    : isMissing
+                        ? 'Missing from joining pack'
+                        : 'Ready for use';
+            return `
+            <div class="document-card ${doc.status}" data-doc-id="${doc.id}" data-category="${doc.category}" data-status="${doc.status}" tabindex="0" role="button" aria-label="View ${doc.title}">
                 <div class="card-status-bar"></div>
                 <div class="card-content">
                     <div class="card-header">
@@ -225,11 +379,9 @@
                             <h3 class="card-title">${doc.title}</h3>
                             <div class="card-status-badge ${doc.status}">
                                 <svg class="status-icon" viewBox="0 0 24 24" fill="currentColor">
-                                    ${doc.status === 'expired' 
-                                        ? '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>'
-                                        : '<path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>'}
+                                    ${getStatusIcon(doc.status)}
                                 </svg>
-                                <span>${doc.status.toUpperCase()}</span>
+                                <span>${statusText}</span>
                             </div>
                         </div>
                         <p class="card-document-number">${doc.type} No. ${doc.number}</p>
@@ -240,25 +392,25 @@
                                 <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
                             </svg>
                             <span class="detail-label">Expiry:</span>
-                            <span class="detail-value ${doc.status === 'expired' ? 'expired-text' : 'valid-text'}">${formatDate(doc.expiry)}</span>
+                            <span class="detail-value ${getStatusTextClass(doc.status)}">${expiryText}</span>
                         </div>
-                        ${doc.status === 'expired' 
-                            ? `<div class="card-risk-warning">
+                        ${isExpired || isExpiring || isMissing
+                            ? `<div class="card-risk-warning ${doc.status}">
                                 <svg class="warning-icon" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
                                 </svg>
-                                <span>Joining risk: expired</span>
+                                <span>${footerText}</span>
                             </div>`
                             : `<div class="card-ready-indicator">
                                 <svg class="check-icon" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                                 </svg>
-                                <span>Ready for use</span>
+                                <span>${footerText}</span>
                             </div>`}
                     </div>
                 </div>
             </div>
-        `).join('');
+        `}).join('');
 
         // Re-attach click listeners to new cards
         document.querySelectorAll('.document-card').forEach(card => {
@@ -290,26 +442,120 @@
             detailStatus.className = `card-status-badge ${doc.status}`;
             detailStatus.innerHTML = `
                 <svg class="status-icon" viewBox="0 0 24 24" fill="currentColor">
-                    ${doc.status === 'expired' 
-                        ? '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>'
-                        : '<path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>'}
+                    ${getStatusIcon(doc.status)}
                 </svg>
-                <span>${doc.status.toUpperCase()}</span>
+                <span>${getStatusLabel(doc.status)}</span>
             `;
         }
-        if (detailExpiry) detailExpiry.textContent = formatDate(doc.expiry);
+        if (detailExpiry) detailExpiry.textContent = doc.expiry ? formatDate(doc.expiry) : 'No expiry recorded';
         if (detailQuality) detailQuality.textContent = doc.quality;
         if (detailNotes) detailNotes.textContent = doc.notes || 'No notes';
         if (detailVersions) {
             detailVersions.innerHTML = doc.versions.map(v => 
                 `<span class="version-tag">${v}</span>`
-            ).join('');
+            ).join('') || '<span class="version-tag">No versions</span>';
         }
         if (previewPlaceholder) {
             previewPlaceholder.className = `preview-placeholder ${doc.status}`;
         }
 
         navigateTo('detail');
+    }
+
+    function clearSearch() {
+        if (!searchInput) return;
+        searchInput.value = '';
+        if (clearSearchBtn) clearSearchBtn.hidden = true;
+        renderVault();
+        searchInput.focus();
+    }
+
+    function resetVaultFilters() {
+        activeCategoryFilter = 'all';
+        activeStatusFilter = 'all';
+        if (searchInput) searchInput.value = '';
+        if (clearSearchBtn) clearSearchBtn.hidden = true;
+        document.querySelectorAll('[data-filter]').forEach(chip => {
+            chip.classList.toggle('active', chip.dataset.value === 'all');
+        });
+        renderVault();
+    }
+
+    function setupAddFlow() {
+        const steps = Array.from(document.querySelectorAll('.add-step'));
+        const progress = Array.from(document.querySelectorAll('.add-progress-step'));
+        const backStepBtn = document.getElementById('add-step-back');
+        const nextStepBtn = document.getElementById('add-step-next');
+        const cancelBtn = document.getElementById('cancel-add-btn');
+        const saveBtn = document.getElementById('save-document-btn');
+
+        if (!steps.length) return;
+
+        function renderStep() {
+            steps.forEach((step, index) => {
+                step.classList.toggle('active', index === activeAddStep);
+            });
+            progress.forEach((step, index) => {
+                step.classList.toggle('active', index <= activeAddStep);
+            });
+            if (backStepBtn) backStepBtn.disabled = activeAddStep === 0;
+            if (nextStepBtn) nextStepBtn.hidden = activeAddStep === steps.length - 1;
+            if (saveBtn) saveBtn.hidden = activeAddStep !== steps.length - 1;
+        }
+
+        if (backStepBtn) {
+            backStepBtn.addEventListener('click', () => {
+                activeAddStep = Math.max(0, activeAddStep - 1);
+                renderStep();
+            });
+        }
+        if (nextStepBtn) {
+            nextStepBtn.addEventListener('click', () => {
+                activeAddStep = Math.min(steps.length - 1, activeAddStep + 1);
+                renderStep();
+            });
+        }
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => {
+                activeAddStep = 0;
+                renderStep();
+            });
+        }
+
+        renderStep();
+    }
+
+    function showFeedback(message) {
+        if (!toast) return;
+        toast.textContent = message;
+        toast.hidden = false;
+        window.clearTimeout(showFeedback.timeoutId);
+        showFeedback.timeoutId = window.setTimeout(() => {
+            toast.hidden = true;
+        }, 2200);
+    }
+
+    function getStatusLabel(status) {
+        const labels = {
+            expired: 'EXPIRED',
+            expiring: 'EXPIRING',
+            valid: 'VALID',
+            missing: 'MISSING'
+        };
+        return labels[status] || status.toUpperCase();
+    }
+
+    function getStatusTextClass(status) {
+        if (status === 'expired' || status === 'missing') return 'expired-text';
+        if (status === 'expiring') return 'expiring-text';
+        return 'valid-text';
+    }
+
+    function getStatusIcon(status) {
+        if (status === 'expired' || status === 'expiring' || status === 'missing') {
+            return '<path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>';
+        }
+        return '<path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>';
     }
 
     // Render Timeline
@@ -386,6 +632,7 @@
                             `).join('')}
                         </div>
                     </div>
+                    <button class="pack-action-btn" type="button">Review Pack</button>
                 </div>
             `;
         }).join('');
@@ -407,7 +654,8 @@
         
         if (themeSelector) {
             themeSelector.addEventListener('change', (e) => {
-                alert(`Prototype: Theme would change to "${e.target.value}". No real change applied.`);
+                document.documentElement.dataset.prototypeTheme = e.target.value;
+                showFeedback(`Prototype theme preview: ${e.target.value}`);
             });
         }
     }

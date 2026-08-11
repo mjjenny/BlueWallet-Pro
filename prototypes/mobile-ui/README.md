@@ -16,8 +16,9 @@ This prototype demonstrates a **premium mobile-first UI/UX redesign** for BlueWa
 
 | File | Purpose |
 |------|---------|
-| `preview.html` | Complete mobile UI prototype screen |
+| `preview.html` | Complete clickable mobile UI prototype shell |
 | `mobile-redesign-overrides.css` | All styling for the prototype |
+| `app.js` | Prototype-only navigation, filtering, wizard, and feedback logic |
 | `README.md` | This documentation file |
 
 ## Key Features Demonstrated
@@ -35,7 +36,11 @@ This prototype demonstrates a **premium mobile-first UI/UX redesign** for BlueWa
   - Expiring soon count
   - Expired count
 
-### 3. Category Filters
+### 3. Search and Filters
+- Search by title, document number, category, status, and notes
+- Category chips
+- Status chips
+- Empty state with reset action
 - Secondary horizontal scroll chips
 - NOT part of bottom navigation
 - Includes: All, Passport, CDC, COC, Visa, Certificates
@@ -60,6 +65,21 @@ Five main app sections (NOT document categories):
 - Packs
 - Profile
 
+### 7. Prototype UX States
+- Expired, expiring soon, valid/ready, and missing document states
+- Sync healthy and sync attention examples
+- Offline mode and update available examples
+- OCR fallback/manual-entry guidance
+- iOS print/share guidance
+
+### 8. Add Document Wizard
+- Four visible prototype steps:
+  1. Category
+  2. Details
+  3. Scan or upload
+  4. Review
+- Next, Back, Cancel, and Save controls are wired for prototype navigation
+
 ## Color Palette
 
 | Color | Usage | Hex |
@@ -77,6 +97,7 @@ Five main app sections (NOT document categories):
 - **Desktop (> 450px)**: Centered phone mockup with shadow
 - **Safe areas**: Respects iOS safe-area-inset
 - **Touch targets**: Minimum 44x44px
+- **Overflow**: Designed for 390px and 320px mobile review with no horizontal page scroll
 
 ## How to Preview
 
@@ -107,7 +128,7 @@ This is a **visual prototype only** for design review.
 
 ## Branch Information
 
-- **Branch**: `feature/mobile-ui-redesign-prototype`
+- **Branch**: `feature/mobile-ui-redesign-prototype-clean`
 - **Stable App**: UNTOUCHED
 - **Status**: Planning/Prototype only
 
@@ -130,8 +151,11 @@ This is a **visual prototype only** for design review.
 - [ ] Back behavior works consistently
 
 ### Interactions
-- [ ] Theme selector changes visual theme (prototype alert)
-- [ ] Search/filter changes visible cards (if implemented)
+- [ ] Theme selector changes visual theme in the prototype
+- [ ] Search/filter changes visible cards
+- [ ] Empty state appears when no cards match
+- [ ] Add wizard moves through all 4 steps
+- [ ] Detail action buttons show prototype feedback
 - [ ] Document cards are readable at 390px
 - [ ] Touch targets are at least 44px
 
