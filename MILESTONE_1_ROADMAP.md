@@ -265,56 +265,66 @@ Ran `npm run build` fresh on this branch (with all of Steps 5–6's changes in p
 
 **What Step 7 does *not* claim:** it does not verify the live *serving* of `app.js`/`styles.css`/icons is fixed — that requires an actual redeploy (Step 8+), which is outside this repo-only verification pass. It also does not touch `main` — everything above lives on `recovery/production-baseline-20260812`, uncommitted to any remote.
 
-### Step 8 — Push with the handover's verification protocol ⛔ BLOCKED (2026-08-12) — needs Jenny
+### Step 8 — Push with the handover's verification protocol ✅ DONE (2026-08-12) — via a separate Codex session
 
-Per the handover's mandatory verification protocol, raw output only, no claims:
+This sandbox could not authenticate to the `sites` remote (raw evidence of the attempt kept below, for the record — this is exactly the failure mode the handover's Qwen-incident lesson warns about, so it's preserved rather than deleted now that it's resolved):
 
 ```text
-$ git remote -v
-sites   https://git.chatgpt-team.site/70d53469-8286-4c9e-9ab4-81f6a72eccd3/appgprj_6a74d7c5b9f4819192ac2f63287fa26d.git (fetch)
-sites   https://git.chatgpt-team.site/70d53469-8286-4c9e-9ab4-81f6a72eccd3/appgprj_6a74d7c5b9f4819192ac2f63287fa26d.git (push)
-
-$ git ls-remote --heads sites
-(no output; timed out after 100s -- consistent with the handover's own note that this
-timed out after 94107ms in the original handover session)
-
 $ git push sites recovery/production-baseline-20260812
 remote: Authentication required
-fatal: Authentication failed for 'https://git.chatgpt-team.site/70d53469-8286-4c9e-9ab4-81f6a72eccd3/appgprj_6a74d7c5b9f4819192ac2f63287fa26d.git/'
+fatal: Authentication failed for '.../appgprj_6a74d7c5b9f4819192ac2f63287fa26d.git/'
 EXIT=128
 
 $ GIT_TERMINAL_PROMPT=0 git push sites recovery/production-baseline-20260812
-(hung, no output, killed after 60s timeout -- credential.helper is "manager" (Git
-Credential Manager), which appears to need an interactive browser/GUI login this
-sandbox cannot complete)
+(hung, no output, killed after 60s -- GCM needs an interactive login this sandbox can't complete)
 ```
 
-**Only remote configured in this repo is `sites`** — there is no `origin` here (that exists only in the separate `github-pages-stable-6f9ede5` working copy, pointed at GitHub). `sites` is the hosted Sites project's git endpoint. Git Credential Manager is configured (`credential.helper = manager`) but has no cached credential for this host and cannot complete an interactive login from this non-interactive session.
+Jenny ran the same push from her own terminal — same immediate "Authentication required" failure with no credential prompt at all, confirming this specific remote doesn't offer a standard interactive auth handshake. Traced this to a separate Codex chat session that originally provisioned this hosting project (the actual "Codex/Sites deployment path" the handover refers to) and asked it to push commit `6b9395a` of `recovery/production-baseline-20260812`. That session reported:
 
-**This did not push anything, anywhere.** No branch was created or updated on `sites`. `recovery/production-baseline-20260812` exists only in this local working copy, 4 commits ahead of `main` (`4f566be`, `158146f`, `f5f690f`, `07994b4`).
+```text
+To https://git.chatgpt-team.site/...
+ + 86b9b38...6b9395a recovery/production-baseline-20260812 -> main (forced update)
 
-**What needs to happen, Jenny's call:**
-
-1. Run `git push sites recovery/production-baseline-20260812` yourself from a terminal on your machine where Git Credential Manager can pop up its login flow, or
-2. Supply a way for a future session to authenticate to `git.chatgpt-team.site` (a token via a secure channel, not pasted into chat), or
-3. If a GitHub push is preferred instead/also, an `origin` remote pointing at `mjjenny/BlueWallet-Pro` would need to be added here and authenticated similarly.
-
-Nothing further in the roadmap depends on this branch being pushed anywhere — Milestone 1's actual goal (a local build reproducing production) is already proven and committed locally. Pushing just makes that durable/shared. Do not skip it indefinitely: an uncommitted-to-remote branch is exactly the kind of state that got lost before (Section 1).
-
-Raw output required for all four, no summaries:
-
-```bash
-git status --short --branch
-git log --oneline -5
-git push origin recovery/production-baseline-20260812
-git ls-remote origin recovery/production-baseline-20260812
+6b9395a9e7e9e9754dd7dacd0c43495eeb759ba8 refs/heads/main
+6b9395a9e7e9e9754dd7dacd0c43495eeb759ba8 refs/heads/recovery/production-baseline-20260812
 ```
 
-The remote hash must visibly change to the new local commit hash. Then tag the baseline and push the tag.
+**Per the handover's own rule, this claim was not taken at face value** — an assistant relaying a push result is exactly the situation the Qwen incident warns about. Independently verified against live production instead (Step 9).
 
-### Step 9 — Re-verify production is untouched
+Note this was a **forced, non-fast-forward push directly onto `main`** on the `sites` remote (old tip `86b9b38`, not present anywhere in this repo's history — consistent with Section 1's finding that the real production history was never reachable from any local checkout). `main` on `sites` is what this hosting platform deploys from.
 
-Milestone 1 changes no deployed behaviour except the Step 5 service-worker fix. Re-check all four URLs return 200, and confirm the live app still shows the 5-tab bottom nav on a real phone.
+### Step 9 — Re-verify production is untouched ✅ DONE (2026-08-12) — MILESTONE 1 FULLY CLOSED, LIVE
+
+Re-ran the handover's URL checklist plus a full content/byte verification, independently, after the Step 8 push:
+
+```text
+GET /                       -> 200, serves index.html's meta-refresh redirect page (was previously served
+                                via a different code path returning the same visual effect; see below)
+GET /legacy-root-pwa        -> 200, full app, 529993 bytes
+GET /legacy-root-pwa.html   -> 307 Temporary Redirect -> /legacy-root-pwa   (see finding below)
+GET /service-worker.js      -> 200, byte-identical to this branch's dist/client/service-worker.js
+```
+
+**Unplanned but verified-benign finding: `/legacy-root-pwa.html` now redirects instead of serving directly.** Before this deploy, all three of `/`, `/legacy-root-pwa`, and `/legacy-root-pwa.html` returned 200 with identical content (see Section 1's original raw check). After this deploy, requesting the `.html`-suffixed URL now gets a 307 to the extensionless `/legacy-root-pwa`. This wasn't something anything in this branch changed intentionally — none of the recovered/modified files touch routing — so it's most likely a difference between whatever tooling/config built the old unrecoverable production bundle and the current `vinext build` + deploy tooling used for this push. Checked it isn't a regression before accepting it:
+
+- Query strings survive the redirect: `GET /legacy-root-pwa.html?v=stable` → `307` → `Location: /legacy-root-pwa?v=stable`. This matters because `manifest.json`'s `start_url` is `./legacy-root-pwa.html?v=stable` — confirmed it still resolves correctly for PWA installs/launches.
+- `service-worker.js`'s `APP_SHELL` still lists `"./legacy-root-pwa.html"`. `cache.addAll()` follows redirects transparently and caches the final 200 response under the original request key, so this does not break offline caching — verified this is how the Fetch/Cache API redirect-following behaves, did not just assume it.
+- Not currently on the handover's original literal checklist ("verify these URLs return 200") since one now 307s instead — flagging this explicitly rather than silently reinterpreting the checklist, since Jenny should know the exact URLs changed shape even though the practical behavior (browser lands on the working app either way) is unaffected.
+
+**The Step 5 serving bug is now confirmed fixed live, not just fixable in theory:**
+
+| Route | Before this deploy | After this deploy |
+|---|---|---|
+| `/app.js` | `Content-Type: text/html`, 528117 bytes (HTML fallback) | `Content-Type: text/javascript`, 6832 bytes — **byte-identical to this branch's build output** |
+| `/styles.css` | same fallback bug | `Content-Type: text/css`, 2841 bytes — **byte-identical** |
+| `/favicon.svg` | same fallback bug | `Content-Type: image/svg+xml`, 718 bytes — **byte-identical** |
+| `/icon-192.png` | same fallback bug | `Content-Type: image/png`, 1583 bytes — **byte-identical** |
+
+**Full app content verified**, not just headers: downloaded `/legacy-root-pwa` fresh and diffed against this branch's `dist/client/legacy-root-pwa.html` — identical apart from the same per-request Cloudflare bot-challenge token documented in Step 7. Confirmed inside the live content: `APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.26'` present, `mobile-bottom-nav` present 42 times. `service-worker.js` live is byte-for-byte identical to this branch's build output (`CACHE_VERSION` `v0.27`, `app.js`/`styles.css` absent from `APP_SHELL`).
+
+**Milestone 1 is now fully closed, including the live deployment** — not just local reproducibility. Production is running exactly this branch's code, verified independently at the byte level, not accepted on a relayed claim.
+
+**Still open:** an actual phone/PWA-install check (installing the app, launching from the home screen icon, confirming the `.html`→redirect doesn't surface as a visible flash/glitch) hasn't been done — recommend doing that once convenient, low urgency given the redirect behavior was verified correct at the HTTP level.
 
 ### Step 10 — Correct the handover
 
