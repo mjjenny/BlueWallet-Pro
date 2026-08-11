@@ -1360,6 +1360,440 @@
     .version-chip { font-size:11px; color:var(--muted); text-align:center; margin-top:8px; }
     @media (max-width:420px) { .capture-actions { grid-template-columns:1fr; } }
 
+    /* Prototype visual shell integration: presentation-only skin for the working stable app. */
+    :root {
+      --ocean-black: #05080c;
+      --ocean-navy: #0a111a;
+      --ocean-deep: #0f1c2e;
+      --ocean-surface: rgba(26, 45, 63, 0.78);
+      --premium-glass: rgba(15, 28, 46, 0.68);
+      --premium-glass-soft: rgba(10, 19, 32, 0.56);
+      --premium-line: rgba(255, 255, 255, 0.12);
+      --premium-line-strong: rgba(94, 212, 255, 0.28);
+      --danger-red: #ff453a;
+      --warning-orange: #ffb23f;
+      --success-green: #30d158;
+      --electric-blue: #00d4ff;
+    }
+    body {
+      background:
+        radial-gradient(ellipse 70% 42% at 48% -10%, rgba(0, 150, 255, 0.12), transparent 62%),
+        radial-gradient(ellipse 62% 36% at 85% 24%, rgba(94, 212, 255, 0.07), transparent 58%),
+        linear-gradient(145deg, var(--ocean-black) 0%, var(--ocean-navy) 46%, var(--ocean-deep) 100%);
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.42;
+      background-image:
+        linear-gradient(170deg, transparent 0 42%, rgba(94, 212, 255, 0.08) 43%, transparent 47% 100%),
+        repeating-linear-gradient(172deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 44px);
+      transform: translateZ(0);
+    }
+    .topbar {
+      min-height: 78px;
+      background: linear-gradient(180deg, rgba(5, 8, 12, 0.92), rgba(5, 8, 12, 0.68));
+      border-bottom: 1px solid var(--premium-line);
+      box-shadow: 0 18px 48px rgba(0,0,0,.28);
+    }
+    .brand h1 {
+      font-size: clamp(18px, 2.3vw, 26px);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .brand p {
+      color: rgba(255,255,255,.66);
+      letter-spacing: .04em;
+      text-transform: none;
+    }
+    .offline-pill-live {
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(7, 19, 33, .66);
+      color: rgba(255,255,255,.78);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .12em;
+      white-space: nowrap;
+    }
+    .brand-mark {
+      background:
+        radial-gradient(circle at 38% 28%, rgba(255,255,255,.62), transparent 18%),
+        linear-gradient(145deg, #66dcff, #067bd8);
+      box-shadow: 0 12px 34px rgba(0, 212, 255, .32), 0 0 44px rgba(0, 122, 255, .18);
+    }
+    .profile-strip,
+    .modal,
+    .sblock,
+    .doc,
+    .empty,
+    .bulk-bar,
+    .tl-month,
+    .help-card,
+    .check-item,
+    .sea-row,
+    .vac-row {
+      background: var(--premium-glass);
+      border-color: var(--premium-line);
+      box-shadow:
+        0 18px 56px rgba(0,0,0,.34),
+        inset 0 1px 0 rgba(255,255,255,.12);
+    }
+    .profile-strip {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      min-height: 170px;
+      padding: clamp(18px, 3.2vw, 34px);
+      border-radius: 24px;
+      background:
+        linear-gradient(135deg, rgba(12, 26, 44, .82), rgba(6, 37, 34, .66)),
+        var(--premium-glass);
+    }
+    .profile-photo {
+      width: clamp(82px, 9vw, 116px);
+      height: clamp(82px, 9vw, 116px);
+      box-shadow: 0 0 0 7px rgba(94,212,255,.12), 0 0 36px rgba(94,212,255,.18);
+    }
+    .profile-meta h2 {
+      font-size: clamp(24px, 3.4vw, 36px);
+      letter-spacing: .01em;
+      text-transform: uppercase;
+    }
+    .profile-meta .rank-line {
+      color: rgba(255,255,255,.7);
+      font-size: clamp(14px, 1.8vw, 18px);
+      font-weight: 500;
+      margin-top: 4px;
+    }
+    .stat-pills {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      width: min(100%, 560px);
+      gap: 0;
+      margin-top: 18px;
+      overflow: hidden;
+      border: 1px solid var(--premium-line);
+      border-radius: 20px;
+      background: rgba(10, 22, 38, .76);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+    }
+    .stat-pills .pill {
+      min-height: 76px;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 5px;
+      font-size: 11px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .stat-pills .pill + .pill { border-left: 1px solid var(--premium-line); }
+    .stat-pills .pill b {
+      display: block;
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: .95;
+      letter-spacing: 0;
+    }
+    .cats {
+      gap: clamp(7px, 1vw, 12px);
+      padding: 6px 0 10px;
+    }
+    .cat,
+    .tool-btn,
+    .tool-select,
+    .search-box,
+    .mode-toggle,
+    .btn-ghost {
+      background: rgba(7, 19, 33, .72);
+      border-color: rgba(94, 212, 255, .16);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+    }
+    .cat {
+      min-height: 58px;
+      border-radius: 16px;
+    }
+    .cat.active {
+      background: rgba(94, 212, 255, .2);
+      border-color: rgba(94, 212, 255, .62);
+      box-shadow: 0 0 0 3px rgba(94,212,255,.12), 0 12px 28px rgba(0,0,0,.22);
+    }
+    .tools-row {
+      padding: 8px 0;
+      border-radius: 24px;
+    }
+    .search-box {
+      min-height: 58px;
+      border-radius: 18px;
+      padding-inline: 18px;
+    }
+    .tool-btn,
+    .tool-select {
+      min-height: 56px;
+      border-radius: 16px;
+    }
+    .docs {
+      gap: 16px;
+    }
+    .doc {
+      border-radius: 22px;
+      padding: 24px 24px 20px;
+      background:
+        linear-gradient(135deg, rgba(16, 34, 58, .82), rgba(6, 26, 40, .68)),
+        var(--premium-glass);
+    }
+    .doc::before {
+      width: 7px;
+      background: var(--electric-blue);
+    }
+    .doc.s-expired::before { background: var(--danger-red); }
+    .doc.s-expiring::before { background: var(--warning-orange); }
+    .doc.s-valid::before { background: var(--success-green); }
+    .doc.s-none::before { background: #8b7cf6; }
+    .doc-ico {
+      width: 66px;
+      height: 66px;
+      border-radius: 16px;
+      background: linear-gradient(145deg, rgba(255,255,255,.14), rgba(0,0,0,.32));
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: 0 14px 30px rgba(0,0,0,.26);
+    }
+    .doc-title {
+      font-size: clamp(18px, 2.2vw, 24px);
+      letter-spacing: .02em;
+    }
+    .doc-sub {
+      font-size: clamp(15px, 1.8vw, 18px);
+      color: rgba(255,255,255,.74);
+    }
+    .badge {
+      min-height: 34px;
+      padding: 7px 14px;
+      font-size: 14px;
+      letter-spacing: .03em;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
+    }
+    .b-bad {
+      background: rgba(255,69,58,.24);
+      color: #ff7b75;
+      border-color: rgba(255,69,58,.55);
+    }
+    .b-warn {
+      background: rgba(255,178,63,.2);
+      color: #ffd166;
+      border-color: rgba(255,178,63,.5);
+    }
+    .b-ok {
+      background: rgba(48,209,88,.2);
+      color: #72e58f;
+      border-color: rgba(48,209,88,.48);
+    }
+    .doc-row2 {
+      font-size: 15px;
+      border-top-color: rgba(255,255,255,.1);
+    }
+    .doc-row2 strong { font-weight: 750; }
+    .modal {
+      background: rgba(6, 17, 30, .9);
+      border-radius: 28px;
+    }
+    .modal-head {
+      min-height: 72px;
+      background: rgba(5, 14, 25, .92);
+    }
+    .modal.wide { max-width: min(1180px, calc(100vw - 36px)); }
+    .view-body {
+      background: rgba(2, 11, 22, .72);
+      max-height: 62dvh;
+    }
+    .view-split {
+      grid-template-columns: minmax(0, 7fr) minmax(260px, 3fr);
+      gap: 18px;
+    }
+    .view-details {
+      padding: 12px 2px;
+      font-size: 15px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #63d8ff, #188dd6);
+      box-shadow: 0 16px 36px rgba(0, 122, 255, .32), 0 0 34px rgba(0, 212, 255, .18);
+    }
+    .fab {
+      width: 70px;
+      height: 70px;
+      background: linear-gradient(145deg, #69dfff, #087cf0);
+      color: white;
+      box-shadow: 0 18px 44px rgba(0,122,255,.46), 0 0 0 1px rgba(255,255,255,.24) inset;
+    }
+    .mobile-bottom-nav {
+      display: none;
+      position: fixed;
+      left: max(12px, env(safe-area-inset-left, 0px));
+      right: max(12px, env(safe-area-inset-right, 0px));
+      bottom: max(10px, env(safe-area-inset-bottom, 0px));
+      z-index: 26;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 4px;
+      min-height: 72px;
+      padding: 8px 10px;
+      border: 1px solid var(--premium-line);
+      border-radius: 22px;
+      background: rgba(6, 14, 26, .88);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      box-shadow: 0 20px 48px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.12);
+    }
+    .mobile-bottom-nav button {
+      min-width: 0;
+      min-height: 56px;
+      border: 0;
+      border-radius: 16px;
+      background: transparent;
+      color: rgba(255,255,255,.68);
+      font-size: 11px;
+      font-weight: 700;
+      display: grid;
+      justify-items: center;
+      align-content: center;
+      gap: 4px;
+    }
+    .mobile-bottom-nav button.active {
+      color: #63d8ff;
+      background: rgba(94, 212, 255, .12);
+    }
+    .mobile-bottom-nav b {
+      font-size: 22px;
+      line-height: 1;
+      font-weight: 500;
+    }
+    @media (max-width: 700px) {
+      .topbar {
+        display: grid;
+        grid-template-columns: 1fr;
+        min-height: calc(84px + env(safe-area-inset-top, 0px));
+        align-items: start;
+        gap: 10px;
+      }
+      .brand {
+        width: 100%;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+      }
+      .brand h1 {
+        font-size: 18px;
+        letter-spacing: .05em;
+      }
+      .brand p {
+        font-size: 11px;
+      }
+      .offline-pill-live {
+        min-height: 34px;
+        padding-inline: 12px;
+        font-size: 10px;
+      }
+      .top-actions {
+        width: 100%;
+        justify-content: flex-end;
+      }
+      .top-actions .btn-ghost,
+      .top-actions .mode-toggle,
+      #btn-help {
+        width: 42px;
+        min-width: 42px;
+        height: 42px;
+      }
+      .main {
+        padding-bottom: calc(164px + env(safe-area-inset-bottom, 0px));
+      }
+      .profile-strip {
+        grid-template-columns: 1fr;
+        justify-items: start;
+        gap: 16px;
+        min-height: 0;
+      }
+      .profile-photo {
+        width: 76px;
+        height: 76px;
+      }
+      .stat-pills {
+        width: 100%;
+        margin-top: 16px;
+      }
+      .stat-pills .pill {
+        min-height: 66px;
+        padding-inline: 4px;
+      }
+      .stat-pills .pill b {
+        font-size: 30px;
+      }
+      .cats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .cat {
+        min-height: 52px;
+      }
+      .tools-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .search-box {
+        min-height: 54px;
+      }
+      .doc {
+        padding: 20px 18px;
+      }
+      .doc-row1 {
+        gap: 10px;
+      }
+      .doc-left {
+        gap: 12px;
+      }
+      .doc-ico {
+        width: 56px;
+        height: 56px;
+      }
+      .badge {
+        font-size: 12px;
+        padding-inline: 10px;
+      }
+      .mobile-bottom-nav {
+        display: grid;
+      }
+      .fab {
+        right: 18px;
+        bottom: calc(94px + env(safe-area-inset-bottom, 0px));
+      }
+      .view-split {
+        grid-template-columns: 1fr;
+      }
+      .modal {
+        border-radius: 28px 28px 0 0;
+      }
+    }
+    @media (min-width: 1180px) {
+      .main {
+        max-width: 1440px;
+      }
+      .docs {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .profile-strip {
+        grid-template-columns: auto minmax(0, 1fr);
+      }
+    }
+
     /* Print sheet only */
     @media print {
       body * { visibility: hidden !important; }
@@ -1534,9 +1968,10 @@
         </svg>
       </div>
       <div>
-        <h1>THE BLUE WALLET</h1>
-        <p>OFFLINE</p>
+        <h1>THE BLUE</h1>
+        <p>Seafarer Digital Wallet</p>
       </div>
+      <span class="offline-pill-live">OFFLINE</span>
     </div>
     <div class="top-actions">
       <button type="button" class="mode-toggle" id="btn-mode" aria-label="Toggle Lite Full mode" title="Toggle Lite / Full">FULL</button>
@@ -1646,6 +2081,13 @@
   </main>
 
   <button class="fab" id="fab-add" aria-label="Add document">+</button>
+  <nav class="mobile-bottom-nav" aria-label="Mobile primary navigation">
+    <button type="button" class="active" data-mobile-nav="vault"><b>□</b><span>Vault</span></button>
+    <button type="button" data-mobile-nav="timeline"><b>◷</b><span>Timeline</span></button>
+    <button type="button" data-mobile-nav="vaccines"><b>＋</b><span>Vaccines</span></button>
+    <button type="button" data-mobile-nav="packs"><b>▱</b><span>Packs</span></button>
+    <button type="button" data-mobile-nav="profile"><b>♙</b><span>Profile</span></button>
+  </nav>
 
   <!-- ADD -->
   <div class="overlay" id="modal-add">
@@ -3644,7 +4086,7 @@
             ? `<img class="doc-thumb" src="${doc.files[0].data}" alt="" />` : '';
           const safeType = ALLOWED_TYPES.includes(doc.type) ? doc.type : 'other';
           const safeId = esc(sanitizeId(doc.id));
-          return `<div class="doc t-${safeType}${doc.favourite?' fav-pin':''}${bulkMode?' select-mode':''}${selectedIds.has(doc.id)?' selected':''}" data-id="${safeId}" role="button" tabindex="0" aria-label="${esc('Open ' + doc.title + ', ' + (LABELS[safeType] || safeType) + ', ' + st.label)}" style="animation-delay:${0.02 + i * 0.03}s">
+          return `<div class="doc t-${safeType} s-${st.key}${doc.favourite?' fav-pin':''}${bulkMode?' select-mode':''}${selectedIds.has(doc.id)?' selected':''}" data-id="${safeId}" role="button" tabindex="0" aria-label="${esc('Open ' + doc.title + ', ' + (LABELS[safeType] || safeType) + ', ' + st.label)}" style="animation-delay:${0.02 + i * 0.03}s">
             ${viewMode==='grid' ? thumb : ''}
             <div class="doc-row1">
               <div class="doc-left">
@@ -5268,7 +5710,9 @@
         btnS.textContent = appMode === 'lite' ? 'Switch to Full mode' : 'Switch to Lite mode';
       }
       const sub = document.querySelector('.brand p');
-      if (sub) sub.textContent = appMode === 'lite' ? 'LITE · OFFLINE' : 'OFFLINE';
+      if (sub) sub.textContent = 'Seafarer Digital Wallet';
+      const offlinePill = document.querySelector('.offline-pill-live');
+      if (offlinePill) offlinePill.textContent = appMode === 'lite' ? 'LITE · OFFLINE' : 'OFFLINE';
       // Reset full-only UI state when leaving full
       if (appMode === 'lite') {
         bulkMode = false;
@@ -5538,6 +5982,27 @@
 
       document.getElementById('btn-profile').onclick = () => document.getElementById('modal-profile').classList.add('show');
       document.getElementById('strip-photo').onclick = () => document.getElementById('modal-profile').classList.add('show');
+      document.querySelectorAll('[data-mobile-nav]').forEach(btn => {
+        btn.onclick = () => {
+          document.querySelectorAll('[data-mobile-nav]').forEach(x => x.classList.toggle('active', x === btn));
+          const target = btn.dataset.mobileNav;
+          if (target === 'vault') {
+            document.querySelectorAll('.overlay.show').forEach(overlay => close(overlay.id));
+            document.getElementById('timeline-wrap').style.display = 'none';
+            activePack = null;
+            render();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          } else if (target === 'timeline') {
+            showGeneric('Renewal timeline', buildTimelineHtml());
+          } else if (target === 'vaccines') {
+            openVaccineUI();
+          } else if (target === 'packs') {
+            openPacksUI();
+          } else if (target === 'profile') {
+            document.getElementById('modal-profile').classList.add('show');
+          }
+        };
+      });
       document.getElementById('btn-change-photo').onclick = () => document.getElementById('profile-file').click();
       document.getElementById('profile-file').onchange = async e => {
         const f = e.target.files[0]; if (!f) return;

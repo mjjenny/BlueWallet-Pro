@@ -8,6 +8,10 @@ function readStableApp(): string {
   return readFileSync(path.join(repoRoot, "legacy-root-pwa.html"), "utf8");
 }
 
+function normalizeLines(value: string): string {
+  return value.replace(/\r\n/g, "\n");
+}
+
 describe("stable final Help section", () => {
   it("documents the final build feature set and support boundaries", () => {
     const html = readStableApp();
@@ -30,7 +34,9 @@ describe("stable final Help section", () => {
   it("keeps Help and Appearance controls responsive without horizontal scrolling", () => {
     const html = readStableApp();
 
-    expect(html).toContain(".help-tabs {\n      display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));");
+    const normalized = normalizeLines(html);
+
+    expect(normalized).toContain(".help-tabs {\n      display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));");
     expect(html).toContain(".help-tabs { grid-template-columns: repeat(6, minmax(0, 1fr)); }");
     expect(html).toContain(".settings-sheet");
     expect(html).toContain("max-width: min(760px, calc(100vw - 24px));");

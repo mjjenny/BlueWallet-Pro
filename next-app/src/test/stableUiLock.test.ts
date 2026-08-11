@@ -5,8 +5,8 @@ import { describe, expect, it } from "vitest";
 
 const repoRoot = path.resolve(process.cwd(), "..");
 
-const STABLE_CSS_SHA256 = "08b7486c0fc0a19704918200c58384b455cf95f7b9711f47f5cb73491f0d468c";
-const STABLE_LAYOUT_MARKERS_SHA256 = "e4e5cb20cb069c6c03a25fd83161674d81dae93f08c019e3dc39d092416b785a";
+const STABLE_CSS_SHA256 = "03d256849da3c07281ed30e99442e96c3650527a752cc20903109785f181e38a";
+const STABLE_LAYOUT_MARKERS_SHA256 = "f4638280d54b4727aa844839a5c1644bb5817c2eadaef5b905c3d4a1da9ec2f8";
 
 const STABLE_LAYOUT_MARKERS = [
   "ocean-bg",
@@ -19,6 +19,10 @@ const STABLE_LAYOUT_MARKERS = [
   "fab",
   "helmSpin3d",
   "waveMove",
+  "offline-pill-live",
+  "mobile-bottom-nav",
+  "s-expired",
+  "s-valid",
 ] as const;
 
 function readRootFile(name: string): string {
