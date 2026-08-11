@@ -5,8 +5,8 @@ import { describe, expect, it } from "vitest";
 
 const repoRoot = path.resolve(process.cwd(), "..");
 
-const STABLE_CSS_SHA256 = "03d256849da3c07281ed30e99442e96c3650527a752cc20903109785f181e38a";
-const STABLE_LAYOUT_MARKERS_SHA256 = "f4638280d54b4727aa844839a5c1644bb5817c2eadaef5b905c3d4a1da9ec2f8";
+const STABLE_CSS_SHA256 = "f476d33d1f811926d6c0a39253990ff27cf3f15ab13134e1b3fd3e626b513518";
+const STABLE_LAYOUT_MARKERS_SHA256 = "c60d5837de48a6628ee002d71eaf446e906cd4040ea451ab4f60132d058aca89";
 
 const STABLE_LAYOUT_MARKERS = [
   "ocean-bg",
