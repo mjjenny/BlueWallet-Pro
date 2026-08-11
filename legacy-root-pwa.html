@@ -2452,6 +2452,994 @@
       }
     }
 
+    /* Mobile acceptance pass: match the Grok mockup structure for Vault, Detail, Vaccines, and Settings. */
+    @media (max-width: 700px) {
+      :root {
+        --mock-bg: #020a15;
+        --mock-card: rgba(9, 25, 44, .72);
+        --mock-card-strong: rgba(12, 33, 58, .82);
+        --mock-line: rgba(166, 208, 255, .24);
+        --mock-blue: #2388ff;
+        --mock-blue-2: #3cc8ff;
+        --mock-green: #67d56d;
+        --mock-red: #ff4d55;
+        --mock-text-soft: rgba(255,255,255,.72);
+      }
+      html,
+      body {
+        background-color: var(--mock-bg) !important;
+      }
+      body {
+        background:
+          radial-gradient(ellipse 68% 28% at 50% -4%, rgba(34, 142, 255, .2), transparent 66%),
+          radial-gradient(ellipse 120% 44% at 50% 86%, rgba(16, 88, 148, .35), transparent 62%),
+          linear-gradient(180deg, #020914 0%, #021222 48%, #02182a 100%) !important;
+        color: #fff;
+      }
+      body::before {
+        opacity: .82;
+        background-image:
+          linear-gradient(176deg, transparent 0 35%, rgba(93, 181, 255, .12) 36%, transparent 39% 100%),
+          linear-gradient(172deg, transparent 0 49%, rgba(93, 181, 255, .18) 50%, transparent 54% 100%),
+          linear-gradient(168deg, transparent 0 63%, rgba(255,255,255,.08) 64%, transparent 66% 100%),
+          repeating-linear-gradient(174deg, rgba(255,255,255,.055) 0 1px, transparent 1px 32px);
+      }
+      .ocean-bg .wave {
+        opacity: .72;
+        filter: saturate(1.25) contrast(1.1);
+      }
+      .topbar {
+        min-height: calc(168px + env(safe-area-inset-top, 0px)) !important;
+        padding: calc(20px + env(safe-area-inset-top, 0px)) 22px 16px !important;
+        background: linear-gradient(180deg, rgba(2, 8, 18, .98), rgba(2, 8, 18, .28)) !important;
+      }
+      .brand {
+        grid-template-columns: auto auto !important;
+        justify-content: center;
+        align-items: center;
+        column-gap: 14px;
+      }
+      .brand-mark {
+        width: 88px !important;
+        height: 58px !important;
+        grid-column: auto !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        overflow: visible;
+      }
+      .brand-mark svg {
+        display: none;
+      }
+      .brand-mark::before {
+        content: "";
+        width: 88px;
+        height: 48px;
+        display: block;
+        background:
+          radial-gradient(ellipse 70% 34% at 67% 20%, rgba(255,255,255,.78), transparent 18%),
+          radial-gradient(ellipse 80% 70% at 58% 48%, rgba(56, 203, 255, .95), transparent 54%),
+          linear-gradient(135deg, transparent 0 34%, #54d6ff 35% 48%, #116dde 49% 62%, transparent 63%);
+        clip-path: polygon(4% 67%, 24% 52%, 42% 30%, 60% 14%, 77% 18%, 61% 34%, 92% 24%, 70% 45%, 48% 58%, 26% 70%);
+        filter: drop-shadow(0 0 14px rgba(58, 198, 255, .72));
+      }
+      .brand h1 {
+        font-family: Georgia, "Times New Roman", serif !important;
+        font-size: 31px !important;
+        letter-spacing: .18em !important;
+        font-weight: 600 !important;
+        white-space: nowrap;
+      }
+      .brand p {
+        grid-column: 1 / -1;
+        justify-self: center;
+        margin-top: -4px !important;
+        font-size: 16px !important;
+        color: rgba(255,255,255,.72) !important;
+      }
+      .offline-pill-live {
+        position: absolute;
+        right: 20px;
+        top: calc(88px + env(safe-area-inset-top, 0px));
+        min-height: 44px !important;
+        padding: 0 18px !important;
+        border-radius: 999px !important;
+        font-size: 13px !important;
+        letter-spacing: .12em;
+        background: rgba(8, 18, 34, .66) !important;
+        border-color: rgba(174, 208, 255, .34) !important;
+      }
+      #btn-settings {
+        position: absolute;
+        right: 20px;
+        top: calc(24px + env(safe-area-inset-top, 0px));
+        width: 44px !important;
+        height: 44px !important;
+        background: rgba(10, 28, 50, .72);
+      }
+      .main {
+        gap: 16px !important;
+        padding: 0 17px calc(142px + env(safe-area-inset-bottom, 0px)) !important;
+      }
+      .profile-meta h2 {
+        font-size: 36px !important;
+        line-height: 1.04 !important;
+        font-weight: 780 !important;
+        letter-spacing: -.01em !important;
+      }
+      .profile-meta .rank-line {
+        margin-top: 8px !important;
+        font-size: 20px !important;
+        line-height: 1.3 !important;
+        color: var(--mock-text-soft) !important;
+      }
+      .stat-pills {
+        margin-top: 18px !important;
+        min-height: 164px;
+        border-radius: 18px !important;
+        background: linear-gradient(180deg, rgba(18, 42, 72, .76), rgba(7, 19, 36, .66)) !important;
+        border: 1px solid var(--mock-line) !important;
+        box-shadow: 0 24px 58px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.14) !important;
+      }
+      .stat-pills .pill {
+        min-height: 164px !important;
+        gap: 8px !important;
+        color: rgba(255,255,255,.74) !important;
+      }
+      .stat-pills .pill::before {
+        width: 34px !important;
+        height: 34px !important;
+        margin-bottom: 0 !important;
+        border-radius: 8px !important;
+        background: #88c9ff !important;
+      }
+      .stat-pills .pill.warn::before {
+        width: 40px !important;
+        height: 40px !important;
+        border: 3px solid #62a8ff;
+        background: transparent !important;
+      }
+      .stat-pills .pill.bad::before {
+        border-left-width: 20px !important;
+        border-right-width: 20px !important;
+        border-bottom-width: 36px !important;
+        border-bottom-color: var(--mock-red) !important;
+      }
+      .stat-pills .pill b {
+        font-size: 44px !important;
+        font-weight: 820 !important;
+      }
+      .stat-pills .pill.bad b { color: var(--mock-red); }
+      .stat-pills .pill.warn b { color: #fff; }
+      .section-head h3 {
+        font-size: 0 !important;
+      }
+      .section-head h3 #stage-label {
+        font-size: 26px !important;
+      }
+      .docs {
+        gap: 16px !important;
+      }
+      .doc {
+        min-height: 248px;
+        border-radius: 18px !important;
+        border: 1px solid var(--mock-line) !important;
+        background:
+          linear-gradient(90deg, rgba(255,255,255,.045), rgba(255,255,255,0)),
+          radial-gradient(ellipse 120% 80% at 86% 88%, rgba(48, 152, 255, .13), transparent 62%),
+          rgba(7, 22, 40, .72) !important;
+        backdrop-filter: blur(26px) saturate(1.25);
+        -webkit-backdrop-filter: blur(26px) saturate(1.25);
+        box-shadow: 0 26px 54px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.11) !important;
+      }
+      .doc::before { width: 7px !important; }
+      .doc-ico {
+        width: 74px !important;
+        height: 74px !important;
+        border-radius: 8px !important;
+        background: linear-gradient(145deg, rgba(255,255,255,.18), rgba(0,0,0,.36)) !important;
+        font-size: 36px !important;
+      }
+      .doc-title {
+        font-size: 28px !important;
+        line-height: 1.05 !important;
+      }
+      .doc-sub {
+        font-size: 22px !important;
+        color: #fff !important;
+      }
+      .badge {
+        min-height: 34px !important;
+        font-size: 16px !important;
+        padding: 6px 14px !important;
+      }
+      .doc-row2 {
+        margin-top: 18px !important;
+        padding-top: 15px !important;
+        font-size: 20px !important;
+      }
+      .fab {
+        width: 86px !important;
+        height: 86px !important;
+        right: 28px !important;
+        bottom: calc(104px + env(safe-area-inset-bottom, 0px)) !important;
+        font-size: 54px !important;
+        font-weight: 300 !important;
+        border: 1px solid rgba(255,255,255,.4) !important;
+        background: linear-gradient(145deg, #52c9ff, #0b72ff) !important;
+        box-shadow: 0 26px 58px rgba(0, 117, 255, .54), inset 0 1px 0 rgba(255,255,255,.28) !important;
+      }
+      .mobile-bottom-nav {
+        min-height: 98px !important;
+        padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px)) !important;
+        border-radius: 20px !important;
+        background: rgba(7, 17, 32, .86) !important;
+        border-color: rgba(174,208,255,.24) !important;
+      }
+      .mobile-bottom-nav b { font-size: 28px !important; }
+      .mobile-bottom-nav span { font-size: 13px; }
+
+      .overlay.show {
+        align-items: stretch;
+        padding: 0 !important;
+      }
+      #modal-view,
+      #modal-settings,
+      #modal-generic.vaccine-mode {
+        background:
+          radial-gradient(ellipse 84% 32% at 50% -6%, rgba(33, 136, 255, .2), transparent 68%),
+          linear-gradient(180deg, rgba(1, 8, 18, .98), rgba(1, 10, 22, .96)) !important;
+      }
+      #modal-view .mobile-doc-detail,
+      #modal-settings .mobile-settings-detail,
+      #modal-generic.vaccine-mode .modal {
+        width: 100vw !important;
+        max-width: none !important;
+        min-height: 100dvh;
+        max-height: none;
+        margin: 0;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background:
+          radial-gradient(ellipse 100% 44% at 50% 78%, rgba(20, 88, 146, .32), transparent 64%),
+          linear-gradient(180deg, #020a15 0%, #031426 100%) !important;
+        box-shadow: none !important;
+      }
+      #modal-view .modal-head,
+      #modal-settings .modal-head,
+      #modal-generic.vaccine-mode .modal-head {
+        min-height: calc(132px + env(safe-area-inset-top, 0px)) !important;
+        padding: calc(22px + env(safe-area-inset-top, 0px)) 24px 18px !important;
+        background: rgba(2, 9, 20, .76) !important;
+        border-bottom: 1px solid rgba(174, 208, 255, .17) !important;
+        backdrop-filter: blur(24px);
+      }
+      .mobile-kicker {
+        display: block;
+        margin-bottom: 4px;
+        color: rgba(255,255,255,.52);
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+      }
+      #modal-view #view-title,
+      #modal-settings .modal-head h2,
+      #modal-generic.vaccine-mode .modal-head h2 {
+        font-size: 35px !important;
+        line-height: 1.05;
+        font-weight: 780;
+        letter-spacing: -.02em;
+      }
+      #modal-settings .modal-head h2 {
+        font-family: Georgia, "Times New Roman", serif !important;
+        font-weight: 500;
+        text-align: center;
+      }
+      #modal-view .x,
+      #modal-settings .x,
+      #modal-generic.vaccine-mode .x {
+        width: 62px;
+        height: 62px;
+        border: 1px solid rgba(174,208,255,.28);
+        border-radius: 50%;
+        background: rgba(18, 36, 62, .62);
+        color: #fff;
+        font-size: 38px;
+        line-height: 1;
+      }
+      #modal-view .modal-head .btn {
+        display: none;
+      }
+      #modal-view .view-body {
+        max-height: none !important;
+        min-height: 0;
+        padding: 18px 24px 0 !important;
+        background: transparent !important;
+        overflow: visible !important;
+        display: block !important;
+      }
+      #modal-view .view-split {
+        display: flex !important;
+        flex-direction: column;
+        gap: 16px;
+      }
+      #modal-view .view-files {
+        min-height: 0 !important;
+        padding: 14px;
+        border-radius: 20px;
+        border: 1px solid rgba(174,208,255,.38);
+        background: rgba(16, 34, 58, .55);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.14);
+        overflow: hidden !important;
+      }
+      #modal-view .view-files img,
+      #modal-view .view-files iframe {
+        width: 100% !important;
+        max-height: 44dvh !important;
+        border-radius: 16px !important;
+        background: #f7f3e9;
+      }
+      #modal-view .view-details {
+        order: 2;
+        padding: 0 !important;
+        font-size: 15px !important;
+        line-height: 1.45;
+        color: rgba(255,255,255,.68);
+      }
+      #modal-view .view-details > p {
+        display: none;
+      }
+      .m-quality-card {
+        display: block;
+        padding: 18px 18px 16px;
+        border-radius: 18px;
+        border: 1px solid rgba(174,208,255,.28);
+        background: rgba(10, 28, 50, .74);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
+      }
+      .m-quality-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(255,255,255,.12);
+        font-size: 23px;
+      }
+      .m-quality-title span,
+      .m-quality-title b {
+        color: var(--mock-green);
+      }
+      .m-quality-title strong {
+        flex: 1;
+        color: #fff;
+      }
+      .m-check-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px 16px;
+        margin-top: 14px;
+        font-size: 18px;
+      }
+      .m-check-grid span {
+        color: rgba(255,255,255,.72);
+      }
+      .m-check-grid .ok {
+        color: rgba(255,255,255,.78);
+      }
+      .m-check-grid .ok::first-letter {
+        color: var(--mock-green);
+      }
+      #modal-view .view-foot {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        padding: 16px 24px calc(30px + env(safe-area-inset-bottom, 0px)) !important;
+        border-top: 0 !important;
+      }
+      #modal-view #view-status {
+        position: absolute;
+        right: 88px;
+        top: calc(46px + env(safe-area-inset-top, 0px));
+        min-height: 42px !important;
+        color: var(--mock-green);
+        background: rgba(50, 185, 78, .22);
+        border-color: rgba(103,213,109,.42);
+      }
+      #modal-view .view-foot > div:last-child {
+        display: contents !important;
+      }
+      #modal-view .view-foot .btn {
+        min-height: 74px;
+        border-radius: 10px;
+        font-size: 26px !important;
+        font-weight: 750;
+      }
+      #modal-view #btn-share-view {
+        background: linear-gradient(135deg, #208eff, #0969f6) !important;
+        color: #fff;
+        box-shadow: 0 18px 42px rgba(0,117,255,.35);
+      }
+      #modal-view #btn-download {
+        display: none !important;
+      }
+      #modal-view #btn-edit,
+      #modal-view #btn-delete {
+        background: rgba(5, 18, 32, .58) !important;
+        border: 1px solid rgba(174,208,255,.24) !important;
+      }
+      #modal-view #btn-delete {
+        color: #ff6870;
+      }
+
+      #modal-generic.vaccine-mode .modal-head h2,
+      #modal-generic.vaccine-mode .modal-head {
+        color: transparent;
+      }
+      #modal-generic.vaccine-mode .modal-head .x {
+        position: absolute;
+        right: 26px;
+        top: calc(26px + env(safe-area-inset-top, 0px));
+        color: #fff;
+      }
+      #modal-generic.vaccine-mode .modal-body {
+        padding: 0 30px calc(32px + env(safe-area-inset-bottom, 0px)) !important;
+        margin-top: calc(-82px - env(safe-area-inset-top, 0px));
+      }
+      .mobile-vaccine-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-height: 68px;
+        margin-bottom: 22px;
+      }
+      .mobile-vaccine-brand span {
+        width: 52px;
+        height: 52px;
+        display: grid;
+        place-items: center;
+        border: 2px solid #8fc1ff;
+        border-radius: 14px;
+        color: #8fc1ff;
+        font-size: 30px;
+      }
+      .mobile-vaccine-brand strong {
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 29px;
+        letter-spacing: .06em;
+      }
+      .mobile-vaccine-brand small {
+        display: block;
+        margin-left: -4px;
+        color: #5ca7ff;
+        font-size: 16px;
+        letter-spacing: .28em;
+      }
+      .mobile-vaccine-card {
+        padding: 34px 22px 28px;
+        border-radius: 32px;
+        border: 1px solid rgba(174,208,255,.28);
+        background: linear-gradient(180deg, rgba(16, 36, 64, .78), rgba(6, 20, 38, .72));
+        box-shadow: 0 30px 70px rgba(0,0,0,.46), inset 0 1px 0 rgba(255,255,255,.12);
+      }
+      .mobile-vaccine-title {
+        display: grid;
+        grid-template-columns: 86px 1fr;
+        gap: 16px;
+        align-items: center;
+        padding-bottom: 24px;
+        margin-bottom: 24px;
+        border-bottom: 1px solid rgba(255,255,255,.14);
+      }
+      .mobile-vaccine-title > span {
+        width: 78px;
+        height: 86px;
+        display: grid;
+        place-items: center;
+        color: #6db2ff;
+        border: 4px solid #7bbcff;
+        border-radius: 22px;
+        font-size: 46px;
+      }
+      .mobile-vaccine-title h3 {
+        font-size: 34px;
+        line-height: 1.04;
+      }
+      .mobile-vaccine-title p {
+        margin-top: 8px;
+        color: var(--mock-text-soft);
+        font-size: 21px;
+      }
+      .mobile-vaccine-card .field label {
+        margin-top: 4px;
+        color: #fff !important;
+        font-size: 21px !important;
+        text-transform: none !important;
+        letter-spacing: 0 !important;
+      }
+      .mobile-vaccine-card .field input {
+        min-height: 80px;
+        border-radius: 14px;
+        font-size: 25px;
+        background: rgba(8, 24, 46, .68);
+        border-color: rgba(174,208,255,.24);
+      }
+      .mobile-dose-field input {
+        text-align: center;
+        font-weight: 800;
+        color: #fff;
+        background: linear-gradient(180deg, rgba(37, 139, 255, .72), rgba(12, 69, 142, .65)) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 0 26px rgba(35,136,255,.24);
+      }
+      .mobile-vaccine-existing {
+        max-height: 118px;
+        overflow: auto;
+        margin-bottom: 16px;
+      }
+      .mobile-vaccine-existing:empty {
+        display: none;
+      }
+      .mobile-vaccine-card #vac-add {
+        min-height: 94px;
+        margin-top: 20px;
+        border-radius: 18px;
+        font-size: 29px !important;
+        font-weight: 760;
+        background: linear-gradient(180deg, #35d8ff, #046eff) !important;
+        box-shadow: 0 0 32px rgba(53,216,255,.52), 0 20px 46px rgba(0,102,255,.35);
+      }
+      .mobile-required-note {
+        margin-top: 18px;
+        text-align: center;
+        color: rgba(255,255,255,.62);
+        font-size: 18px;
+      }
+
+      #modal-settings .modal-head {
+        display: grid !important;
+        grid-template-columns: 54px 1fr 54px;
+      }
+      #modal-settings .mobile-back-x {
+        display: grid !important;
+        color: #4ea3ff;
+        border: 0;
+        background: transparent;
+        font-size: 48px;
+      }
+      #modal-settings #close-settings {
+        color: transparent;
+        border: 0;
+        background: transparent;
+        pointer-events: none;
+      }
+      #modal-settings #close-settings::before {
+        content: "◌";
+        color: #6fb3ff;
+        font-size: 44px;
+      }
+      #modal-settings .settings-body {
+        padding: 0 20px calc(38px + env(safe-area-inset-bottom, 0px)) !important;
+      }
+      .mobile-settings-brand {
+        display: grid;
+        grid-template-columns: 86px 1fr;
+        gap: 14px;
+        align-items: center;
+        margin: -16px 4px 18px;
+      }
+      .mobile-wave-mark {
+        width: 72px;
+        height: 72px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        border: 1px solid rgba(94,212,255,.52);
+        color: #65cfff;
+        font-size: 52px;
+        background: rgba(15, 41, 70, .6);
+        box-shadow: 0 0 26px rgba(73,180,255,.24);
+      }
+      .mobile-settings-brand strong {
+        display: block;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 32px;
+        letter-spacing: .12em;
+      }
+      .mobile-settings-brand span {
+        display: block;
+        margin-top: 4px;
+        color: #70afff;
+        font-size: 13px;
+        letter-spacing: .24em;
+        text-transform: uppercase;
+      }
+      #modal-settings .sblock {
+        margin: 14px 0;
+        padding: 22px 16px 18px;
+        border-radius: 18px;
+        border: 1px solid rgba(174,208,255,.22);
+        background: rgba(8, 23, 42, .72);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
+      }
+      #modal-settings .sblock h3 {
+        position: relative;
+        padding-left: 52px;
+        color: #fff;
+        font-size: 27px;
+        line-height: 1.1;
+      }
+      #modal-settings .sblock h3::before {
+        content: "◌";
+        position: absolute;
+        left: 0;
+        top: -7px;
+        width: 38px;
+        height: 38px;
+        display: grid;
+        place-items: center;
+        color: #5aaaff;
+        font-size: 34px;
+      }
+      #modal-settings .sblock p {
+        margin-top: 12px;
+        color: rgba(255,255,255,.66);
+        font-size: 18px;
+        line-height: 1.35;
+      }
+      #modal-settings #btn-mode-settings {
+        min-height: 60px;
+        margin-top: 18px;
+        color: #61aeff;
+        border-color: rgba(48,136,255,.62);
+        background: linear-gradient(180deg, rgba(27,96,180,.58), rgba(9,39,82,.62));
+      }
+      #modal-settings .theme-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      #modal-settings .theme-choice {
+        min-height: 66px;
+        grid-template-columns: 62px 1fr;
+        border-radius: 12px;
+        background: rgba(8, 27, 48, .72);
+        border-color: rgba(174,208,255,.14);
+      }
+      #modal-settings .theme-choice span:first-child {
+        width: 50px;
+        height: 50px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: linear-gradient(145deg, #5fd8ff, #146be0);
+        box-shadow: 0 0 18px rgba(61,186,255,.24);
+      }
+      #modal-settings .theme-choice span:last-child {
+        font-size: 22px;
+      }
+      #modal-settings .theme-choice small {
+        margin-top: 2px;
+        color: rgba(255,255,255,.62);
+        font-size: 14px;
+      }
+      #modal-settings .theme-choice.active {
+        border-color: #4aa3ff;
+        box-shadow: 0 0 0 1px #4aa3ff, 0 0 26px rgba(74,163,255,.34);
+      }
+      #modal-settings .theme-choice.active::after {
+        content: "✓";
+        justify-self: end;
+        align-self: center;
+        width: 34px;
+        height: 34px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        border: 2px solid #4aa3ff;
+        color: #4aa3ff;
+      }
+    }
+
+    /* Mobile mockup conformance pass: four target screens become native-feeling pages. */
+    @media (max-width: 700px) {
+      body {
+        min-height: 100dvh;
+        overflow-x: hidden;
+      }
+      .topbar {
+        display: block !important;
+        position: relative;
+        border: 0 !important;
+      }
+      .top-actions > :not(#btn-settings) {
+        display: none !important;
+      }
+      #btn-settings {
+        color: transparent !important;
+        border-radius: 999px !important;
+      }
+      #btn-settings::before {
+        content: "";
+        width: 22px;
+        height: 22px;
+        border: 2px solid #8fc4ff;
+        border-radius: 8px 8px 11px 11px;
+        box-shadow: inset 0 -8px 0 rgba(70, 154, 255, .22), 0 0 18px rgba(94, 190, 255, .35);
+      }
+      .brand {
+        display: grid !important;
+        grid-template-columns: 84px minmax(0, auto) !important;
+        width: 100%;
+        padding-top: 10px;
+      }
+      .brand > div:last-of-type {
+        align-self: center;
+      }
+      .brand h1 {
+        font-size: clamp(25px, 8vw, 34px) !important;
+      }
+      .offline-pill-live::before {
+        content: "";
+        width: 16px;
+        height: 12px;
+        display: inline-block;
+        margin-right: 8px;
+        border: 2px solid rgba(180, 220, 255, .86);
+        border-top-color: transparent;
+        border-radius: 0 0 12px 12px;
+        transform: rotate(45deg);
+      }
+      .alert,
+      .cats,
+      .tools-row,
+      .section-head,
+      .bulk-bar {
+        display: none !important;
+      }
+      .profile-strip {
+        display: block !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+      }
+      .profile-photo {
+        display: none !important;
+      }
+      .profile-meta h2 {
+        font-size: clamp(34px, 9vw, 42px) !important;
+        margin: 0 0 8px !important;
+      }
+      .profile-meta h2::after {
+        content: "Your important documents. Always with you.";
+        display: block;
+        margin-top: 8px;
+        color: rgba(255,255,255,.68);
+        font-size: 20px;
+        font-weight: 450;
+        line-height: 1.25;
+      }
+      .profile-meta .rank-line {
+        display: none !important;
+      }
+      .stat-pills {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr);
+        overflow: hidden;
+      }
+      .stat-pills .pill {
+        position: relative;
+        justify-content: center;
+        border-radius: 0 !important;
+      }
+      .stat-pills .pill + .pill {
+        border-left: 1px solid rgba(174, 208, 255, .22);
+      }
+      .docs {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+      }
+      .doc {
+        padding: 24px 20px 18px 96px !important;
+      }
+      .doc-left {
+        display: contents !important;
+      }
+      .doc-ico {
+        position: absolute;
+        left: 38px;
+        top: 24px;
+      }
+      .doc-ico::after {
+        content: "";
+        position: absolute;
+        right: -12px;
+        bottom: -10px;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: var(--mock-green);
+        box-shadow: 0 0 0 2px rgba(3, 13, 27, .88);
+      }
+      .doc.s-expired .doc-ico::after {
+        background: var(--mock-red);
+      }
+      .doc-ico::before {
+        content: "";
+        position: absolute;
+        right: 2px;
+        bottom: 1px;
+        z-index: 1;
+        width: 16px;
+        height: 8px;
+        border-left: 3px solid #fff;
+        border-bottom: 3px solid #fff;
+        transform: rotate(-45deg);
+      }
+      .doc.s-expired .doc-ico::before {
+        width: 4px;
+        height: 19px;
+        right: 18px;
+        bottom: 0;
+        border: 0;
+        border-radius: 999px;
+        background: #fff;
+        transform: none;
+        box-shadow: 0 24px 0 -7px #fff;
+      }
+      .doc-row1 {
+        display: block !important;
+      }
+      .doc .badge {
+        position: absolute;
+        top: 24px;
+        right: 18px;
+        text-transform: none;
+      }
+      .doc-row2 {
+        display: grid !important;
+        grid-template-columns: auto 1fr;
+        justify-content: start;
+        gap: 14px;
+        border-top-color: rgba(255,255,255,.13) !important;
+      }
+      .doc-row2 strong {
+        justify-self: start;
+      }
+      .doc.s-expired .doc-row2:last-child,
+      .doc.s-expired .doc-row2 strong {
+        color: var(--mock-red) !important;
+      }
+      .doc.s-valid .doc-row2:last-child,
+      .doc.s-valid .doc-row2 strong {
+        color: var(--mock-green) !important;
+      }
+      #modal-view .modal-head {
+        display: grid !important;
+        grid-template-columns: 64px 1fr 64px;
+        gap: 12px;
+        align-items: center;
+      }
+      #modal-view .mobile-view-back {
+        display: grid !important;
+        color: #fff;
+        font-size: 48px;
+      }
+      #modal-view .modal-head > div:last-child {
+        justify-self: end;
+      }
+      #modal-view #close-view {
+        display: grid !important;
+      }
+      #modal-view #view-title {
+        white-space: normal !important;
+      }
+      #modal-view #view-meta {
+        position: relative;
+        padding-left: 44px;
+        margin-top: 18px !important;
+        color: rgba(255,255,255,.68) !important;
+        font-size: 18px !important;
+        line-height: 1.25;
+      }
+      #modal-view #view-meta::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 2px;
+        width: 30px;
+        height: 30px;
+        border: 3px solid rgba(255,255,255,.76);
+        border-radius: 50%;
+        box-shadow: 0 0 0 1px rgba(255,255,255,.16), inset 0 0 0 6px transparent;
+      }
+      #modal-view .view-files {
+        margin-top: -2px;
+      }
+      #modal-view .view-files img,
+      #modal-view .view-files iframe {
+        object-fit: contain;
+      }
+      #modal-view #btn-print {
+        display: none !important;
+      }
+      #modal-view #btn-download {
+        display: none !important;
+      }
+      #modal-view #btn-download-view-mobile {
+        display: inline-flex !important;
+      }
+      #modal-view .view-foot .btn::first-letter {
+        text-transform: uppercase;
+      }
+      #modal-generic.vaccine-mode .modal {
+        padding-top: env(safe-area-inset-top, 0px);
+      }
+      .mobile-dose-field {
+        display: none !important;
+      }
+      .mobile-dose-segment {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        min-height: 72px;
+        margin: 10px 0 20px;
+        overflow: hidden;
+        border: 1px solid rgba(174,208,255,.24);
+        border-radius: 14px;
+        background: rgba(8, 24, 46, .68);
+      }
+      .mobile-dose-segment button {
+        border: 0;
+        border-left: 1px solid rgba(174,208,255,.16);
+        background: transparent;
+        color: rgba(255,255,255,.72);
+        font: inherit;
+        font-size: 24px;
+        min-height: 72px;
+      }
+      .mobile-dose-segment button:first-child {
+        border-left: 0;
+      }
+      .mobile-dose-segment button.active {
+        color: #fff;
+        background: linear-gradient(180deg, rgba(50, 151, 255, .86), rgba(11, 84, 178, .72));
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.32), 0 0 22px rgba(45, 142, 255, .34);
+      }
+      #modal-settings .theme-choice span:first-child {
+        color: transparent;
+      }
+      #modal-settings .theme-choice[data-theme-choice="ocean"] span:first-child {
+        background: radial-gradient(circle at 66% 30%, #d9fbff 0 8%, transparent 9%), linear-gradient(145deg, #6fe8ff, #176ee6);
+      }
+      #modal-settings .theme-choice[data-theme-choice="violet"] span:first-child {
+        background: radial-gradient(circle at 65% 35%, #e7c6ff 0 12%, transparent 13%), linear-gradient(145deg, #8e5cff, #4d159e);
+      }
+      #modal-settings .theme-choice[data-theme-choice="indigo"] span:first-child {
+        background: radial-gradient(circle at 36% 34%, #9eb6ff 0 10%, transparent 11%), linear-gradient(145deg, #4057e8, #171c6d);
+      }
+      #modal-settings .theme-choice[data-theme-choice="current"] span:first-child {
+        background: repeating-linear-gradient(165deg, #48d8ff 0 3px, transparent 3px 9px), linear-gradient(145deg, #064a68, #082a3e);
+      }
+      #modal-settings .theme-choice[data-theme-choice="yellow"] span:first-child {
+        background: radial-gradient(circle at 50% 34%, #ffdf70 0 22%, transparent 23%), linear-gradient(145deg, #9a6922, #22170c);
+      }
+      #modal-settings .theme-choice[data-theme-choice="sunset"] span:first-child {
+        background: radial-gradient(circle at 50% 60%, #ffcf50 0 24%, transparent 25%), linear-gradient(180deg, #ff8a2b, #5c2015);
+      }
+      #modal-settings .theme-choice[data-theme-choice="red"] span:first-child {
+        background: radial-gradient(circle at 60% 34%, #ffb6b6 0 12%, transparent 13%), linear-gradient(145deg, #ff5d66, #65121d);
+      }
+      #modal-settings .theme-choice[data-theme-choice="night"] span:first-child {
+        background: radial-gradient(circle at 62% 34%, #7e86ff 0 18%, transparent 19%), linear-gradient(145deg, #302e6c, #070817);
+      }
+      #modal-settings .theme-choice[data-theme-choice="aurora"] span:first-child {
+        background: conic-gradient(from 20deg, #53f5ff, #8f7cff, #4dffbc, #53f5ff);
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -2763,9 +3751,11 @@
 
   <!-- VIEW -->
   <div class="overlay" id="modal-view">
-    <div class="modal wide">
+    <div class="modal wide mobile-doc-detail">
       <div class="modal-head">
+        <button class="x mobile-view-back" id="view-back-mobile" type="button" aria-label="Back">‹</button>
         <div style="min-width:0;flex:1">
+          <div class="mobile-kicker">Document details</div>
           <h2 id="view-title" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></h2>
           <div style="font-size:14px;color:var(--muted);margin-top:3px" id="view-meta"></div>
         </div>
@@ -2779,6 +3769,8 @@
       <div class="view-foot">
         <div id="view-status" class="badge"></div>
         <div style="display:flex;gap:10px">
+          <button class="btn btn-primary" id="btn-share-view" style="padding:9px 14px;font-size:15px">Share</button>
+          <button class="btn btn-ghost" id="btn-download-view-mobile" style="padding:9px 14px;font-size:15px">Download</button>
           <button class="btn btn-ghost" id="btn-edit" style="padding:9px 14px;font-size:15px">Edit</button>
           <button class="btn btn-danger" id="btn-delete" style="padding:9px 14px;font-size:15px">Delete</button>
         </div>
@@ -3022,9 +4014,13 @@
   </div>
 
   <div class="overlay" id="modal-settings">
-    <div class="modal settings-sheet">
-      <div class="modal-head"><h2>Settings & Backup</h2><button class="x" id="close-settings">✕</button></div>
+    <div class="modal settings-sheet mobile-settings-detail">
+      <div class="modal-head"><button class="x mobile-back-x" id="settings-back-mobile" type="button" aria-label="Back">‹</button><h2>Settings & Backup</h2><button class="x" id="close-settings">✕</button></div>
       <div class="modal-body settings-body">
+        <div class="mobile-settings-brand">
+          <div class="mobile-wave-mark" aria-hidden="true">≋</div>
+          <div><strong>THE BLUE</strong><span>Seafarer Digital Wallet</span></div>
+        </div>
         <div class="sblock">
           <h3>App mode</h3>
           <p>Lite = core wallet only. Full = packs, STCW, OCR, logs, timeline, bulk tools.</p>
@@ -3185,7 +4181,7 @@
   </div>
 
   <script>
-    const APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.20';
+    const APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.21';
     const DB_NAME = 'SeafarerWalletDB';
     let db;
     let useStorageFallback = false;
@@ -4340,6 +5336,7 @@
       }, mins * 60 * 1000);
     }
     function showGeneric(title, bodyHtml) {
+      document.getElementById('modal-generic').classList.remove('vaccine-mode');
       document.getElementById('generic-title').textContent = title;
       document.getElementById('generic-body').innerHTML = bodyHtml;
       document.getElementById('modal-generic').classList.add('show');
@@ -4798,9 +5795,22 @@
       const history = (doc.history || []).slice(0, 5).map(row =>
         `<li>${esc(row.at ? new Date(row.at).toLocaleString() : 'Previous version')} - ${esc(row.title || 'Untitled')} ${row.expiryDate ? '(' + esc(fmt(row.expiryDate)) + ')' : ''}</li>`
       ).join('');
+      const checks = [
+        ['Readable & Clear', q.readable],
+        ['Stamp / Seal Visible', q.stamp],
+        ['Full Page Captured', q.fullPage],
+        ['Front & Back', q.frontBack],
+        ['Data Verified', q.verified],
+      ];
       details.innerHTML = `
         ${doc.flagNotes ? `<p><strong style="color:#fff">Flag notes:</strong> ${esc(doc.flagNotes)}</p>` : ''}
         ${doc.reminderNote ? `<p><strong style="color:#fff">Reminder note:</strong> ${esc(doc.reminderNote)}</p>` : ''}
+        <div class="m-quality-card">
+          <div class="m-quality-title"><span>🛡</span><strong>Quality verified</strong><b>${qualityScore(doc)}/5</b></div>
+          <div class="m-check-grid">
+            ${checks.map(([label, ok]) => `<span class="${ok ? 'ok' : 'no'}">${ok ? '✓' : '•'} ${esc(label)}</span>`).join('')}
+          </div>
+        </div>
         <p><strong style="color:#fff">Quality:</strong> ${esc(qualitySummary(doc))} (${qualityScore(doc)}/5) - ${esc(joiningRisk(doc))}</p>
         <p><strong style="color:#fff">Checks:</strong> readable ${q.readable ? 'yes' : 'no'} · full page ${q.fullPage ? 'yes' : 'no'} · stamp ${q.stamp ? 'yes' : 'no'} · front/back ${q.frontBack ? 'yes' : 'no'} · verified ${q.verified ? 'yes' : 'no'}</p>
         ${history ? `<p><strong style="color:#fff">Version history:</strong></p><ul style="padding-left:18px">${history}</ul>` : '<p><strong style="color:#fff">Version history:</strong> No previous edits recorded.</p>'}
@@ -5629,13 +6639,32 @@
            <button class="btn btn-danger" data-del-vac="${v.id}" style="padding:6px 10px;font-size:12px">Delete</button>
          </div></div>`
       ).join('') || '<p style="color:var(--muted)">No vaccinations logged.</p>';
-      showGeneric(editing ? 'Edit vaccination' : 'Vaccination log', rows + `
+      showGeneric(editing ? 'Edit vaccination' : 'Vaccination log', `
+        <div class="mobile-vaccine-brand"><span>✚</span><strong>THE BLUE</strong><small>SEAFARER</small></div>
+        <div class="mobile-vaccine-card">
+        <div class="mobile-vaccine-title"><span>✚</span><div><h3>Vaccination log</h3><p>Add a new vaccination record</p></div></div>
+        <div class="mobile-vaccine-existing">${rows}</div>
         <input type="hidden" id="vac-edit-id" value="${editing ? esc(editing.id) : ''}" />
         <div class="field"><label>Vaccine</label><input id="vac-name" placeholder="Yellow fever / Hep B / COVID..." value="${editing ? esc(editing.name) : ''}" /></div>
-        <div class="row"><div class="field"><label>Dose</label><input id="vac-dose" placeholder="1 / 2 / booster" value="${editing ? esc(editing.dose||'') : ''}" /></div>
-        <div class="field"><label>Date</label><input type="date" id="vac-date" value="${editing ? esc(editing.date||'') : ''}" /></div></div>
+        <div class="field mobile-dose-field"><label>Dose</label><input id="vac-dose" placeholder="1 / 2 / booster" value="${editing ? esc(editing.dose||'') : ''}" /></div>
+        <div class="mobile-dose-segment" role="group" aria-label="Dose">
+          <button type="button" data-dose-pick="1" class="${!editing || (editing.dose||'') === '1' ? 'active' : ''}">1</button>
+          <button type="button" data-dose-pick="2" class="${(editing?.dose||'') === '2' ? 'active' : ''}">2</button>
+          <button type="button" data-dose-pick="Booster" class="${/booster/i.test(editing?.dose||'') ? 'active' : ''}">Booster</button>
+        </div>
+        <div class="field"><label>Date</label><input type="date" id="vac-date" value="${editing ? esc(editing.date||'') : ''}" /></div>
         <div class="field"><label>Expiry</label><input type="date" id="vac-exp" value="${editing ? esc(editing.expiry||'') : ''}" /></div>
-        <button class="btn btn-primary" id="vac-add" style="width:100%">${editing ? 'Save changes' : 'Add'}</button>`);
+        <button class="btn btn-primary" id="vac-add" style="width:100%">${editing ? 'Save changes' : '+ Add vaccination'}</button>
+        <p class="mobile-required-note">All fields are required</p>
+        </div>`);
+      document.getElementById('modal-generic').classList.add('vaccine-mode');
+      document.querySelectorAll('[data-dose-pick]').forEach(btn => {
+        btn.onclick = () => {
+          document.querySelectorAll('[data-dose-pick]').forEach(x => x.classList.toggle('active', x === btn));
+          document.getElementById('vac-dose').value = btn.dataset.dosePick || '';
+        };
+      });
+      if (!editing && !document.getElementById('vac-dose').value) document.getElementById('vac-dose').value = '1';
       document.getElementById('vac-add').onclick = () => {
         const name = document.getElementById('vac-name').value.trim();
         if (!name) return;
@@ -6548,8 +7577,10 @@
       document.getElementById('close-add').onclick = () => cancelAddFlow();
       document.getElementById('btn-cancel').onclick = () => cancelAddFlow();
       document.getElementById('close-view').onclick = () => { close('modal-view'); viewId = null; };
+      document.getElementById('view-back-mobile')?.addEventListener('click', () => { close('modal-view'); viewId = null; });
       document.getElementById('close-profile').onclick = () => close('modal-profile');
       document.getElementById('close-settings').onclick = () => close('modal-settings');
+      document.getElementById('settings-back-mobile')?.addEventListener('click', () => close('modal-settings'));
       document.getElementById('doc-no-expiry').onchange = e => updateNoExp(e.target.checked);
 
       document.getElementById('btn-profile').onclick = () => document.getElementById('modal-profile').classList.add('show');
@@ -7138,6 +8169,28 @@
         });
         recordActivity('document-exported', { type: LABELS[doc.type] || doc.type, title: doc.title, files: files.length });
       };
+      document.getElementById('btn-download-view-mobile')?.addEventListener('click', () => {
+        document.getElementById('btn-download')?.click();
+      });
+      document.getElementById('btn-share-view')?.addEventListener('click', () => {
+        const doc = documents.find(d => d.id === viewId);
+        if (!doc) return;
+        const st = status(doc);
+        const text = `${doc.title}
+${doc.number || ''}
+${doc.noExpiry ? 'No expiry' : 'Expiry: ' + fmt(doc.expiryDate)}
+Status: ${st.label}
+${qualitySummary(doc)}
+${joiningRisk(doc)}`;
+        if (navigator.share) navigator.share({ title: doc.title || 'Blue Wallet document', text }).catch(() => {});
+        else {
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
+          a.download = 'blue-wallet-document-summary.txt';
+          a.click();
+        }
+        recordActivity('document-summary-shared', { type: LABELS[doc.type] || doc.type, title: doc.title });
+      });
       document.getElementById('btn-print').onclick = async () => {
         const doc = documents.find(d => d.id === viewId);
         if (!doc) return;

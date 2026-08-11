@@ -42,7 +42,7 @@ describe("stable production rollback contract", () => {
   it("uses the stable service worker cache version and offline fallback", () => {
     const worker = readRootFile("service-worker.js");
 
-    expect(worker).toContain("blue-wallet-stable-rollback-v0.20");
+    expect(worker).toContain("blue-wallet-stable-rollback-v0.21");
     expect(worker).toContain("./legacy-root-pwa.html");
     expect(worker).toContain("./offline.html");
     expect(worker).toContain("keys.filter((key) => key !== CACHE_VERSION)");
@@ -54,12 +54,12 @@ describe("stable production rollback contract", () => {
     const html = readRootFile("legacy-root-pwa.html");
     const worker = readRootFile("service-worker.js");
 
-    expect(html).toContain("const APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.20'");
+    expect(html).toContain("const APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.21'");
     expect(html).toContain("checkForAppUpdate");
     expect(html).toContain("service-worker.js?update-check=");
     expect(html).toContain("New Blue Wallet update available.");
     expect(html).toContain("applyAppUpdate");
-    expect(worker).toContain('const CACHE_VERSION = "blue-wallet-stable-rollback-v0.20"');
+    expect(worker).toContain('const CACHE_VERSION = "blue-wallet-stable-rollback-v0.21"');
   });
 
   it("supports OCR for both image scans and PDF pages", () => {
