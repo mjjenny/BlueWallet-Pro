@@ -18,7 +18,7 @@ async function render(pathname = "/") {
           const filePath = new URL(`../public${url.pathname}`, import.meta.url);
           try {
             return new Response(await readFile(filePath), { status: 200 });
-          } catch (_) {
+          } catch {
             return new Response("Not found", { status: 404 });
           }
         },

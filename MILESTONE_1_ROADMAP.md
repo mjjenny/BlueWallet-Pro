@@ -222,15 +222,31 @@ So the icons are load-bearing and must serve correctly; `app.js`/`styles.css` ar
 
 **Still open, deferred to a later milestone (not this repo, not this pass):** the deployed host apparently returns HTTP 200 with the app-shell HTML for any static path it doesn't recognize, instead of a real 404. That's a separate, more general defect in the hosting/routing layer — once the stale-bundle issue is fixed by redeploying, an unmatched path should ideally 404, not silently succeed with garbage. Worth a follow-up ticket against the hosting config once someone has access to it; not fixable from within `public/` or `service-worker.js`.
 
-### Step 6 — Fix lint and make it gate deploys
+### Step 6 — Fix lint and make it gate deploys ✅ DONE (2026-08-12, not yet pushed)
 
-Fix the three errors (`public/app.js` 13:156 and 13:220; `tests/rendered-html.test.mjs` 21:20), then change `package.json`:
+Recovering `recovered/app.js` (a snapshot copy of the same dead file, see Step 5) introduced two *more* copies of the same two errors — 5 total, not 3, once linted fresh. Added `recovered/**` to `eslint.config.mjs`'s `globalIgnores`, same treatment as `build/**`: it's a frozen audit snapshot, not maintained source.
+
+`public/app.js` 13:156 / 13:220 (`@typescript-eslint/no-unused-expressions`): both were the `cond && (expr)` idiom used as a bare statement —
+
+```js
+$('#cancel')&&($('#cancel').onclick=()=>{modal=false;render()});$('#form')&&($('#form').onsubmit=saveForm);
+```
+
+Rewrote as real `if` statements rather than loosening the lint rule project-wide (`app.js` is dead code per Step 5, but the fix should still be the correct one, not a suppressed one):
+
+```js
+if($('#cancel'))$('#cancel').onclick=()=>{modal=false;render()};if($('#form'))$('#form').onsubmit=saveForm;
+```
+
+`tests/rendered-html.test.mjs` 21:20 (`@typescript-eslint/no-unused-vars`): `catch (_) {` → `catch {` (optional catch binding, the `_` was never used).
+
+`npm run lint` now reports zero problems. `package.json`'s `test` script is now:
 
 ```json
 "test": "npm run lint && npm run build && node --test tests/rendered-html.test.mjs"
 ```
 
-Run `npm test` and `npm run lint` — both must be clean.
+Ran `npm test` end-to-end: lint → build → both tests pass. Lint failures will now fail CI/local `npm test` runs instead of silently passing, as they did before this step (the handover's original observation — "npm test passed because it does not run the lint command" — no longer holds).
 
 ### Step 7 — Verify reproducibility
 
