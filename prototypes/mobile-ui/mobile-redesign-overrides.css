@@ -1522,6 +1522,34 @@ body.modal-open {
     }
 }
 
+@media (max-width: 480px) {
+    .brand-header {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 12px 8px;
+        align-items: center;
+    }
+
+    .brand-left {
+        grid-column: 1 / -1;
+        min-width: 0;
+    }
+
+    .brand-title {
+        white-space: nowrap;
+    }
+
+    .offline-pill {
+        justify-self: start;
+        min-height: 40px;
+    }
+
+    .walkthrough-btn {
+        justify-self: start;
+        min-height: 44px;
+    }
+}
+
 @media (min-width: 450px) {
     .bottom-nav {
         position: absolute;
@@ -1533,5 +1561,412 @@ body.modal-open {
 
     .prototype-toast {
         position: absolute;
+    }
+}
+
+/* Desktop companion prototype - same premium ocean design, wide-screen layout */
+@media (min-width: 900px) {
+    body {
+        display: block;
+        min-height: 100vh;
+        padding: 0;
+        background:
+            radial-gradient(circle at 8% 12%, rgba(0, 212, 255, 0.13), transparent 30%),
+            radial-gradient(circle at 88% 10%, rgba(88, 166, 255, 0.11), transparent 32%),
+            radial-gradient(circle at 50% 95%, rgba(47, 224, 184, 0.09), transparent 36%),
+            linear-gradient(135deg, #02050a 0%, #06111f 42%, #0a1627 100%);
+    }
+
+    body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background:
+            linear-gradient(115deg, transparent 0 44%, rgba(120, 205, 255, 0.08) 45%, transparent 52%),
+            repeating-linear-gradient(170deg, rgba(78, 169, 230, 0.055) 0 1px, transparent 1px 64px);
+        mask-image: linear-gradient(180deg, transparent, #000 24%, #000 84%, transparent);
+        opacity: 0.72;
+    }
+
+    .mobile-frame {
+        width: 100%;
+        max-width: none;
+        min-height: 100vh;
+        margin: 0;
+        padding: 0 32px 64px 136px;
+        overflow-x: clip;
+        border-radius: 0;
+        box-shadow: none;
+        background:
+            radial-gradient(ellipse at 18% 16%, rgba(0, 212, 255, 0.08), transparent 34%),
+            radial-gradient(ellipse at 78% 24%, rgba(0, 122, 255, 0.075), transparent 34%),
+            linear-gradient(180deg, rgba(3, 8, 14, 0.98), rgba(8, 19, 33, 0.96));
+    }
+
+    .status-bar {
+        display: none;
+    }
+
+    .brand-header {
+        position: sticky;
+        top: 0;
+        z-index: 900;
+        align-items: center;
+        min-height: 96px;
+        margin: 0 -32px 28px -136px;
+        padding: 18px 32px 18px 136px;
+        background: linear-gradient(180deg, rgba(2, 8, 15, 0.94), rgba(4, 13, 23, 0.76));
+        border-bottom: 1px solid rgba(123, 201, 255, 0.16);
+        box-shadow: 0 22px 60px rgba(0, 0, 0, 0.34);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+    }
+
+    .logo-mark {
+        width: 64px;
+        height: 64px;
+    }
+
+    .brand-title {
+        font-size: 30px;
+        letter-spacing: 4px;
+    }
+
+    .brand-subtitle {
+        font-size: 15px;
+    }
+
+    .offline-pill {
+        margin-left: auto;
+        min-height: 48px;
+        padding: 0 18px;
+        border-color: rgba(93, 231, 199, 0.32);
+        color: #9ff5de;
+        background: rgba(16, 65, 66, 0.28);
+    }
+
+    .walkthrough-btn {
+        min-width: 86px;
+        min-height: 48px;
+    }
+
+    .screen-content {
+        width: min(100%, 1480px);
+        margin: 0 auto;
+        padding: 0 0 84px;
+    }
+
+    .vault-hero {
+        display: grid;
+        grid-template-columns: minmax(300px, 0.9fr) minmax(520px, 1.4fr);
+        gap: 24px;
+        align-items: stretch;
+        padding: 0 0 24px;
+    }
+
+    .vault-title {
+        font-size: clamp(40px, 4vw, 64px);
+        line-height: 0.98;
+        margin-top: 10px;
+        letter-spacing: 0;
+    }
+
+    .vault-subtitle {
+        max-width: 520px;
+        font-size: 18px;
+        color: rgba(221, 241, 255, 0.72);
+    }
+
+    .glass-stats-panel {
+        margin-top: 0;
+        min-height: 170px;
+        border-radius: 28px;
+        background: linear-gradient(145deg, rgba(20, 45, 74, 0.74), rgba(6, 18, 32, 0.82));
+        box-shadow:
+            0 28px 90px rgba(0, 0, 0, 0.46),
+            inset 0 1px 0 rgba(255, 255, 255, 0.18),
+            0 0 90px rgba(0, 150, 255, 0.08);
+    }
+
+    .stat-value {
+        font-size: 50px;
+    }
+
+    .stat-label {
+        font-size: 13px;
+    }
+
+    .vault-search-panel,
+    .category-filters,
+    .status-filters,
+    .documents-list,
+    .empty-state,
+    .ux-states-panel,
+    .detail-view,
+    .add-form,
+    .timeline-list,
+    .vaccine-list,
+    .packs-list,
+    .profile-section,
+    .settings-section {
+        margin-left: 0;
+        margin-right: 0;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .vault-search-panel {
+        max-width: none;
+        min-height: 64px;
+        margin-bottom: 16px;
+        padding-inline: 24px;
+        border-radius: 24px;
+    }
+
+    .category-filters,
+    .status-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding-bottom: 14px;
+        overflow: visible;
+    }
+
+    .filter-chip,
+    .status-chip {
+        min-height: 48px;
+        padding-inline: 18px;
+        font-size: 14px;
+    }
+
+    .documents-list {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(260px, 1fr));
+        gap: 18px;
+        padding-bottom: 30px;
+    }
+
+    .document-card {
+        min-height: 236px;
+        border-radius: 26px;
+        transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    .document-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(123, 201, 255, 0.38);
+        box-shadow:
+            0 24px 70px rgba(0, 0, 0, 0.45),
+            0 0 44px rgba(0, 150, 255, 0.1);
+    }
+
+    .card-content {
+        padding: 22px 22px 20px 30px;
+    }
+
+    .card-header {
+        grid-template-columns: 78px minmax(0, 1fr);
+        gap: 18px;
+    }
+
+    .doc-thumb {
+        width: 70px;
+        height: 92px;
+        border-radius: 18px;
+    }
+
+    .card-title {
+        font-size: 20px;
+    }
+
+    .card-details {
+        margin-top: 18px;
+    }
+
+    .ux-states-panel {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        padding: 18px;
+        border-radius: 26px;
+    }
+
+    .ux-states-panel .section-kicker {
+        grid-column: 1 / -1;
+    }
+
+    .bottom-nav {
+        position: fixed;
+        left: 24px;
+        top: 122px;
+        bottom: auto;
+        transform: none;
+        width: 88px;
+        max-width: 88px;
+        padding: 14px 10px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        border: 1px solid rgba(123, 201, 255, 0.2);
+        border-radius: 28px;
+        background: linear-gradient(180deg, rgba(8, 20, 34, 0.88), rgba(3, 10, 18, 0.94));
+        box-shadow:
+            0 24px 70px rgba(0, 0, 0, 0.46),
+            inset 0 1px 0 rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+    }
+
+    .nav-item {
+        min-width: 0;
+        min-height: 68px;
+        padding: 8px 4px;
+        border-radius: 18px;
+        gap: 6px;
+    }
+
+    .nav-item svg {
+        width: 25px;
+        height: 25px;
+    }
+
+    .nav-label {
+        font-size: 11px;
+    }
+
+    .floating-add-btn {
+        position: fixed;
+        top: 118px;
+        right: 34px;
+        bottom: auto;
+        width: 72px;
+        height: 72px;
+    }
+
+    .screen-header {
+        margin: 0 0 18px;
+        padding: 0;
+    }
+
+    .screen-title {
+        font-size: 38px;
+    }
+
+    .back-btn {
+        min-height: 46px;
+        padding-inline: 18px;
+    }
+
+    .detail-view {
+        display: grid;
+        grid-template-columns: minmax(520px, 1.35fr) minmax(320px, 0.75fr);
+        gap: 22px;
+        padding: 22px;
+        border-radius: 28px;
+    }
+
+    .detail-preview-placeholder {
+        min-height: 540px;
+        grid-row: span 2;
+        border-radius: 24px;
+    }
+
+    .detail-info {
+        display: grid;
+        gap: 14px;
+        align-self: start;
+    }
+
+    .detail-actions {
+        align-self: end;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .add-form {
+        width: min(100%, 900px);
+        margin-inline: auto;
+        padding: 26px;
+        border-radius: 28px;
+    }
+
+    .category-choice-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .timeline-list,
+    .vaccine-list,
+    .packs-list {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(260px, 1fr));
+        gap: 18px;
+    }
+
+    .timeline-item,
+    .vaccine-card,
+    .pack-card,
+    .profile-card,
+    .settings-section {
+        border-radius: 24px;
+    }
+
+    .profile-section {
+        max-width: 720px;
+    }
+
+    #screen-profile .screen-content {
+        display: grid;
+        grid-template-columns: minmax(320px, 0.8fr) minmax(520px, 1.2fr);
+        gap: 18px;
+        align-items: start;
+    }
+
+    #screen-profile .screen-header {
+        grid-column: 1 / -1;
+    }
+
+    .prototype-toast {
+        position: fixed;
+        bottom: 28px;
+    }
+
+    .prototype-modal {
+        place-items: center;
+    }
+
+    .prototype-modal-card {
+        width: min(100%, 520px);
+    }
+}
+
+@media (min-width: 900px) and (max-width: 1180px) {
+    .mobile-frame {
+        padding-left: 118px;
+        padding-right: 24px;
+    }
+
+    .brand-header {
+        margin-left: -118px;
+        margin-right: -24px;
+        padding-left: 118px;
+        padding-right: 24px;
+    }
+
+    .vault-hero,
+    .detail-view,
+    #screen-profile .screen-content {
+        grid-template-columns: 1fr;
+    }
+
+    .documents-list,
+    .timeline-list,
+    .vaccine-list,
+    .packs-list {
+        grid-template-columns: repeat(2, minmax(260px, 1fr));
+    }
+
+    .detail-preview-placeholder {
+        min-height: 420px;
+        grid-row: auto;
     }
 }

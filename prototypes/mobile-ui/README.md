@@ -2,7 +2,7 @@
 
 ## Overview
 
-This prototype demonstrates a **premium mobile-first UI/UX redesign** for BlueWallet Pro, following the Grok visual standard for a seafarer digital wallet.
+This prototype demonstrates a **premium mobile-first and desktop-compatible UI/UX redesign** for BlueWallet Pro, following the Grok visual standard for a seafarer digital wallet.
 
 ## Visual Design Goals
 
@@ -11,6 +11,7 @@ This prototype demonstrates a **premium mobile-first UI/UX redesign** for BlueWa
 - **Strong brand identity**: Wave/ocean logo mark with "THE BLUE" wordmark
 - **Status-first design**: Clear visual hierarchy using color (red/green/blue)
 - **Mobile-native**: Bottom navigation, floating actions, touch-friendly targets
+- **Desktop-matched**: The same visual system expands into a wide dashboard with a left navigation rail and responsive document grids
 - **Review-safe prototype**: All changes stay inside `prototypes/mobile-ui/`
 
 ## Files in This Directory
@@ -61,8 +62,8 @@ This prototype demonstrates a **premium mobile-first UI/UX redesign** for BlueWa
 - Premium glow shadow effect
 - Does not cover important content
 
-### 6. Bottom Navigation
-Five main app sections (NOT document categories):
+### 6. Navigation
+Five main app sections (NOT document categories). On phone widths this appears as bottom navigation. On desktop widths it becomes a compact left navigation rail:
 - Vault
 - Timeline
 - Vaccines
@@ -104,18 +105,19 @@ Five main app sections (NOT document categories):
 ## Responsive Behavior
 
 - **Mobile (< 390px)**: Full-width mobile frame
-- **Desktop (> 450px)**: Centered phone mockup with shadow
+- **Tablet/Desktop (> 900px)**: Wide premium dashboard with sticky header, left navigation rail, responsive card grids, and desktop-sized detail/add layouts
 - **Safe areas**: Respects iOS safe-area-inset
 - **Touch targets**: Minimum 44x44px
-- **Overflow**: Designed for 390px and 320px mobile review with no horizontal page scroll
+- **Overflow**: Designed for 320px, 390px, tablet, and desktop review with no horizontal page scroll
 - **Bottom spacing**: Extra scroll room keeps the nav and floating add button from covering review content
 
 ## How to Preview
 
 1. Open `preview.html` in any modern browser
 2. For mobile simulation, use browser DevTools device mode
-3. Set viewport to 390px width (iPhone 12/13/14 Pro)
-4. Test scrolling and touch interactions
+3. Set viewport to 390px width for the phone design
+4. Set viewport to 1440px or wider for the desktop companion design
+5. Test navigation, scrolling, filters, detail view, and add flow in both widths
 
 ## What This Prototype Does NOT Include
 
@@ -152,7 +154,8 @@ This is a **visual prototype only** for design review.
 ### Responsive Testing
 - [ ] 390px viewport: no horizontal overflow
 - [ ] 320px viewport: no horizontal overflow
-- [ ] Desktop preview centers correctly
+- [ ] Desktop preview expands into the wide dashboard layout
+- [ ] Desktop left navigation rail works without covering content
 
 ### Navigation
 - [ ] Bottom nav usable on all screens
