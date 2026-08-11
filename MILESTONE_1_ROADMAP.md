@@ -190,20 +190,37 @@ Captured into `recovered/` (checked into this branch, see `recovered/README.md` 
 - feature-marker counts match the Section 2 table
 - file closes with `</html>` (download is complete, not truncated)
 
-### Step 4 — Establish the recovered state as source of truth
+### Step 4 — Establish the recovered state as source of truth ✅ DONE (2026-08-12, not yet pushed)
 
-Create `recovery/production-baseline-20260812` from current `main`. Replace `public/` with the recovered assets. Commit as `Recover deployed production source`.
+Branch `recovery/production-baseline-20260812` created from `main`. Replaced the 4 `public/` files that actually differed from production (`legacy-root-pwa.html`, `service-worker.js`, `index.html`, `offline.html` — confirmed by `cmp` against `recovered/` before touching anything). Left `app.js`, `styles.css`, `manifest.json`, and the icon files untouched since the repo's copies are already the correct ones (production serves the fallback shell on those seven routes — see P1 above).
 
-Keep the stale `public/legacy-root-pwa.html` in history — do not force-push or rewrite. The old file is the only artifact that shows what the pre-mobile app looked like.
+Committed as `4f566be` — `Recover deployed production source`. 20 files changed, 21,580 insertions, 134 deletions. Nothing force-pushed or rewritten; `main` and its history are untouched, so the stale pre-mobile `legacy-root-pwa.html` is still there on `main` for reference.
 
-### Step 5 — Close the app-shell serving bug
+Not pushed yet — that's Step 8, and requires your go-ahead first per the push/deploy safety rule.
 
-Decide, with Jenny, which is true:
+### Step 5 — Close the app-shell serving bug ✅ DONE (2026-08-12, not yet pushed/deployed)
 
-- `app.js` / `styles.css` are unused by the wallet → remove both from `APP_SHELL` in `service-worker.js`, bump `CACHE_VERSION` to `v0.27`; **or**
-- they are needed → fix hosting so they serve with correct MIME types.
+**Root cause identified — it is not a code defect in this repo.**
 
-Evidence points to the first. Either way `CACHE_VERSION` must be bumped, or clients keep the poisoned precache.
+Checked whether `app.js`, `styles.css`, and the icon files are actually referenced anywhere:
+
+- `public/legacy-root-pwa.html` and `public/index.html` reference `apple-touch-icon.png` directly.
+- `manifest.json` references `icon-192.png`, `icon-512.png`, `icon-maskable-512.png`.
+- `app/layout.tsx` (the vinext wrapper) references `/icon-192.png` and `/apple-touch-icon.png` via Next's `metadata.icons`, and `/manifest.json`.
+- **Nothing anywhere references `app.js` or `styles.css`** — not the wallet, not the vinext wrapper (`app/page.tsx` just does a server-side redirect to `/legacy-root-pwa.html`; `app/globals.css` uses Tailwind, not `styles.css`). They're dead files.
+- `favicon.svg` also isn't referenced by any `<link rel="icon">` in current code — the app uses `icon-192.png` as favicon via `app/layout.tsx` metadata instead. Left in place (harmless, commonly requested by convention) but flagged as orphaned.
+
+So the icons are load-bearing and must serve correctly; `app.js`/`styles.css` are not and can be dropped from the cache list. That's a mixed outcome, not the either/or the roadmap first framed it as.
+
+**Then checked whether serving them correctly is even possible from this repo's current state.** Ran `npm run build` fresh and inspected `dist/client/`: all seven files — `app.js`, `styles.css`, `favicon.svg`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `icon-maskable-512.png` — are present with their real content and correct types (verified via file-type inspection: real PNGs at 192×192/512×512/512×512/180×180, real SVG). **A fresh build of the current repo does not reproduce the bug.** That confirms the live serving bug is caused by the deployed Worker bundle being stale (built from whatever unrecoverable commit produced the mismatched `legacy-root-pwa.html` found in Section 1), not by anything wrong in this codebase. It should self-resolve once this recovered baseline is actually redeployed (Step 8+, hosted deploy — out of scope for this repo-only pass).
+
+**Changes made in this branch:**
+
+- `public/service-worker.js`: removed `"./styles.css"` and `"./app.js"` from `APP_SHELL` (dead references, no longer precached). Bumped `CACHE_VERSION` from `blue-wallet-stable-rollback-v0.26` (the recovered production value) to `v0.27`.
+- The recovered `legacy-root-pwa.html` has its own internal `APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.26'`, used by the in-app update-prompt feature (`APP_VERSION_RE`, compares the running app's baked-in version against the live `service-worker.js`'s `CACHE_VERSION` and prompts the user to refresh on mismatch). Left this untouched — the `v0.26` → `v0.27` mismatch this creates is intentional; it's exactly the signal the update prompt is designed to detect once `v0.27` is actually deployed.
+- `tests/rendered-html.test.mjs`: both hardcoded version assertions were still pinned to `v0.19` (the stale pre-recovery value). Updated to `v0.26` (HTML's baked-in version, untouched, taken verbatim from production) and `v0.27` (new SW version). `npm test` passes 2/2 after the change.
+
+**Still open, deferred to a later milestone (not this repo, not this pass):** the deployed host apparently returns HTTP 200 with the app-shell HTML for any static path it doesn't recognize, instead of a real 404. That's a separate, more general defect in the hosting/routing layer — once the stale-bundle issue is fixed by redeploying, an unmatched path should ideally 404, not silently succeed with garbage. Worth a follow-up ticket against the hosting config once someone has access to it; not fixable from within `public/` or `service-worker.js`.
 
 ### Step 6 — Fix lint and make it gate deploys
 

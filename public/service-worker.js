@@ -1,12 +1,10 @@
-const CACHE_VERSION = "blue-wallet-stable-rollback-v0.26";
+const CACHE_VERSION = "blue-wallet-stable-rollback-v0.27";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./legacy-root-pwa.html",
   "./manifest.json",
   "./offline.html",
-  "./styles.css",
-  "./app.js",
   "./icon-192.png",
   "./icon-512.png",
   "./icon-maskable-512.png",
