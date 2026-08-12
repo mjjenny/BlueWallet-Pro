@@ -524,6 +524,23 @@
       .ring-fill { transition: none; }
     }
 
+    /* ===== PACK PROGRESS RING (shared structure; sizing set per breakpoint
+       alongside .mobile-pack-icon) ===== */
+    .mobile-pack-icon { width: 64px; height: 64px; }
+    .mobile-pack-icon.pack-ring { position: relative; cursor: pointer; }
+    .pack-ring-svg {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      transform: rotate(-90deg);
+      pointer-events: none;
+    }
+    .pack-ring-track, .pack-ring-fill { fill: none; stroke-width: 7; }
+    .pack-ring-track { stroke: rgba(255,255,255,.16); }
+    .pack-ring-fill { stroke-linecap: round; transition: stroke-dashoffset 0.8s cubic-bezier(.22,1,.36,1); }
+    .pack-ring-label { position: relative; z-index: 1; }
+    @media (prefers-reduced-motion: reduce) {
+      .pack-ring-fill { transition: none; }
+    }
+
     /* ===== CATEGORY RAIL (no All) ===== */
     .cats {
       display: flex; flex-wrap: nowrap; gap: clamp(3px, .45vw, 7px);
@@ -1085,6 +1102,27 @@
         gap: 14px;
         margin-bottom: 24px;
       }
+      #modal-generic.packs-mode .mobile-pack-card {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      #modal-generic.packs-mode .mobile-pack-icon {
+        width: 64px;
+        height: 64px;
+        flex-shrink: 0;
+        border-radius: 16px;
+        display: grid;
+        place-items: center;
+        color: #9ed4ff;
+        font-size: 26px;
+        background: linear-gradient(145deg, rgba(63, 157, 255, .34), rgba(9, 37, 68, .82));
+        border: 1px solid rgba(174,208,255,.28);
+      }
+      #modal-generic.packs-mode .mobile-pack-card.medical .mobile-pack-icon { color: #ffd05b; background: linear-gradient(145deg, rgba(229, 176, 61, .42), rgba(74, 47, 15, .78)); }
+      #modal-generic.packs-mode .mobile-pack-card.visa .mobile-pack-icon { color: #9d93ff; background: linear-gradient(145deg, rgba(111, 94, 255, .42), rgba(24, 26, 82, .78)); }
+      #modal-generic.packs-mode .mobile-pack-card.ready .mobile-pack-icon { color: #73f2c9; background: linear-gradient(145deg, rgba(37, 213, 172, .34), rgba(10, 61, 57, .78)); }
+      #modal-generic.packs-mode .mobile-pack-icon.pack-ring { font-size: 12px; }
       #modal-generic.packs-mode .desktop-pack-body {
         border-top: 1px solid var(--glass-border);
         padding-top: 20px;
@@ -4206,6 +4244,7 @@
         border-radius: 18px;
         background: linear-gradient(180deg, rgba(16, 40, 70, .74), rgba(7, 23, 42, .7));
         box-shadow: 0 20px 52px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.1);
+        cursor: pointer;
       }
       .mobile-pack-icon {
         width: 84px;
@@ -11396,94 +11435,6 @@
       });
     }
 
-    function openPacksUI() {
-      const countTypes = types => documents.filter(d => types.includes(d.type)).length;
-      const packModels = [
-        { name: 'STCW Pack', icon: '◌', count: countTypes(['certificate','coc']), total: 8, cls: 'ready', note: 'All documents ready', bar: '#55d96b' },
-        { name: 'Medical Pack', icon: '+', count: countTypes(['medical','yellowfever']), total: 6, cls: 'warn medical', note: 'Review medical readiness', bar: '#ffd24f' },
-        { name: 'Visa & Immigration', icon: '✈', count: countTypes(['visa','passport']), total: 4, cls: 'review visa', note: 'Review required', bar: '#3da1ff' },
-        { name: 'CDC & Yellow Fever', icon: '✓', count: countTypes(['cdc','yellowfever']), total: 2, cls: 'ready', note: 'Ready to share', bar: '#55d96b' },
-      ];
-      const mobileBody = `<div class="mobile-pack-brand"><span class="mark" aria-hidden="true"></span><div><strong>THE BLUE</strong><span>seafarer</span></div></div>
-        <div class="mobile-pack-list">
-          ${packModels.map(p => {
-            const capped = Math.min(p.count, p.total);
-            const pct = Math.max(8, Math.round((capped / p.total) * 100));
-            const ready = capped >= p.total;
-            return `<article class="mobile-pack-card ${p.cls}" style="--progress:${pct}%;--bar:${p.bar}">
-              <div class="mobile-pack-icon" aria-hidden="true">${esc(p.icon)}</div>
-              <div class="mobile-pack-main">
-                <h3>${esc(p.name)}</h3>
-                <div class="mobile-pack-meta">${ready ? 'Complete v' : capped + '/' + p.total + ' complete !'}</div>
-                <div class="mobile-pack-progress"><span></span></div>
-                <div class="mobile-pack-sub">${esc(ready ? p.note : (p.total - capped) + ' document pending')}</div>
-              </div>
-              <button class="btn btn-ghost mobile-pack-share" data-pack-share data-share-pack-auto="${esc(p.name)}">Share pack</button>
-            </article>`;
-          }).join('')}
-        </div>
-        <div class="mobile-pack-new">
-          <div class="field"><label>New pack name</label><input type="text" id="new-pack-name" placeholder="e.g. Joining M/V Aurora" /></div>
-          <button class="btn btn-primary" id="btn-create-pack" style="width:100%">+ Create pack</button>
-          <button class="btn btn-ghost" id="btn-stcw-from-packs" data-open-stcw style="width:100%;margin-top:10px">STCW checklist reference</button>
-        </div>`;
-      const body = packs.map(p =>
-        `<div class="check-item"><div><div class="cn">${esc(p.name)}</div><div class="cs">${(p.docIds||[]).length} docs</div></div>
-         <div><button class="btn btn-ghost" data-open-pack="${p.id}">Open</button>
-         <button class="btn btn-danger" data-del-pack="${p.id}">Delete</button></div></div>`
-      ).join('') || '<p style="color:var(--muted)">No packs yet.</p>';
-      showGeneric('Document Packs', mobileBody + `<div class="desktop-pack-body">${body}
-        <div class="field" style="margin-top:14px"><label>New pack name</label>
-        <input type="text" id="new-pack-name-desktop" placeholder="e.g. Joining M/V Aurora" /></div>
-        <button class="btn btn-primary" id="btn-create-pack-desktop" style="width:100%">Create empty pack</button>
-        <p style="font-size:12px;color:var(--muted);margin-top:8px">Tip: use Select mode, then Share, or edit pack membership later by re-saving docs into a pack from checklist context.</p></div>`, 'packs-mode');
-      document.getElementById('btn-create-pack').onclick = () => {
-        const name = document.getElementById('new-pack-name').value.trim();
-        if (!name) return;
-        packs.push({ id: uid(), name, docIds: [] });
-        savePacks();
-        openPacksUI();
-      };
-      document.getElementById('btn-create-pack-desktop')?.addEventListener('click', () => {
-        const name = document.getElementById('new-pack-name-desktop').value.trim();
-        if (!name) return;
-        packs.push({ id: uid(), name, docIds: [] });
-        savePacks();
-        openPacksUI();
-      });
-      document.querySelectorAll('[data-share-pack-auto]').forEach(b => b.onclick = () => {
-        alert(`${b.dataset.sharePackAuto} is ready for review. Use Select + Share to export the exact document set.`);
-      });
-      document.getElementById('btn-stcw-from-packs')?.addEventListener('click', () => {
-        close('modal-generic');
-        openStcwUI();
-      });
-      document.querySelectorAll('[data-open-pack]').forEach(b => b.onclick = () => {
-        activePack = b.dataset.openPack;
-        close('modal-generic');
-        render();
-        alert('Pack filter on - clear via Packs or reload category tab');
-      });
-      document.querySelectorAll('[data-del-pack]').forEach(b => b.onclick = () => {
-        packs = packs.filter(p => p.id !== b.dataset.delPack);
-        if (activePack === b.dataset.delPack) activePack = null;
-        savePacks(); openPacksUI();
-      });
-    }
-    function openStcwUI() {
-      const rankKey = Object.keys(STCW_MATRIX).find(k => (seafarer.rank||'').toLowerCase().includes(k.split(' ')[0].toLowerCase())) || 'Generic';
-      const reqs = STCW_MATRIX[rankKey] || STCW_MATRIX.Generic;
-      const body = `<p style="color:var(--muted);margin-bottom:12px">Matrix for: <b style="color:#fff">${esc(rankKey)}</b> (set rank in profile for better match)</p>` +
-        reqs.map(course => {
-          const hit = documents.find(d =>
-            (d.type === 'certificate' || d.type === 'coc') &&
-            (d.title||'').toLowerCase().includes(course.toLowerCase().slice(0,4))
-          );
-          return `<div class="matrix-row ${hit?'ok':''}"><span>${esc(course)}</span><span>${hit ? '✅ ' + esc(hit.title) : '❌ Missing'}</span></div>`;
-        }).join('');
-      showGeneric('STCW / course matrix', body);
-    }
-
     function openSeatimeUI(editId) {
       const editing = editId ? seatime.find(s => s.id === editId) : null;
       const rows = seatime.map(s =>
@@ -12381,24 +12332,35 @@
             const capped = Math.min(docIds.length, p.total);
             const pct = Math.max(8, Math.round((capped / p.total) * 100));
             const ready = capped >= p.total;
-            return `<article class="mobile-pack-card ${p.cls}" style="--progress:${pct}%;--bar:${p.bar}">
-              <div class="mobile-pack-icon" aria-hidden="true">${esc(p.icon)}</div>
+            const dashoffset = (264 * (1 - pct / 100)).toFixed(1);
+            return `<article class="mobile-pack-card ${p.cls}" data-pack-detail-auto="${esc(p.id)}">
+              <div class="mobile-pack-icon pack-ring" aria-hidden="true">
+                <svg class="pack-ring-svg" viewBox="0 0 100 100">
+                  <circle class="pack-ring-track" cx="50" cy="50" r="42" />
+                  <circle class="pack-ring-fill" cx="50" cy="50" r="42" style="stroke:${p.bar};stroke-dasharray:264;stroke-dashoffset:${dashoffset}" />
+                </svg>
+                <span class="pack-ring-label">${esc(p.icon)}</span>
+              </div>
               <div class="mobile-pack-main">
                 <h3>${esc(p.name)}</h3>
                 <div class="mobile-pack-meta">${capped}/${p.total} ${ready ? 'complete' : 'complete !'}</div>
-                <div class="mobile-pack-progress"><span></span></div>
                 <div class="mobile-pack-sub">${esc(ready ? 'All documents ready' : (p.total - capped) + ' document pending')}</div>
               </div>
               <button class="btn btn-ghost mobile-pack-edit" data-edit-pack-auto="${esc(p.id)}">Choose docs</button>
               <button class="btn btn-ghost mobile-pack-share" data-pack-share data-share-pack-auto="${esc(p.id)}">Share pack</button>
             </article>`;
           }).join('')}
-          ${packs.map(p => `<article class="mobile-pack-card custom" style="--progress:100%;--bar:#5ed4ff">
-            <div class="mobile-pack-icon" aria-hidden="true">NEW</div>
+          ${packs.map(p => `<article class="mobile-pack-card custom" data-pack-detail-custom="${esc(p.id)}">
+            <div class="mobile-pack-icon pack-ring" aria-hidden="true">
+              <svg class="pack-ring-svg" viewBox="0 0 100 100">
+                <circle class="pack-ring-track" cx="50" cy="50" r="42" />
+                <circle class="pack-ring-fill" cx="50" cy="50" r="42" style="stroke:#5ed4ff;stroke-dasharray:264;stroke-dashoffset:0" />
+              </svg>
+              <span class="pack-ring-label">NEW</span>
+            </div>
             <div class="mobile-pack-main">
               <h3>${esc(p.name)}</h3>
               <div class="mobile-pack-meta">${(p.docIds || []).length} selected</div>
-              <div class="mobile-pack-progress"><span></span></div>
               <div class="mobile-pack-sub">Custom document pack</div>
             </div>
             <button class="btn btn-ghost mobile-pack-edit" data-edit-pack-custom="${esc(p.id)}">Choose docs</button>
@@ -12433,6 +12395,16 @@
         const model = packModels.find(p => p.id === b.dataset.editPackAuto);
         if (model) openPackBuilder({ name: model.name, docIds: recommendedPackDocs(model.types), presetTypes: model.types });
       });
+      document.querySelectorAll('[data-pack-detail-auto]').forEach(card => card.addEventListener('click', e => {
+        if (e.target.closest('button')) return;
+        const model = packModels.find(p => p.id === card.dataset.packDetailAuto);
+        if (model) openPackDetail(model);
+      }));
+      document.querySelectorAll('[data-pack-detail-custom]').forEach(card => card.addEventListener('click', e => {
+        if (e.target.closest('button')) return;
+        const pack = packs.find(p => p.id === card.dataset.packDetailCustom);
+        if (pack) openPackBuilder({ id: pack.id, name: pack.name, docIds: pack.docIds || [] });
+      }));
       document.querySelectorAll('[data-share-pack-custom]').forEach(b => b.onclick = () => {
         const pack = packs.find(p => p.id === b.dataset.sharePackCustom);
         if (pack) openPackShareSheet(pack.name, pack.docIds || []);
@@ -12452,6 +12424,34 @@
         if (activePack === b.dataset.delPack) activePack = null;
         savePacks(); openPacksUI();
       });
+    }
+
+    function openPackDetail(model) {
+      const matched = documents.filter(d => model.types.includes(d.type) && !d.archived);
+      const capped = Math.min(matched.length, model.total);
+      const remaining = Math.max(0, model.total - matched.length);
+      const typesLabel = model.types.map(t => LABELS[t] || t).join(' / ');
+      const rows = matched.map(d => {
+        const st = status(d);
+        const ok = st.key === 'valid' || st.key === 'none';
+        return `<div class="matrix-row ${ok ? 'ok' : ''}"><span class="matrix-course">${esc(d.title)}</span><span class="matrix-status">${esc(st.label)}</span></div>`;
+      }).join('') || '<p style="color:var(--muted)">No documents in this pack yet.</p>';
+      const missingRow = remaining > 0
+        ? `<div class="matrix-row"><span class="matrix-course">${remaining} more needed</span><span class="matrix-status">Missing</span></div>`
+        : '';
+      showGeneric(model.name, `
+        <p style="color:var(--muted);margin-bottom:12px">${esc(typesLabel)} - <b style="color:#fff">${capped}/${model.total}</b> on file</p>
+        ${rows}${missingRow}
+        <button class="btn btn-primary" id="btn-pack-detail-add" style="width:100%;margin-top:14px">+ Add missing document</button>
+        <button class="btn btn-ghost" id="btn-pack-detail-back" style="width:100%;margin-top:10px">Back to Packs</button>
+      `, 'stcw-mode');
+      document.getElementById('btn-pack-detail-add').onclick = () => {
+        close('modal-generic');
+        openAdd();
+        const select = document.getElementById('doc-type');
+        if (select) { select.value = model.types[0]; select.dispatchEvent(new Event('change', { bubbles: true })); }
+      };
+      document.getElementById('btn-pack-detail-back').onclick = () => openPacksUI();
     }
 
     function openPackBuilder({ id = '', name = '', docIds = [], presetTypes = [] } = {}) {
