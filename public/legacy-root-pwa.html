@@ -969,6 +969,35 @@
       }
     }
 
+    /* ===== SEA-TIME LOG — DESKTOP LAYOUT ===== */
+    @media (min-width: 1024px) {
+      #modal-generic.seatime-mode .modal { max-width: 760px; }
+      #modal-generic.seatime-mode #generic-body {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        align-content: start;
+      }
+      #modal-generic.seatime-mode #generic-body > p,
+      #modal-generic.seatime-mode #generic-body > .field,
+      #modal-generic.seatime-mode #generic-body > .row,
+      #modal-generic.seatime-mode #generic-body > input,
+      #modal-generic.seatime-mode #generic-body > button {
+        grid-column: 1 / -1;
+      }
+      #modal-generic.seatime-mode .sea-row {
+        padding: 16px;
+        border-radius: 14px;
+        background: rgba(12, 32, 54, .55);
+        border: 1px solid var(--glass-border);
+        font-size: 13px;
+      }
+      #modal-generic.seatime-mode .sea-row b {
+        font-size: 15px;
+        color: var(--text);
+      }
+    }
+
     /* Large desktop — 3-column cards when space allows */
     @media (min-width: 1280px) {
       .main { max-width: 1200px; }
