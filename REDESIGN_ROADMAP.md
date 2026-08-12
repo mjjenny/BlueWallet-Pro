@@ -14,7 +14,7 @@ on mobile / left rail on desktop. Treating it as whole-app here.
 
 | Plan item | Reality | Effort left |
 |---|---|---|
-| Readiness hero (score + metrics + CTA) | **Does not exist.** The 22 "readiness" hits in the code are all the unrelated *Release Readiness* QA panel. No progress ring exists either (`stroke-dasharray` hits are the helm logo). | Build from scratch |
+| Readiness hero (score + metrics + CTA) | **Done** (1.1, `c2c4c34`) — progress ring, adaptive label/CTA, verified live | — |
 | Left rail on desktop | **Done** — added this session, 5 items, wired to existing nav JS | — |
 | Bottom nav on mobile | **Done** — shipped in the mobile phase | — |
 | Pack cards with progress | **Mostly done** — 4 auto-packs render with progress *bars*, status colours, and completion counts. Plan asks for *rings*. | Restyle only |
@@ -57,19 +57,23 @@ Nothing in Phase 1 is blocked by this except item 1.5. Decide before then.
 
 The plan's own priority order, kept.
 
-### 1.1 Readiness hero *(biggest single win)*
-Replace the current `.profile-strip` hero (large name + 3 stat pills) with:
-- Circular progress ring showing a readiness score, animated on load
-- Three metrics in a row: Total · Expiring soon · Expired *(data already exists —
-  `stat-total`, `stat-expiring`, `stat-expired` are populated in `render()`)*
-- One primary CTA that adapts: "+ Add first document" when empty → "Complete
-  STCW Pack" when a pack is closest to done
+### 1.1 Readiness hero *(biggest single win)* — ✅ DONE (2026-08-12, `c2c4c34`)
+Replaced the flat `.profile-strip` hero with an animated circular readiness
+ring (`computeReadiness()`), the existing stat pills (Total · Expiring ·
+Expired), and an adaptive CTA/label: "Getting started" + "+ Add first
+document" when empty, "Missing: X, Y" + "+ Add Document" when partial, "Ready
+to join" at 100%. Ring colour: red (<60%), amber (60–99%), accent (100%).
 
-**Needs a definition first:** what counts toward "% Ready"? Suggested starting
-formula, open to change — core joining docs present and unexpired (passport,
-CDC, COC, medical), weighted by expiry proximity. This must be agreed before
-building, since a readiness score that disagrees with a seafarer's own judgment
-is worse than none.
+Formula used (not re-confirmed with user beyond "ok start with it" — flag if
+it should change): % of the 5 `JOIN_REQUIRED` categories (passport, CDC, COC,
+medical, STCW/certificate) with at least one present, non-archived,
+non-expired document. Stricter than the pre-existing `renderChecklist()`
+(which counts "present" alone, even if expired).
+
+Verified in-browser at mobile (375px) and desktop (1280px) viewports across
+empty/40%/80%/100% states — no overlap, no overflow, ring/label/CTA all
+update correctly. `npm test` clean. Pushed to `feature/desktop-grok-redesign`,
+confirmed byte-identical live on Cloudflare (`READINESS RING` marker present).
 
 ### 1.2 Category cards with status strips
 Add a coloured status strip to each category card (green all-valid / amber
