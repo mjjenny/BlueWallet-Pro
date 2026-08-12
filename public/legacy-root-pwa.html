@@ -1047,6 +1047,25 @@
       }
     }
 
+    /* ===== RENEWAL TIMELINE — DESKTOP WRAPPING GRID =====
+       .timeline is produced only by buildTimelineHtml(), shared between the
+       inline #timeline-wrap panel (desktop tools-row) and the
+       #modal-generic.timeline-mode modal (mobile nav) -- this fixes both. */
+    @media (min-width: 1024px) {
+      .timeline {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 12px;
+        overflow: visible !important;
+        scroll-snap-type: none;
+        padding: 2px;
+      }
+      .tl-month {
+        flex: none;
+        min-height: 120px;
+      }
+    }
+
     /* Large desktop — 3-column cards when space allows */
     @media (min-width: 1280px) {
       .main { max-width: 1200px; }
