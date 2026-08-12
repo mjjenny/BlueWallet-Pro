@@ -1303,6 +1303,7 @@
         column-gap: 24px;
       }
       .sblock,
+      .settings-group,
       .settings-body .sfoot {
         break-inside: avoid;
       }
@@ -1500,6 +1501,25 @@
     }
     .sblock h3 { font-size: 17px; margin-bottom: 5px; color: #fff; }
     .sblock p { font-size: 15px; color: var(--muted); margin-bottom: 12px; }
+    .settings-group { margin-bottom: 18px; }
+    .settings-group summary {
+      cursor: pointer;
+      list-style: none;
+      display: flex; align-items: center; justify-content: space-between;
+      min-height: 44px;
+      padding: 4px 2px;
+      font-size: 13px; font-weight: 800; color: var(--accent);
+      text-transform: uppercase; letter-spacing: .08em;
+      border-bottom: 1px solid var(--glass-border);
+      margin-bottom: 12px;
+    }
+    .settings-group summary::-webkit-details-marker { display: none; }
+    .settings-group summary::after {
+      content: '▾'; font-size: 12px; color: var(--muted);
+      transition: transform .2s;
+    }
+    .settings-group[open] summary::after { transform: rotate(180deg); }
+    .settings-group .sblock:last-child { margin-bottom: 0; }
     .theme-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -8763,136 +8783,164 @@
           <div class="mobile-wave-mark" aria-hidden="true">≋</div>
           <div><strong>THE BLUE</strong><span>Seafarer Digital Wallet</span></div>
         </div>
-        <div class="sblock">
-          <h3>App mode</h3>
-          <p>Lite = core wallet only. Full = packs, STCW, OCR, logs, timeline, bulk tools.</p>
-          <button class="btn btn-ghost" id="btn-mode-settings" style="width:100%">Switch to Lite mode</button>
-        </div>
-        <div class="sblock">
-          <h3>Appearance</h3>
-          <p>Choose a sea theme and motion style.</p>
-          <div class="theme-grid" id="theme-grid" role="radiogroup" aria-label="Appearance theme">
-            <button type="button" class="theme-choice" data-theme-choice="violet"><span>🟣</span><span>Violet Tide<small>VIBGYOR violet</small></span></button>
-            <button type="button" class="theme-choice" data-theme-choice="indigo"><span>🔷</span><span>Indigo Depth<small>VIBGYOR indigo</small></span></button>
-            <button type="button" class="theme-choice" data-theme-choice="ocean"><span>🌊</span><span>Ocean Blue<small>VIBGYOR blue, default</small></span></button>
-            <button type="button" class="theme-choice" data-theme-choice="current"><span>🟢</span><span>Deep Current<small>VIBGYOR green</small></span></button>
-            <button type="button" class="theme-choice" data-theme-choice="yellow"><span>🟡</span><span>Golden Beacon<small>VIBGYOR yellow</small></span></button>
-            <button type="button" class="theme-choice" data-theme-choice="sunset"><span>🟠</span><span>Harbor Sunset<small>VIBGYOR orange</small></span></button>
-            <button type="button" class="theme-choice" data-theme-choice="red"><span>🔴</span><span>Coral Red<small>VIBGYOR red</small></span></button>
-            <button type="button" class="theme-choice" data-theme-choice="night"><span>🌑</span><span>Abyssal Night<small>Slow deep water</small></span></button>
-            <button type="button" class="theme-choice" data-theme-choice="aurora"><span>✨</span><span>Aurora Watch<small>Bright animated glow</small></span></button>
+        <details class="settings-group" open>
+          <summary>Appearance</summary>
+          <div class="sblock">
+            <h3>App mode</h3>
+            <p>Lite = core wallet only. Full = packs, STCW, OCR, logs, timeline, bulk tools.</p>
+            <button class="btn btn-ghost" id="btn-mode-settings" style="width:100%">Switch to Lite mode</button>
           </div>
-        </div>
-        <div class="sblock settings-help-block">
-          <h3>Help & FAQ</h3>
-          <p>Open the full stable app guide for documents, backup, sync, print, OCR, sea-time, vaccines, packs, STCW, and real-device checks.</p>
-          <button class="btn btn-ghost" id="btn-settings-help" type="button" style="width:100%">Open Help Guide</button>
-        </div>
-        <div class="sblock">
-          <h3>Security</h3>
-          <p>PIN lock (4–6 digits). Setting a PIN encrypts documents at rest with AES-GCM (key derived via PBKDF2). Unlock with PIN after each reload. Biometrics confirm presence but PIN is still required to decrypt when encryption is on.</p>
-          <div class="field" style="margin:10px 0 0"><label>Set / change PIN</label>
-            <input type="password" id="pin-set" inputmode="numeric" maxlength="6" placeholder="New PIN" />
+          <div class="sblock">
+            <h3>Theme</h3>
+            <p>Choose a sea theme and motion style.</p>
+            <div class="theme-grid" id="theme-grid" role="radiogroup" aria-label="Appearance theme">
+              <button type="button" class="theme-choice" data-theme-choice="violet"><span>🟣</span><span>Violet Tide<small>VIBGYOR violet</small></span></button>
+              <button type="button" class="theme-choice" data-theme-choice="indigo"><span>🔷</span><span>Indigo Depth<small>VIBGYOR indigo</small></span></button>
+              <button type="button" class="theme-choice" data-theme-choice="ocean"><span>🌊</span><span>Ocean Blue<small>VIBGYOR blue, default</small></span></button>
+              <button type="button" class="theme-choice" data-theme-choice="current"><span>🟢</span><span>Deep Current<small>VIBGYOR green</small></span></button>
+              <button type="button" class="theme-choice" data-theme-choice="yellow"><span>🟡</span><span>Golden Beacon<small>VIBGYOR yellow</small></span></button>
+              <button type="button" class="theme-choice" data-theme-choice="sunset"><span>🟠</span><span>Harbor Sunset<small>VIBGYOR orange</small></span></button>
+              <button type="button" class="theme-choice" data-theme-choice="red"><span>🔴</span><span>Coral Red<small>VIBGYOR red</small></span></button>
+              <button type="button" class="theme-choice" data-theme-choice="night"><span>🌑</span><span>Abyssal Night<small>Slow deep water</small></span></button>
+              <button type="button" class="theme-choice" data-theme-choice="aurora"><span>✨</span><span>Aurora Watch<small>Bright animated glow</small></span></button>
+            </div>
           </div>
-          <div class="field"><input type="password" id="pin-set2" inputmode="numeric" maxlength="6" placeholder="Confirm PIN" /></div>
-          <div class="field" id="pin-current-wrap" style="display:none;margin-top:8px">
-            <label>Current PIN (required to change/remove)</label>
-            <input type="password" id="pin-current" inputmode="numeric" maxlength="6" autocomplete="off" />
+        </details>
+
+        <details class="settings-group" open>
+          <summary>Security</summary>
+          <div class="sblock">
+            <h3>PIN &amp; biometrics</h3>
+            <p>PIN lock (4–6 digits). Setting a PIN encrypts documents at rest with AES-GCM (key derived via PBKDF2). Unlock with PIN after each reload. Biometrics confirm presence but PIN is still required to decrypt when encryption is on.</p>
+            <div class="field" style="margin:10px 0 0"><label>Set / change PIN</label>
+              <input type="password" id="pin-set" inputmode="numeric" maxlength="6" placeholder="New PIN" />
+            </div>
+            <div class="field"><input type="password" id="pin-set2" inputmode="numeric" maxlength="6" placeholder="Confirm PIN" /></div>
+            <div class="field" id="pin-current-wrap" style="display:none;margin-top:8px">
+              <label>Current PIN (required to change/remove)</label>
+              <input type="password" id="pin-current" inputmode="numeric" maxlength="6" autocomplete="off" />
+            </div>
+            <button class="btn btn-ghost" id="btn-save-pin" style="width:100%;margin-bottom:8px">Save PIN</button>
+            <button class="btn btn-danger" id="btn-clear-pin" style="width:100%">Remove PIN</button>
+            <div class="toggle" style="margin-top:12px">
+              <div><div class="tl">Require unlock on open</div><div class="ts">Show lock screen when app loads</div></div>
+              <label class="sw"><input type="checkbox" id="pin-required" /><span class="sl"></span></label>
+            </div>
+            <div class="full-only">
+            <div class="toggle">
+              <div><div class="tl">Biometric unlock</div><div class="ts">Fingerprint / Face ID via WebAuthn (needs HTTPS or localhost)</div></div>
+              <label class="sw"><input type="checkbox" id="bio-enabled" /><span class="sl"></span></label>
+            </div>
+            <button class="btn btn-ghost" id="btn-register-bio" style="width:100%;margin-top:10px">🔐 Register biometric</button>
+            <button class="btn btn-danger" id="btn-clear-bio" style="width:100%;margin-top:8px">Remove biometric</button>
+            <p id="bio-status" style="font-size:12px;color:var(--muted);margin-top:8px"></p>
+            </div>
           </div>
-          <button class="btn btn-ghost" id="btn-save-pin" style="width:100%;margin-bottom:8px">Save PIN</button>
-          <button class="btn btn-danger" id="btn-clear-pin" style="width:100%">Remove PIN</button>
-          <div class="toggle" style="margin-top:12px">
-            <div><div class="tl">Require unlock on open</div><div class="ts">Show lock screen when app loads</div></div>
-            <label class="sw"><input type="checkbox" id="pin-required" /><span class="sl"></span></label>
+          <div class="sblock full-only">
+            <h3>Auto-lock</h3>
+            <p>Re-lock after inactivity (minutes). 0 = off.</p>
+            <div class="field"><label>Idle minutes</label><input type="number" id="idle-mins" min="0" max="120" value="5" /></div>
+            <button class="btn btn-ghost" id="btn-save-idle" style="width:100%">Save auto-lock</button>
           </div>
-          <div class="full-only">
-          <div class="toggle">
-            <div><div class="tl">Biometric unlock</div><div class="ts">Fingerprint / Face ID via WebAuthn (needs HTTPS or localhost)</div></div>
-            <label class="sw"><input type="checkbox" id="bio-enabled" /><span class="sl"></span></label>
+        </details>
+
+        <details class="settings-group" open>
+          <summary>Backup &amp; sync</summary>
+          <div class="sblock">
+            <h3>Download &amp; backup</h3>
+            <p>Export keeps scans private on your device. Full backups include a version label and integrity check.</p>
+            <button class="btn btn-primary" id="btn-export" style="width:100%;margin-bottom:8px">⬇ Download full backup v6</button>
+            <input type="file" id="import-file" accept=".json" class="hidden" />
+            <button class="btn btn-ghost" id="btn-import" style="width:100%;margin-bottom:8px">⬆ Verify &amp; import backup</button>
+            <button class="btn btn-ghost full-only" id="btn-meta-transfer" style="width:100%">Multi-device meta transfer</button>
+            <p style="font-size:12px;color:var(--muted);margin-top:10px">Also: open any document → Download scan · Tools → Share / Calendar (.ics in Full).</p>
           </div>
-          <button class="btn btn-ghost" id="btn-register-bio" style="width:100%;margin-top:10px">🔐 Register biometric</button>
-          <button class="btn btn-danger" id="btn-clear-bio" style="width:100%;margin-top:8px">Remove biometric</button>
-          <p id="bio-status" style="font-size:12px;color:var(--muted);margin-top:8px"></p>
+          <div class="sblock full-only">
+            <h3>Encrypted Sync Vault</h3>
+            <p>Optional Supabase sync. The full backup is encrypted on this device before upload, so the cloud stores only unreadable vault data.</p>
+            <div class="field"><label>Supabase project URL</label><input type="url" id="sync-url" placeholder="https://your-project.supabase.co" autocomplete="off" /></div>
+            <div class="field"><label>Supabase anon key</label><input type="password" id="sync-key" placeholder="Paste anon public key" autocomplete="off" /></div>
+            <div class="row">
+              <div class="field"><label>Vault ID</label><input id="sync-vault-id" placeholder="e.g. bluewallet-main" autocomplete="off" /></div>
+              <div class="field"><label>Sync passphrase</label><input type="password" id="sync-passphrase" placeholder="Required to encrypt/decrypt" autocomplete="off" /></div>
+            </div>
+            <div class="toggle">
+              <div><div class="tl">Remember passphrase here</div><div class="ts">Needed for automatic pull on this device. Leave off on shared devices.</div></div>
+              <label class="sw"><input type="checkbox" id="sync-remember" /><span class="sl"></span></label>
+            </div>
+            <div class="toggle">
+              <div><div class="tl">Auto-check on open</div><div class="ts">When saved, the app checks the vault and pulls newer data only when safe.</div></div>
+              <label class="sw"><input type="checkbox" id="sync-auto" /><span class="sl"></span></label>
+            </div>
+            <div class="actions" style="margin-top:10px">
+              <button class="btn btn-ghost" id="btn-sync-save" type="button">Save settings</button>
+              <button class="btn btn-primary" id="btn-sync-upload" type="button">Upload encrypted vault</button>
+            </div>
+            <button class="btn btn-ghost" id="btn-sync-pull" type="button" style="width:100%;margin-top:8px">Pull latest from vault</button>
+            <p id="sync-status" style="font-size:12px;color:var(--muted);margin-top:10px">Sync is off until settings are saved.</p>
           </div>
-        </div>
-        <div class="sblock full-only">
-          <h3>Auto-lock</h3>
-          <p>Re-lock after inactivity (minutes). 0 = off.</p>
-          <div class="field"><label>Idle minutes</label><input type="number" id="idle-mins" min="0" max="120" value="5" /></div>
-          <button class="btn btn-ghost" id="btn-save-idle" style="width:100%">Save auto-lock</button>
-        </div>
-        <div class="sblock">
-          <h3>Expiry reminders</h3>
-          <p>Alert when a document is within these windows (days).</p>
-          <div class="row">
-            <div class="field"><label>Primary</label><input type="number" id="rem-primary" min="1" max="730" value="183" /></div>
-            <div class="field"><label>Secondary</label><input type="number" id="rem-secondary" min="1" max="365" value="90" /></div>
+        </details>
+
+        <details class="settings-group" open>
+          <summary>Reminders</summary>
+          <div class="sblock">
+            <h3>Expiry reminders</h3>
+            <p>Alert when a document is within these windows (days).</p>
+            <div class="row">
+              <div class="field"><label>Primary</label><input type="number" id="rem-primary" min="1" max="730" value="183" /></div>
+              <div class="field"><label>Secondary</label><input type="number" id="rem-secondary" min="1" max="365" value="90" /></div>
+            </div>
+            <div class="row">
+              <div class="field"><label>Urgent</label><input type="number" id="rem-urgent" min="1" max="90" value="30" /></div>
+              <div class="field"><label>Critical</label><input type="number" id="rem-critical" min="1" max="30" value="7" /></div>
+            </div>
+            <button class="btn btn-ghost" id="btn-save-reminders" style="width:100%;margin-bottom:8px">Save reminder windows</button>
+            <button class="btn btn-ghost" id="btn-reminder-center" style="width:100%;margin-bottom:8px">Reminder center</button>
+            <button class="btn btn-ghost" id="btn-download-reminders" style="width:100%">⬇ Download expiry reminders</button>
           </div>
-          <div class="row">
-            <div class="field"><label>Urgent</label><input type="number" id="rem-urgent" min="1" max="90" value="30" /></div>
-            <div class="field"><label>Critical</label><input type="number" id="rem-critical" min="1" max="30" value="7" /></div>
+        </details>
+
+        <details class="settings-group" open>
+          <summary>Data &amp; storage</summary>
+          <div class="sblock">
+            <h3>Install app</h3>
+            <p>Add to Home Screen for offline use like a native app.</p>
+            <button class="btn btn-ghost" id="btn-install" style="width:100%">📲 Install / Add to Home Screen</button>
+            <p style="font-size:12px;color:var(--muted);margin-top:8px">On iPhone Safari: open the HTTPS app URL, tap Share, then Add to Home Screen. On Android/Chrome: use Install app or Add to Home Screen.</p>
           </div>
-          <button class="btn btn-ghost" id="btn-save-reminders" style="width:100%">Save reminder windows</button>
-        </div>
-        <div class="sblock">
-          <h3>Install app</h3>
-          <p>Add to Home Screen for offline use like a native app.</p>
-          <button class="btn btn-ghost" id="btn-install" style="width:100%">📲 Install / Add to Home Screen</button>
-          <p style="font-size:12px;color:var(--muted);margin-top:8px">On iPhone Safari: open the HTTPS app URL, tap Share, then Add to Home Screen. On Android/Chrome: use Install app or Add to Home Screen.</p>
-        </div>
-        <div class="sblock">
-          <h3>Download &amp; backup</h3>
-          <p>Export keeps scans private on your device. Full backups include a version label and integrity check.</p>
-          <button class="btn btn-primary" id="btn-export" style="width:100%;margin-bottom:8px">⬇ Download full backup v6</button>
-          <input type="file" id="import-file" accept=".json" class="hidden" />
-          <button class="btn btn-ghost" id="btn-import" style="width:100%;margin-bottom:8px">⬆ Verify &amp; import backup</button>
-          <button class="btn btn-ghost full-only" id="btn-meta-transfer" style="width:100%;margin-bottom:8px">Multi-device meta transfer</button>
-          <button class="btn btn-ghost" id="btn-reminder-center" style="width:100%;margin-bottom:8px">Reminder center</button>
-          <button class="btn btn-ghost" id="btn-download-reminders" style="width:100%;margin-bottom:8px">⬇ Download expiry reminders</button>
-          <button class="btn btn-ghost" id="btn-download-summary" style="width:100%;margin-bottom:8px">⬇ Download status summary</button>
-          <button class="btn btn-ghost" id="btn-real-device-qa" style="width:100%;margin-bottom:8px">Real device QA pack</button>
-          <button class="btn btn-ghost" id="btn-release-readiness" style="width:100%;margin-bottom:8px">Release readiness panel</button>
-          <button class="btn btn-ghost" id="btn-data-safety" style="width:100%;margin-bottom:8px">Data safety status</button>
-          <button class="btn btn-ghost" id="btn-offline-recovery" style="width:100%;margin-bottom:8px">Offline recovery check</button>
-          <button class="btn btn-ghost" id="btn-activity-log" style="width:100%">Download activity log</button>
-          <p style="font-size:12px;color:var(--muted);margin-top:10px">Also: open any document → Download scan · Tools → Share / Calendar (.ics in Full).</p>
-        </div>
-        <div class="sblock full-only">
-          <h3>Encrypted Sync Vault</h3>
-          <p>Optional Supabase sync. The full backup is encrypted on this device before upload, so the cloud stores only unreadable vault data.</p>
-          <div class="field"><label>Supabase project URL</label><input type="url" id="sync-url" placeholder="https://your-project.supabase.co" autocomplete="off" /></div>
-          <div class="field"><label>Supabase anon key</label><input type="password" id="sync-key" placeholder="Paste anon public key" autocomplete="off" /></div>
-          <div class="row">
-            <div class="field"><label>Vault ID</label><input id="sync-vault-id" placeholder="e.g. bluewallet-main" autocomplete="off" /></div>
-            <div class="field"><label>Sync passphrase</label><input type="password" id="sync-passphrase" placeholder="Required to encrypt/decrypt" autocomplete="off" /></div>
+          <div class="sblock">
+            <h3>Offline storage</h3>
+            <p id="storage-status">Checking available device storage…</p>
+            <div class="storage-meter"><i id="storage-meter-fill"></i></div>
+            <button class="btn btn-ghost" id="btn-storage-check" style="width:100%">Refresh storage check</button>
+            <div class="version-chip">Blue Wallet Offshore v0.2</div>
           </div>
-          <div class="toggle">
-            <div><div class="tl">Remember passphrase here</div><div class="ts">Needed for automatic pull on this device. Leave off on shared devices.</div></div>
-            <label class="sw"><input type="checkbox" id="sync-remember" /><span class="sl"></span></label>
+          <div class="sblock">
+            <h3>Diagnostics &amp; reports</h3>
+            <p>Device and data-health checks, plus downloadable reports.</p>
+            <button class="btn btn-ghost" id="btn-download-summary" style="width:100%;margin-bottom:8px">⬇ Download status summary</button>
+            <button class="btn btn-ghost" id="btn-real-device-qa" style="width:100%;margin-bottom:8px">Real device QA pack</button>
+            <button class="btn btn-ghost" id="btn-release-readiness" style="width:100%;margin-bottom:8px">Release readiness panel</button>
+            <button class="btn btn-ghost" id="btn-data-safety" style="width:100%;margin-bottom:8px">Data safety status</button>
+            <button class="btn btn-ghost" id="btn-offline-recovery" style="width:100%;margin-bottom:8px">Offline recovery check</button>
+            <button class="btn btn-ghost" id="btn-activity-log" style="width:100%">Download activity log</button>
           </div>
-          <div class="toggle">
-            <div><div class="tl">Auto-check on open</div><div class="ts">When saved, the app checks the vault and pulls newer data only when safe.</div></div>
-            <label class="sw"><input type="checkbox" id="sync-auto" /><span class="sl"></span></label>
+          <div class="sblock">
+            <h3>Clear Everything</h3>
+            <p>Permanently delete documents, profile, PIN, packs, logs and settings on this device.</p>
+            <button class="btn btn-danger" id="btn-clear" style="width:100%">Delete All Local Data</button>
           </div>
-          <div class="actions" style="margin-top:10px">
-            <button class="btn btn-ghost" id="btn-sync-save" type="button">Save settings</button>
-            <button class="btn btn-primary" id="btn-sync-upload" type="button">Upload encrypted vault</button>
+        </details>
+
+        <details class="settings-group" open>
+          <summary>Help</summary>
+          <div class="sblock settings-help-block">
+            <h3>Help &amp; FAQ</h3>
+            <p>Open the full stable app guide for documents, backup, sync, print, OCR, sea-time, vaccines, packs, STCW, and real-device checks.</p>
+            <button class="btn btn-ghost" id="btn-settings-help" type="button" style="width:100%">Open Help Guide</button>
           </div>
-          <button class="btn btn-ghost" id="btn-sync-pull" type="button" style="width:100%;margin-top:8px">Pull latest from vault</button>
-          <p id="sync-status" style="font-size:12px;color:var(--muted);margin-top:10px">Sync is off until settings are saved.</p>
-        </div>
-        <div class="sblock">
-          <h3>Offline storage</h3>
-          <p id="storage-status">Checking available device storage…</p>
-          <div class="storage-meter"><i id="storage-meter-fill"></i></div>
-          <button class="btn btn-ghost" id="btn-storage-check" style="width:100%">Refresh storage check</button>
-          <div class="version-chip">Blue Wallet Offshore v0.2</div>
-        </div>
-        <div class="sblock">
-          <h3>Clear Everything</h3>
-          <p>Permanently delete documents, profile, PIN, packs, logs and settings on this device.</p>
-          <button class="btn btn-danger" id="btn-clear" style="width:100%">Delete All Local Data</button>
-        </div>
+        </details>
+
         <div class="sfoot">All data stays on this device · Fully offline</div>
       </div>
     </div>
