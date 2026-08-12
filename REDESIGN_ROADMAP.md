@@ -361,3 +361,33 @@ gated to `min-width:901px`, `.mobile-bottom-nav` still gated to
 fix. Flagged as a follow-up, not fixed in this pass — would need matching
 adjustments across `.main`'s whole desktop grid-template-areas system, not
 just the nav threshold, to do properly.
+
+---
+
+## Real-WebKit testing capability added (2026-08-12)
+
+No Playwright MCP server is connected in this environment, but Playwright
+itself ships a genuine WebKit browser build — installed it standalone via
+npm directly into the session scratchpad (not this project's own
+dependencies, since it's a testing tool, not something the app ships
+with). Using `devices['iPhone 14']` gives a real Mobile Safari UA,
+`devicePixelRatio: 3`, and actual WebKit CSS/layout resolution — a
+materially stronger check than the Chromium-only in-app browser used for
+everything up to this point, which cannot emulate WebKit at all (always
+reports an Android Chrome UA regardless of viewport size).
+
+Used it immediately to find a second real bug: the "Expiring" stat-pill's
+decorative icon was rendering as a transparent blue-outlined square
+instead of a filled yellow circle at mobile widths — the visible tail of
+a 5-deep chain of competing `!important` declarations for
+`.stat-pills .pill.warn::before` across four different `max-width:700px`/
+`760px` breakpoint blocks, none of which Chromium-only testing would have
+caught since the cascade result is CSS-engine-agnostic (it reproduces
+identically on both engines — this was a code bug, not a rendering
+difference, but real-WebKit screenshots are what surfaced it in the first
+place). Fixed (`edfb0db`) by adding one more `!important` declaration,
+placed last in source order within the same breakpoint scope, restoring
+the yellow circle and aligning its size (18px) with the other two pills.
+Verified via `getComputedStyle(el, '::before')` — not just reading the
+CSS text — against both the local build and the live production URL under
+real WebKit, plus a direct screenshot.
