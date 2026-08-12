@@ -8381,6 +8381,7 @@
       <h3 id="empty-title">No documents here yet</h3>
       <p id="empty-body">Add your COC, CDC, passport or certificates. Everything stays private on this device.</p>
       <button class="btn btn-primary" id="btn-add-empty">+ Add Document</button>
+      <button type="button" class="btn btn-ghost hidden" id="btn-empty-see-pack" style="margin-top:10px"></button>
     </div>
   </main>
 
@@ -10579,6 +10580,16 @@
         document.getElementById('empty-title').textContent = `No ${LABELS[cat] || 'documents'} yet`;
         document.getElementById('empty-body').textContent = copy.body;
         document.getElementById('btn-add-empty').textContent = copy.cta;
+        const seePackBtn = document.getElementById('btn-empty-see-pack');
+        const relatedPack = PACK_MODELS.find(p => p.types.includes(cat));
+        if (relatedPack) {
+          seePackBtn.textContent = `See required documents for ${relatedPack.name}`;
+          seePackBtn.classList.remove('hidden');
+          seePackBtn.onclick = () => openPackDetail(relatedPack);
+        } else {
+          seePackBtn.classList.add('hidden');
+          seePackBtn.onclick = null;
+        }
         empty.classList.add('show');
       } else {
         empty.classList.remove('show');
@@ -12319,6 +12330,7 @@
         if (i >= steps.length - 1) {
           localStorage.setItem('bwOnboardDone', '1');
           document.getElementById('onboard').classList.remove('show');
+          window.__maybeShowInstallBanner?.();
           return;
         }
         i++; show();
@@ -12326,6 +12338,7 @@
       document.getElementById('ob-skip').onclick = () => {
         localStorage.setItem('bwOnboardDone', '1');
         document.getElementById('onboard').classList.remove('show');
+        window.__maybeShowInstallBanner?.();
       };
       show();
     }
@@ -13320,8 +13333,17 @@
       function hideInstallBanner() {
         if (installBanner) installBanner.style.display = 'none';
       }
-      if (installBanner && !isStandaloneDisplay && localStorage.getItem('bwInstallBannerDismissed') !== '1') {
-        installBanner.style.display = 'flex';
+      function maybeShowInstallBanner() {
+        if (installBanner && !isStandaloneDisplay && localStorage.getItem('bwInstallBannerDismissed') !== '1') {
+          installBanner.style.display = 'flex';
+        }
+      }
+      window.__maybeShowInstallBanner = maybeShowInstallBanner;
+      // First-time users get the onboarding walkthrough first -- the install
+      // banner shows once that's dismissed (see runOnboarding), not stacked
+      // on top of it. Returning users (onboarding already done) see it now.
+      if (localStorage.getItem('bwOnboardDone') === '1' || appMode !== 'full') {
+        maybeShowInstallBanner();
       }
       document.getElementById('btn-install-banner')?.addEventListener('click', triggerInstall);
       document.getElementById('btn-install-banner-dismiss')?.addEventListener('click', () => {
