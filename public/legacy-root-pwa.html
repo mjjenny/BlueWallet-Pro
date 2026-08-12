@@ -461,6 +461,16 @@
       flex: 1; width: 100%; max-width: 1100px; margin: 0 auto;
       padding: 14px 14px 110px; display: flex; flex-direction: column; gap: 14px;
     }
+    /* Flex items default to min-width:auto, which refuses to shrink below
+       their content's intrinsic width. If any child's content ever needs
+       more than the viewport width (long unbroken text, a fixed-width
+       element), it silently pushes the whole page into horizontal
+       overflow instead of wrapping/shrinking. Found live via a real
+       phone screenshot: .profile-strip (display:block at narrow widths)
+       was overflowing to ~580px on a 390px viewport for exactly this
+       reason. Applies to every direct child defensively, not just the
+       one that happened to trigger it. */
+    .main > * { min-width: 0; }
 
     /* ===== PROFILE STRIP ===== */
     .profile-strip {
@@ -2217,6 +2227,12 @@
       line-height: 1;
       font-weight: 500;
     }
+    /* Desktop-only left rail -- only ever given display:flex inside the
+       min-width:901px block below. Without this unconditional default it
+       falls back to the browser's native <nav>/<button> display (block/
+       inline-block), rendering as a wrapped row of pill-shaped buttons at
+       the top of every narrower viewport. Found live on a real phone. */
+    .sidebar-nav { display: none; }
     @media (max-width: 700px) {
       body {
         background:
