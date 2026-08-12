@@ -127,10 +127,15 @@ in the add/edit-entry view. Profile modal was checked against "clean identity
 card" — already a single-column photo + identity form with no concrete gap,
 so left unchanged rather than inventing unrequested redesign work.
 
-**Found but not fixed** (pre-existing, unrelated to any Phase 2 change): the
-Packs modal's card list is `display:none` for the entire 701–1023px viewport
-width range — neither the mobile nor desktop layout rules cover that gap.
-Worth a follow-up.
+**Found and fixed** (2026-08-12, `46e544c`): the Packs modal's card list was
+`display:none` for the entire 701–1023px viewport width range — root cause
+was `.mobile-pack-list` sharing a "hidden by default" rule with genuinely
+mobile-exclusive chrome, with nothing re-enabling it between the
+`max-width:700px` and `min-width:1024px` overrides. Fixed by giving
+`.mobile-pack-list`/`.mobile-pack-card` their own unconditional visible
+defaults; the two breakpoint-specific rules still refine layout at their
+own widths via normal cascade order. Verified at 375px/850px/1280px,
+byte-identical live.
 
 ---
 
@@ -164,7 +169,6 @@ not that it looks right.
 ## Phase 1 & 2 status: complete
 
 All nine items (1.1–1.5, 2.1–2.4) shipped and verified live on Cloudflare as
-of 2026-08-12. Next up is Phase 3 (Polish & delight) — not started, no
-blockers. One pre-existing bug was found but not fixed during Phase 2 (see
-2.1/2.4 notes above): the Packs modal is invisible between 701–1023px
-viewport width.
+of 2026-08-12, plus one pre-existing bug found during Phase 2 and fixed
+(`46e544c`): the Packs modal was invisible between 701–1023px viewport width.
+Next up is Phase 3 (Polish & delight) — not started, no blockers.
