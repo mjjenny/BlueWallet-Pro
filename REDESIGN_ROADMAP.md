@@ -391,3 +391,45 @@ the yellow circle and aligning its size (18px) with the other two pills.
 Verified via `getComputedStyle(el, '::before')` — not just reading the
 CSS text — against both the local build and the live production URL under
 real WebKit, plus a direct screenshot.
+
+---
+
+## Full-app iOS conformity walkthrough (2026-08-12)
+
+Walked every major screen (Vault, Document view, Add Document, Packs,
+Pack detail, Timeline, Sea Time, Profile, Settings, Help, STCW matrix,
+Checklist) under real WebKit at the iPhone 14 viewport, driven via direct
+`page.evaluate()` calls into the app's own open/render functions rather
+than simulated taps.
+
+**Found and fixed**: the Timeline screen's "Critical" and "Next 90 days"
+filter chips visually activated on click (the `.active` class landed
+correctly) but silently failed to hide non-matching entries — a document
+365 days from expiry still showed up under "Critical". Root cause was the
+same class of bug as the stat-pill fix above: `.tl-hidden { display:
+none !important }` and a later-in-source-order `.mobile-timeline-card {
+display: grid !important }` (declared inside a breakpoint block, several
+hundred lines after `.tl-hidden`) tied at (0,1,0) specificity, so source
+order let the `grid` declaration win regardless of which element had
+`.tl-hidden` applied. Fixed by raising `.tl-hidden`'s specificity for the
+two elements the filter actually toggles — `.mobile-timeline-card.tl-hidden`
+and `.tl-month.tl-hidden` — rather than chasing source order across the
+half-dozen `.mobile-timeline-card` breakpoint blocks. Desktop's
+`.tl-item`/`.tl-month` elements were never affected (no competing
+`display` declaration exists for them), so this was mobile-only. Verified
+via `getComputedStyle` on the seeded test documents before/after the
+filter click, confirming `display: none` actually applies now, plus a
+before/after screenshot.
+
+**Investigated, not a bug**: two screenshots from an early pass of this
+walkthrough (Document view, Add Document) appeared blank — just the
+darkened Vault backdrop — despite `getComputedStyle` proving the modal's
+own DOM state was fully correct (`opacity: 1`, correct dimensions, real
+text content). Root-caused to a WebKit-headless compositor-timing
+artifact: screenshotting too soon after several overlay open/close
+cycles chained within one long-lived page session produces a stale
+composited frame in Playwright, even though the live DOM is already
+correct. Re-running each screen with a fresh page load (matching how a
+real user actually navigates — one screen at a time, not a rapid
+scripted chain) made every capture render correctly, confirming this was
+a test-harness artifact, not something a real user would ever see.

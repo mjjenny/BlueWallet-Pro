@@ -2995,6 +2995,11 @@
     .tl-item.warn { color: var(--warn); }
     .tl-item.bad { color: var(--bad); }
     .tl-hidden { display: none !important; }
+    /* Several later breakpoint rules re-declare .mobile-timeline-card { display: grid !important }
+       at the same (0,1,0) specificity as .tl-hidden, so source order let them win and the
+       Critical / Next-90-days timeline filters silently failed to hide anything. Bump specificity
+       so the hidden state always wins regardless of which breakpoint block ran last. */
+    .mobile-timeline-card.tl-hidden, .tl-month.tl-hidden { display: none !important; }
     .tl-filters {
       display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;
     }
