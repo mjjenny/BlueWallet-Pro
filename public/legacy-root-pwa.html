@@ -1066,6 +1066,98 @@
       }
     }
 
+    /* ===== PACK BUILDER & PACK SHARE — DESKTOP CARD GRIDS =====
+       Reuses the same visual language the mobile-only CSS already
+       established for these classes (@media max-width:760px, not
+       shown here) -- glass card, checkbox/icon/text grid columns --
+       just laid out as a 2-column grid with room to breathe instead
+       of full-width rows. */
+    @media (min-width: 1024px) {
+      #modal-generic.pack-builder-mode .modal,
+      #modal-generic.pack-share-mode .modal {
+        max-width: 900px;
+      }
+      #modal-generic.pack-builder-mode .pack-builder-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin: 12px 0;
+      }
+      #modal-generic.pack-builder-mode .pack-doc-row {
+        display: grid;
+        grid-template-columns: 26px 48px minmax(0, 1fr);
+        gap: 10px;
+        align-items: center;
+        min-height: 66px;
+        padding: 10px;
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        background: rgba(12, 32, 54, .55);
+      }
+      #modal-generic.pack-share-mode .pack-share-sheet {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+      /* Everything except the six share-option buttons spans both columns --
+         .pack-share-sheet's direct children are a flat sibling list (summary,
+         6 options, quality toggle, 2 buttons), so .pack-share-option is left
+         unmatched here and falls through to the 2-column auto-placement below. */
+      #modal-generic.pack-share-mode .pack-share-sheet > *:not(.pack-share-option) {
+        grid-column: 1 / -1;
+      }
+      #modal-generic.pack-share-mode .pack-share-summary {
+        display: grid;
+        grid-template-columns: 48px minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: center;
+        min-height: 58px;
+        padding: 14px;
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        background: rgba(12, 32, 54, .55);
+      }
+      #modal-generic.pack-share-mode .pack-share-option {
+        display: grid;
+        grid-template-columns: 40px minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: center;
+        min-height: 58px;
+        padding: 10px 14px;
+        border: 1px solid var(--glass-border);
+        border-radius: 14px;
+        background: rgba(12, 32, 54, .55);
+        color: var(--text);
+        text-align: left;
+        cursor: pointer;
+      }
+      #modal-generic.pack-share-mode .pack-share-option:hover {
+        background: rgba(94, 212, 255, .12);
+      }
+      #modal-generic.pack-share-mode .pack-quality-toggle {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 48px;
+        padding: 10px 14px;
+        border: 1px solid var(--glass-border);
+        border-radius: 14px;
+        background: rgba(12, 32, 54, .55);
+      }
+      #modal-generic.pack-share-mode .pack-doc-icon,
+      #modal-generic.pack-builder-mode .pack-doc-icon {
+        display: grid;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: rgba(94, 212, 255, .12);
+        font-size: 11px;
+        font-weight: 700;
+        color: #63d8ff;
+      }
+    }
+
     /* Large desktop — 3-column cards when space allows */
     @media (min-width: 1280px) {
       .main { max-width: 1200px; }
