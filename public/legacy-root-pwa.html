@@ -535,6 +535,7 @@
     .cats::-webkit-scrollbar { display: none; height: 0; }
     .cats::-webkit-scrollbar-thumb { background: rgba(94,212,255,.35); border-radius: 4px; }
     .cat {
+      position: relative;
       display: flex; align-items: center; justify-content: center; gap: 5px;
       flex: 1 1 0; min-width: 0;
       min-height: 44px;
@@ -546,6 +547,16 @@
       transition: all .2s cubic-bezier(.34,1.56,.64,1);
       user-select: none;
     }
+    .cat::after {
+      content: '';
+      position: absolute; left: 10%; right: 10%; bottom: 0;
+      height: 3px; border-radius: 3px 3px 0 0;
+      background: transparent;
+    }
+    .cat.status-good::after { background: var(--ok); }
+    .cat.status-warn::after { background: var(--warn); }
+    .cat.status-bad::after { background: var(--bad); }
+    .cat.status-empty::after { background: rgba(255,255,255,.12); }
     .cat:active { transform: scale(.96); }
     .cat.active {
       background: rgba(94,212,255,.18);
@@ -1605,6 +1616,20 @@
     .view-toggle .tool-btn { padding-inline: 0; }
     .tool-btn:hover { border-color: var(--accent); }
     .tool-btn.active { background: rgba(94,212,255,.18); border-color: rgba(94,212,255,.5); color: var(--accent); }
+
+    .tools-menu { position: relative; min-width: 0; order: 1; }
+    .tools-menu .tool-btn { width: 100%; }
+    .tools-dropdown {
+      display: none;
+      position: absolute; top: calc(100% + 6px); right: 0; z-index: 40;
+      flex-direction: column; gap: 6px;
+      min-width: 190px; padding: 8px;
+      background: var(--panel-solid); border: 1px solid var(--glass-border);
+      border-radius: 14px; box-shadow: 0 12px 32px rgba(0,0,0,.4);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    }
+    .tools-dropdown.show { display: flex; }
+    .tools-dropdown .tool-btn { width: 100%; justify-content: flex-start; }
 
     @media (min-width: 700px) {
       .tools-row {
@@ -8085,10 +8110,10 @@
     </div>
     <nav class="sidebar-nav" aria-label="Desktop primary navigation">
       <button type="button" class="active" data-mobile-nav="vault"><b>□</b><span>Vault</span></button>
-      <button type="button" data-mobile-nav="timeline"><b>◷</b><span>Timeline</span></button>
       <button type="button" data-mobile-nav="packs"><b>▱</b><span>Packs</span></button>
+      <button type="button" data-mobile-nav="timeline"><b>◷</b><span>Timeline</span></button>
+      <button type="button" data-mobile-nav="seatime"><b>⚓</b><span>Sea Time</span></button>
       <button type="button" data-mobile-nav="profile"><b>♙</b><span>Profile</span></button>
-      <button type="button" data-mobile-nav="settings"><b>&#9881;</b><span>Settings</span></button>
     </nav>
     <div class="top-actions">
       <button type="button" class="mode-toggle" id="btn-mode" aria-label="Toggle Lite Full mode" title="Toggle Lite / Full">FULL</button>
@@ -8168,16 +8193,16 @@
         <option value="none">No expiry</option>
         <option value="archived">Archived</option>
       </select>
-      <button type="button" class="tool-btn full-only" id="btn-checklist">📋 Checklist</button>
-      <button type="button" class="tool-btn" id="btn-print-sheet">🖨 Summary</button>
-      <button type="button" class="tool-btn" id="btn-share-quick">↗ Share</button>
-      <button type="button" class="tool-btn full-only" id="btn-ics">📅 Calendar</button>
-      <button type="button" class="tool-btn full-only" id="btn-timeline">⏱ Timeline</button>
-      <button type="button" class="tool-btn full-only" id="btn-packs">📦 Packs</button>
-      <button type="button" class="tool-btn full-only" id="btn-stcw">🎓 STCW</button>
-      <button type="button" class="tool-btn full-only" id="btn-seatime">🚢 Sea time</button>
-      <button type="button" class="tool-btn full-only" id="btn-vaccines">💉 Vaccines</button>
-      <button type="button" class="tool-btn full-only" id="btn-bulk">☑ Select</button>
+      <div class="tools-menu full-only">
+        <button type="button" class="tool-btn" id="btn-tools-toggle" aria-haspopup="true" aria-expanded="false">🛠 Tools</button>
+        <div class="tools-dropdown" id="tools-dropdown">
+          <button type="button" class="tool-btn" id="btn-checklist">📋 Checklist</button>
+          <button type="button" class="tool-btn" id="btn-ics">📅 Calendar</button>
+          <button type="button" class="tool-btn" id="btn-stcw">🎓 STCW</button>
+          <button type="button" class="tool-btn" id="btn-vaccines">💉 Vaccines</button>
+          <button type="button" class="tool-btn" id="btn-bulk">☑ Select</button>
+        </div>
+      </div>
       <div class="view-toggle full-only">
         <button type="button" class="tool-btn active" id="view-list" title="List">☰</button>
         <button type="button" class="tool-btn" id="view-grid" title="Grid">▦</button>
@@ -8200,9 +8225,9 @@
 
     <div class="docs" id="docs-grid"></div>
     <div class="empty" id="empty-state">
-      <div class="ei">📂</div>
-      <h3>No documents here yet</h3>
-      <p>Add your COC, CDC, passport or certificates. Everything stays private on this device.</p>
+      <div class="ei" id="empty-icon">📂</div>
+      <h3 id="empty-title">No documents here yet</h3>
+      <p id="empty-body">Add your COC, CDC, passport or certificates. Everything stays private on this device.</p>
       <button class="btn btn-primary" id="btn-add-empty">+ Add Document</button>
     </div>
   </main>
@@ -8210,10 +8235,10 @@
   <button class="fab" id="fab-add" aria-label="Add document">+</button>
   <nav class="mobile-bottom-nav" aria-label="Mobile primary navigation">
     <button type="button" class="active" data-mobile-nav="vault"><b>□</b><span>Vault</span></button>
-    <button type="button" data-mobile-nav="timeline"><b>◷</b><span>Timeline</span></button>
     <button type="button" data-mobile-nav="packs"><b>▱</b><span>Packs</span></button>
+    <button type="button" data-mobile-nav="timeline"><b>◷</b><span>Timeline</span></button>
+    <button type="button" data-mobile-nav="seatime"><b>⚓</b><span>Sea Time</span></button>
     <button type="button" data-mobile-nav="profile"><b>♙</b><span>Profile</span></button>
-    <button type="button" data-mobile-nav="settings"><b>&#9881;</b><span>Settings</span></button>
   </nav>
 
   <!-- ADD -->
@@ -8389,6 +8414,9 @@
           <div class="field"><label>Next of kin</label><input type="text" id="sf-nok" placeholder="Name · relation · phone" /></div>
           <button class="btn btn-primary" id="btn-save-profile" style="width:100%">Save profile</button>
           <button class="btn btn-ghost" id="btn-profile-seatime" style="width:100%;margin-top:10px">Sea service records</button>
+          <button class="btn btn-ghost" id="btn-print-sheet" style="width:100%;margin-top:10px">🖨 Document summary</button>
+          <button class="btn btn-ghost" id="btn-share-quick" style="width:100%;margin-top:10px">↗ Share summary</button>
+          <button class="btn btn-ghost" id="btn-profile-settings" style="width:100%;margin-top:10px">⚙️ Settings</button>
         </div>
         <p style="font-size:15px;color:var(--muted);margin-top:14px">Passport size recommended</p>
       </div>
@@ -9285,6 +9313,17 @@
       certificate:'#34d399', medical:'#fb7185', yellowfever:'#fbbf24',
       contract:'#60a5fa', other:'#94a3b8'
     };
+    const EMPTY_STATE_COPY = {
+      passport: { body: 'Your passport is the foundation of every joining. Add it once and it stays private on this device.', cta: '+ Add Passport' },
+      cdc: { body: 'Your CDC / Seafarer ID proves your right to work at sea — it’s usually the first document a manning agent asks for.', cta: '+ Add CDC' },
+      coc: { body: 'Your Certificate of Competency shows the rank you’re qualified to serve at. Keep it current to avoid joining delays.', cta: '+ Add COC' },
+      visa: { body: 'Visas clear you to enter the country you’re joining or signing off in. Add the ones you currently hold.', cta: '+ Add Visa' },
+      certificate: { body: 'STCW and other certificates prove you’ve completed the mandatory safety and technical training for your rank.', cta: '+ Add Certificate' },
+      medical: { body: 'A valid medical fitness certificate is required before you can join any vessel.', cta: '+ Add Medical Certificate' },
+      yellowfever: { body: 'Some flag states and ports won’t let you join without proof of yellow fever vaccination.', cta: '+ Add Yellow Fever Card' },
+      contract: { body: 'Keep a copy of your contract or articles of agreement handy for reference during and after the voyage.', cta: '+ Add Contract' },
+      other: { body: 'Anything else worth keeping safe — training records, letters, or supporting documents.', cta: '+ Add Document' }
+    };
     const ICONS = {
       passport:'🛂', cdc:'📘', coc:'🎓', visa:'✈️',
       certificate:'📜', medical:'🏥', yellowfever:'💉',
@@ -9327,6 +9366,26 @@
       });
       const pct = total ? Math.round((ready / total) * 100) : 0;
       return { pct, ready, total, missing };
+    }
+
+    /**
+     * Category status strip colour: worst-case across a category's
+     * non-archived documents (bad beats warn beats good), so one expired
+     * passport still flags the whole Passport tab even if a second, valid
+     * one exists.
+     */
+    function categoryStatus(type) {
+      const docs = documents.filter(d => d.type === type && !d.archived);
+      if (!docs.length) return 'empty';
+      let hasBad = false, hasWarn = false;
+      docs.forEach(d => {
+        const key = status(d).key;
+        if (key === 'expired') hasBad = true;
+        else if (key === 'expiring') hasWarn = true;
+      });
+      if (hasBad) return 'bad';
+      if (hasWarn) return 'warn';
+      return 'good';
     }
 
     let documents = [], cat = 'passport', viewId = null, pendingFiles = [];
@@ -10309,6 +10368,11 @@
       types.forEach(t => {
         const el = document.getElementById('count-' + t);
         if (el) el.textContent = documents.filter(d => d.type === t).length;
+        const catEl = document.querySelector('.cat[data-cat="' + t + '"]');
+        if (catEl) {
+          catEl.classList.remove('status-good', 'status-warn', 'status-bad', 'status-empty');
+          catEl.classList.add('status-' + categoryStatus(t));
+        }
       });
 
       document.getElementById('stage-label').textContent = LABELS[cat] || 'Documents';
@@ -10321,6 +10385,11 @@
       const empty = document.getElementById('empty-state');
       if (!list.length) {
         grid.innerHTML = '';
+        const copy = EMPTY_STATE_COPY[cat] || EMPTY_STATE_COPY.other;
+        document.getElementById('empty-icon').textContent = ICONS[cat] || '📂';
+        document.getElementById('empty-title').textContent = `No ${LABELS[cat] || 'documents'} yet`;
+        document.getElementById('empty-body').textContent = copy.body;
+        document.getElementById('btn-add-empty').textContent = copy.cta;
         empty.classList.add('show');
       } else {
         empty.classList.remove('show');
@@ -12521,14 +12590,12 @@
       [
         ['sort-by', 'Sort documents'],
         ['filter-status', 'Filter documents by expiry status'],
+        ['btn-tools-toggle', 'Open tools menu'],
         ['btn-checklist', 'Open checklist'],
         ['btn-print-sheet', 'Print document summary'],
         ['btn-share-quick', 'Share document summary'],
         ['btn-ics', 'Download calendar reminders'],
-        ['btn-timeline', 'Open expiry timeline'],
-        ['btn-packs', 'Open document packs'],
         ['btn-stcw', 'Open STCW matrix'],
-        ['btn-seatime', 'Open sea time log'],
         ['btn-vaccines', 'Open vaccines log'],
         ['btn-bulk', 'Select multiple documents'],
         ['btn-real-device-qa', 'Open real device QA pack'],
@@ -12646,11 +12713,10 @@
             wireTimelineCards();
           } else if (target === 'packs') {
             openPacksUI();
+          } else if (target === 'seatime') {
+            openSeatimeUI();
           } else if (target === 'profile') {
             document.getElementById('modal-profile').classList.add('show');
-            syncOverlayState();
-          } else if (target === 'settings') {
-            document.getElementById('modal-settings').classList.add('show');
             syncOverlayState();
           }
         };
@@ -12672,7 +12738,7 @@
           if (pane) pane.classList.add('active');
         };
       });
-      document.getElementById('btn-settings').onclick = () => {
+      function openSettingsUI() {
         closeMobilePrimarySurfaces();
         const rem = getReminders();
         document.getElementById('rem-primary').value = rem.primary;
@@ -12687,7 +12753,12 @@
         updateStorageStatus();
         document.getElementById('modal-settings').classList.add('show');
         syncOverlayState();
-      };
+      }
+      document.getElementById('btn-settings').onclick = openSettingsUI;
+      document.getElementById('btn-profile-settings')?.addEventListener('click', () => {
+        close('modal-profile');
+        openSettingsUI();
+      });
 
       document.getElementById('app-toast-close').onclick = hideAppToast;
       document.getElementById('btn-storage-check').onclick = updateStorageStatus;
@@ -12732,15 +12803,28 @@
       document.getElementById('btn-data-safety').onclick = () => openDataSafetyStatus();
       document.getElementById('btn-offline-recovery').onclick = () => openOfflineRecovery();
       document.getElementById('btn-activity-log').onclick = () => downloadActivityLog();
-      document.getElementById('btn-timeline').onclick = () => {
-        const w = document.getElementById('timeline-wrap');
-        if (w.style.display === 'none') { w.style.display = 'block'; w.innerHTML = buildTimelineHtml(); wireTimelineCards(); }
-        else w.style.display = 'none';
-      };
-      document.getElementById('btn-packs').onclick = () => openPacksUI();
       document.getElementById('btn-stcw').onclick = () => openStcwUI();
-      document.getElementById('btn-seatime').onclick = () => openSeatimeUI();
       document.getElementById('btn-vaccines').onclick = () => openVaccineUI();
+      const toolsToggle = document.getElementById('btn-tools-toggle');
+      const toolsDropdown = document.getElementById('tools-dropdown');
+      if (toolsToggle && toolsDropdown) {
+        toolsToggle.onclick = e => {
+          e.stopPropagation();
+          const willShow = !toolsDropdown.classList.contains('show');
+          toolsDropdown.classList.toggle('show', willShow);
+          toolsToggle.setAttribute('aria-expanded', String(willShow));
+        };
+        toolsDropdown.addEventListener('click', e => {
+          if (e.target.closest('.tool-btn')) {
+            toolsDropdown.classList.remove('show');
+            toolsToggle.setAttribute('aria-expanded', 'false');
+          }
+        });
+        document.addEventListener('click', () => {
+          toolsDropdown.classList.remove('show');
+          toolsToggle.setAttribute('aria-expanded', 'false');
+        });
+      }
       document.getElementById('close-generic').onclick = () => {
         close('modal-generic');
         setMobileNavActive('vault');
