@@ -561,6 +561,38 @@
       .ring-fill { transition: none; }
     }
 
+    /* ===== HOME INSIGHTS (pack progress + next expiry risk) ===== */
+    .home-insights { display: flex; flex-direction: column; gap: 14px; margin: 16px 0; }
+    .insight-card {
+      background: rgba(0,0,0,.28); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 16px; padding: 16px;
+    }
+    .insight-head { margin-bottom: 12px; }
+    .insight-head h3 {
+      font-size: 13px; font-weight: 800; color: var(--accent);
+      text-transform: uppercase; letter-spacing: .06em;
+    }
+    .insight-pack-row {
+      display: flex; gap: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .insight-pack-row::-webkit-scrollbar { display: none; }
+    .insight-pack-item {
+      flex: 0 0 auto; display: flex; align-items: center; gap: 8px;
+      background: var(--glass); border: 1px solid var(--glass-border);
+      border-radius: 999px; padding: 0 16px 0 10px; min-height: 44px;
+      cursor: pointer; color: inherit; font: inherit;
+    }
+    .insight-pack-item:hover, .insight-pack-item:focus-visible { border-color: var(--accent); }
+    .insight-pack-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .insight-pack-item b { font-size: 13px; color: #fff; font-weight: 700; }
+    .insight-pack-item span { font-size: 12px; color: var(--muted); margin-left: 4px; }
+    .insight-expiry-body {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      cursor: pointer; min-height: 44px;
+    }
+    .insight-expiry-body .badge { flex-shrink: 0; }
+
     /* ===== PACK PROGRESS RING (shared structure; sizing set per breakpoint
        alongside .mobile-pack-icon) ===== */
     .mobile-pack-icon { width: 64px; height: 64px; }
@@ -2553,6 +2585,7 @@
         grid-template-areas:
           "banner banner"
           "hero hero"
+          "insights insights"
           "docs cats"
           "docs tools"
           "timeline timeline"
@@ -2562,6 +2595,9 @@
       .install-banner {
         grid-area: banner;
         margin-bottom: 0;
+      }
+      .home-insights {
+        grid-area: insights;
       }
       .profile-strip {
         grid-area: hero;
@@ -8312,6 +8348,17 @@
       </div>
     </div>
 
+    <div class="home-insights" id="home-insights">
+      <div class="insight-card">
+        <div class="insight-head"><h3>Pack progress</h3></div>
+        <div class="insight-pack-row" id="insight-pack-row"></div>
+      </div>
+      <div class="insight-card" id="insight-expiry-card" style="display:none">
+        <div class="insight-head"><h3>Next expiry risk</h3></div>
+        <div class="insight-expiry-body" id="insight-expiry-body"></div>
+      </div>
+    </div>
+
     <!-- Categories — NO "All" -->
     <div class="cats" id="cats">
       <div class="cat active" data-cat="passport"><span class="cat-ico">🛂</span><span class="cat-name" data-short="PPT">PASSPORT</span><span class="cat-n" id="count-passport">0</span></div>
@@ -10694,7 +10741,38 @@
         }
       }
 
+      const packRow = document.getElementById('insight-pack-row');
+      if (packRow) {
+        packRow.innerHTML = PACK_MODELS.map(p => {
+          const have = recommendedPackDocs(p.types).length;
+          const capped = Math.min(have, p.total);
+          return `<button type="button" class="insight-pack-item" data-insight-pack="${esc(p.id)}">
+            <span class="insight-pack-dot" style="background:${p.bar}"></span>
+            <b>${esc(p.name)}</b><span>${capped}/${p.total}</span>
+          </button>`;
+        }).join('');
+        packRow.querySelectorAll('[data-insight-pack]').forEach(btn => {
+          btn.onclick = () => {
+            const model = PACK_MODELS.find(p => p.id === btn.dataset.insightPack);
+            if (model) openPackDetail(model);
+          };
+        });
+      }
       const groups = getExpiryGroups();
+      const expiryCard = document.getElementById('insight-expiry-card');
+      const expiryBody = document.getElementById('insight-expiry-body');
+      if (expiryCard && expiryBody) {
+        const riskDoc = groups.expired[0] || groups.expiring[0];
+        if (riskDoc) {
+          const st = status(riskDoc);
+          expiryCard.style.display = '';
+          expiryBody.innerHTML = `<div><b>${esc(riskDoc.title)}</b><div style="font-size:12px;color:var(--muted);margin-top:2px">${esc(LABELS[riskDoc.type] || riskDoc.type)}</div></div><span class="badge ${st.cls}">${esc(st.label)}</span>`;
+          expiryBody.onclick = () => openView(riskDoc.id);
+        } else {
+          expiryCard.style.display = 'none';
+        }
+      }
+
       const bands = [];
       groups.expired.forEach(d => bands.push(`Expired: ${d.title} (${Math.abs(daysUntil(d.expiryDate) || 0)}d overdue)`));
       groups.expiring.forEach(d => {
