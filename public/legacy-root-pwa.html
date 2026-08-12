@@ -9026,6 +9026,11 @@
             <div class="version-chip">Blue Wallet Offshore v0.2</div>
           </div>
           <div class="sblock">
+            <h3>Updates</h3>
+            <p id="update-check-status">Blue Wallet checks for updates automatically in the background.</p>
+            <button class="btn btn-ghost" id="btn-check-update" type="button" style="width:100%">Check for Update</button>
+          </div>
+          <div class="sblock">
             <h3>Diagnostics &amp; reports</h3>
             <p>Device and data-health checks, plus downloadable reports.</p>
             <button class="btn btn-ghost" id="btn-download-summary" style="width:100%;margin-bottom:8px">⬇ Download status summary</button>
@@ -12567,9 +12572,19 @@
       if (!response.ok) throw new Error('Update check failed');
       return readAppVersionFromText(await response.text());
     }
-    function promptAppUpdate(message, registration, worker) {
+    function setUpdateCheckStatus(text) {
+      const el = document.getElementById('update-check-status');
+      if (el) el.textContent = text;
+    }
+    function markUpdateAvailable(registration, worker) {
       pendingUpdateRegistration = registration || pendingUpdateRegistration;
       pendingUpdateWorker = worker || pendingUpdateWorker;
+      setUpdateCheckStatus('A new version is available.');
+      const btn = document.getElementById('btn-check-update');
+      if (btn) btn.textContent = 'Update now';
+    }
+    function promptAppUpdate(message, registration, worker) {
+      markUpdateAvailable(registration, worker);
       showAppToast(message || 'New Blue Wallet update available.', 'Update', () => applyAppUpdate());
     }
     async function applyAppUpdate() {
@@ -12594,21 +12609,42 @@
       location.reload();
     }
     async function checkForAppUpdate(options = {}) {
-      if (!('serviceWorker' in navigator) || isFileProtocol() || !secureContextOk()) return;
+      if (!('serviceWorker' in navigator) || isFileProtocol() || !secureContextOk()) {
+        if (options.announceUpToDate) {
+          setUpdateCheckStatus('Update check is unavailable on this device.');
+          showAppToast('Update check is unavailable on this device.', null, null);
+        }
+        return;
+      }
       const now = Date.now();
       if (!options.force && now - lastUpdateCheckAt < 60000) return;
       if (updateCheckInFlight) return;
       updateCheckInFlight = true;
       lastUpdateCheckAt = now;
+      if (options.announceUpToDate) setUpdateCheckStatus('Checking for updates…');
       try {
         const liveVersion = await fetchLiveAppVersion();
         if (liveVersion && liveVersion !== APP_CACHE_VERSION) {
           const registration = await navigator.serviceWorker.getRegistration('./').catch(() => null);
           if (registration) await registration.update().catch(() => {});
-          promptAppUpdate('New Blue Wallet update available.', registration, registration && (registration.waiting || registration.installing));
+          const worker = registration && (registration.waiting || registration.installing);
+          // Background/periodic checks stay quiet -- only the manual "Check for Update"
+          // button in Settings (announceUpToDate) surfaces the toast, so the app never
+          // interrupts the user unprompted with an update banner.
+          if (options.announceUpToDate) {
+            promptAppUpdate('New Blue Wallet update available.', registration, worker);
+          } else {
+            markUpdateAvailable(registration, worker);
+          }
+        } else if (options.announceUpToDate) {
+          setUpdateCheckStatus("You're on the latest version.");
+          showAppToast("You're on the latest version of Blue Wallet.", null, null);
         }
       } catch (_) {
-        if (options.force) showAppToast('Could not check for updates. Try again online.', null, null);
+        if (options.announceUpToDate) {
+          setUpdateCheckStatus('Could not check for updates. Try again online.');
+          showAppToast('Could not check for updates. Try again online.', null, null);
+        }
       } finally {
         updateCheckInFlight = false;
       }
@@ -13104,6 +13140,10 @@
 
       document.getElementById('app-toast-close').onclick = hideAppToast;
       document.getElementById('btn-storage-check').onclick = updateStorageStatus;
+      document.getElementById('btn-check-update').onclick = () => {
+        if (pendingUpdateWorker) { applyAppUpdate(); return; }
+        checkForAppUpdate({ force: true, announceUpToDate: true });
+      };
       document.getElementById('btn-sync-save').onclick = () => saveSyncSettings();
       document.getElementById('btn-sync-upload').onclick = async () => {
         try { await syncUploadNow(); }
@@ -13494,14 +13534,14 @@
           pendingUpdateRegistration = registration;
           registration.update().catch(() => {});
           if (registration.waiting) {
-            promptAppUpdate('New Blue Wallet update available.', registration, registration.waiting);
+            markUpdateAvailable(registration, registration.waiting);
           }
           registration.addEventListener('updatefound', () => {
             const worker = registration.installing;
             if (!worker) return;
             worker.addEventListener('statechange', () => {
               if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-                promptAppUpdate('New Blue Wallet update available.', registration, worker);
+                markUpdateAvailable(registration, worker);
               }
             });
           });

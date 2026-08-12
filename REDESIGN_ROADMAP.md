@@ -433,3 +433,33 @@ correct. Re-running each screen with a fresh page load (matching how a
 real user actually navigates — one screen at a time, not a rapid
 scripted chain) made every capture render correctly, confirming this was
 a test-harness artifact, not something a real user would ever see.
+
+---
+
+## Update-available toast made opt-in, not automatic (2026-08-13)
+
+The "New Blue Wallet update available." toast previously fired
+unprompted: on every page load, every 30-minute background timer tick,
+every tab-visibility change, and immediately whenever the service worker
+detected a waiting/installing worker. Flagged as intrusive — it's a
+`position:fixed` overlay that lands wherever its CSS places it regardless
+of scroll position, so it frequently sat on top of the readiness card or
+document counts on first load.
+
+Rather than relocate it (a fixed toast has no truly "safe" spot on a
+content-dense phone screen), the automatic paths were changed to update
+state silently — `markUpdateAvailable()` now just tracks the pending
+registration/worker and updates a status line, with no toast. A new
+"Updates" row was added to the **Data & storage** settings group (right
+next to the app version chip) with a live status line and a **Check for
+Update** button; tapping it is the only path that still calls
+`promptAppUpdate()` / shows the toast, whether it finds an update, is
+already current, or fails to check. `showAppToast()` itself is untouched
+since it's a shared component used for many other in-app messages (pack
+actions, print, offline/online, etc.) — only the update-specific
+auto-triggers were silenced.
+
+Verified via real WebKit: no toast appears after page load + reload
+(waited 1.5s), the Settings row correctly reflects a silently-detected
+pending update ("A new version is available." / "Update now"), and
+tapping Check for Update surfaces the toast on demand.
