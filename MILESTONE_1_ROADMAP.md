@@ -267,6 +267,8 @@ Ran `npm run build` fresh on this branch (with all of Steps 5–6's changes in p
 
 ### Step 8 — Push with the handover's verification protocol ✅ DONE (2026-08-12) — via a separate Codex session
 
+**See [`DEPLOYMENT.md`](DEPLOYMENT.md) for the confirmed standing process this step discovered.** Codex confirmed directly (2026-08-12) that no permanent deploy credential for the `sites` remote is obtainable by design — the workflow below isn't a one-off workaround, it's how every future deploy has to happen: build here → push to GitHub (`mjjenny/BlueWallet-Pro`, which this sandbox *can* authenticate to) → hand Codex the exact branch/commit → Codex publishes it. Read that file before re-deriving any of this from scratch.
+
 This sandbox could not authenticate to the `sites` remote (raw evidence of the attempt kept below, for the record — this is exactly the failure mode the handover's Qwen-incident lesson warns about, so it's preserved rather than deleted now that it's resolved):
 
 ```text
