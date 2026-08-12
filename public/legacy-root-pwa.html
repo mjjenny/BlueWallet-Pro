@@ -1158,6 +1158,30 @@
       }
     }
 
+    /* ===== SETTINGS & BACKUP — DESKTOP TWO-COLUMN FLOW =====
+       Sections vary wildly in height (138px to 706px), so CSS Grid's
+       row-track sizing is the wrong tool here (hit that exact problem
+       with Add Document earlier this session) -- multi-column layout
+       flows blocks of any height into balanced columns without needing
+       matching row heights. */
+    @media (min-width: 1024px) {
+      #modal-settings .modal.settings-sheet {
+        max-width: 1100px;
+        width: 94vw;
+      }
+      #modal-settings .mobile-settings-brand {
+        display: none;
+      }
+      .settings-body {
+        column-count: 2;
+        column-gap: 24px;
+      }
+      .sblock,
+      .settings-body .sfoot {
+        break-inside: avoid;
+      }
+    }
+
     /* Large desktop — 3-column cards when space allows */
     @media (min-width: 1280px) {
       .main { max-width: 1200px; }
