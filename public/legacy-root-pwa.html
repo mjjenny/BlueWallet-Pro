@@ -928,6 +928,47 @@
       }
     }
 
+    /* ===== STCW CHECKLIST — DESKTOP CARD GRID ===== */
+    @media (min-width: 1024px) {
+      #modal-generic.stcw-mode .modal { max-width: 900px; }
+      #modal-generic.stcw-mode #generic-body {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        align-content: start;
+      }
+      #modal-generic.stcw-mode #generic-body > p {
+        grid-column: 1 / -1;
+      }
+      #modal-generic.stcw-mode .matrix-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 18px;
+        border-radius: 16px;
+        background: rgba(12, 32, 54, .55);
+        border: 1px solid var(--glass-border);
+        font-size: 14px;
+      }
+      #modal-generic.stcw-mode .matrix-course {
+        font-weight: 700;
+        font-size: 15px;
+        color: var(--text);
+      }
+      #modal-generic.stcw-mode .matrix-status {
+        padding: 5px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        background: rgba(255, 255, 255, .08);
+        color: var(--muted);
+      }
+      #modal-generic.stcw-mode .matrix-row.ok .matrix-status {
+        background: rgba(93, 255, 176, .16);
+        color: #5dffb0;
+      }
+    }
+
     /* Large desktop — 3-column cards when space allows */
     @media (min-width: 1280px) {
       .main { max-width: 1200px; }
@@ -12062,7 +12103,7 @@
             (d.type === 'certificate' || d.type === 'coc') &&
             (d.title||'').toLowerCase().includes(course.toLowerCase().slice(0,4))
           );
-          return `<div class="matrix-row ${hit?'ok':''}"><span>${esc(course)}</span><span>${hit ? 'Valid - ' + esc(hit.title) : 'Missing'}</span></div>`;
+          return `<div class="matrix-row ${hit?'ok':''}"><span class="matrix-course">${esc(course)}</span><span class="matrix-status">${hit ? 'Valid - ' + esc(hit.title) : 'Missing'}</span></div>`;
         }).join('');
       showGeneric('STCW Checklist', body, 'stcw-mode');
     }
