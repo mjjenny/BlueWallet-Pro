@@ -491,6 +491,28 @@
     .pill.warn b { color: var(--warn); }
     .pill.bad b { color: var(--bad); }
 
+    /* ===== INSTALL BANNER ===== */
+    .install-banner {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      background: linear-gradient(135deg, rgba(94,212,255,.16), rgba(94,212,255,.05));
+      border: 1px solid rgba(94,212,255,.35);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+    }
+    .install-banner-text {
+      flex: 1 1 200px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+    }
+    .install-banner .btn { padding: 8px 16px; font-size: 13px; }
+    .install-banner-close {
+      background: transparent; border: none; color: var(--muted);
+      font-size: 16px; cursor: pointer; padding: 4px 8px; line-height: 1;
+    }
+    .install-banner-close:hover { color: #fff; }
+
     /* ===== READINESS RING ===== */
     .readiness-ring {
       position: relative;
@@ -673,6 +695,26 @@
     @keyframes rise {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
+    }
+    .cat, .mobile-pack-card {
+      animation: rise .3s cubic-bezier(.22,1,.36,1) both;
+    }
+    .cat:nth-child(1) { animation-delay: .01s; }
+    .cat:nth-child(2) { animation-delay: .03s; }
+    .cat:nth-child(3) { animation-delay: .05s; }
+    .cat:nth-child(4) { animation-delay: .07s; }
+    .cat:nth-child(5) { animation-delay: .09s; }
+    .cat:nth-child(6) { animation-delay: .11s; }
+    .cat:nth-child(7) { animation-delay: .13s; }
+    .cat:nth-child(8) { animation-delay: .15s; }
+    .cat:nth-child(9) { animation-delay: .17s; }
+    .mobile-pack-card:nth-child(1) { animation-delay: .02s; }
+    .mobile-pack-card:nth-child(2) { animation-delay: .06s; }
+    .mobile-pack-card:nth-child(3) { animation-delay: .1s; }
+    .mobile-pack-card:nth-child(4) { animation-delay: .14s; }
+    .mobile-pack-card:nth-child(5) { animation-delay: .18s; }
+    @media (prefers-reduced-motion: reduce) {
+      .doc, .cat, .mobile-pack-card { animation: none; }
     }
     .doc:active { transform: scale(.985); }
     @media (hover:hover) {
@@ -2469,12 +2511,17 @@
         display: grid;
         grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
         grid-template-areas:
+          "banner banner"
           "hero hero"
           "docs cats"
           "docs tools"
           "timeline timeline"
           "bulk bulk";
         gap: 24px;
+      }
+      .install-banner {
+        grid-area: banner;
+        margin-bottom: 0;
       }
       .profile-strip {
         grid-area: hero;
@@ -8202,6 +8249,11 @@
   </div>
 
   <main class="main">
+    <div class="install-banner" id="install-banner" style="display:none">
+      <span class="install-banner-text">📲 Install Blue Wallet for offline, one-tap access</span>
+      <button type="button" class="btn btn-primary" id="btn-install-banner">Install</button>
+      <button type="button" class="install-banner-close" id="btn-install-banner-dismiss" aria-label="Dismiss">✕</button>
+    </div>
     <div class="profile-strip">
       <div class="profile-photo" id="strip-photo">
         <img id="strip-img" class="hidden" alt="" />
@@ -9408,6 +9460,12 @@
       { type: 'coc', label: 'COC' },
       { type: 'medical', label: 'Medical / Fitness' },
       { type: 'certificate', label: 'STCW / Certificates' }
+    ];
+    const PACK_MODELS = [
+      { id: 'stcw', name: 'STCW Pack', icon: 'ST', types: ['certificate','coc'], total: 8, cls: 'ready', bar: '#55d96b' },
+      { id: 'medical', name: 'Medical Pack', icon: '+', types: ['medical','yellowfever'], total: 6, cls: 'warn medical', bar: '#ffd24f' },
+      { id: 'visa', name: 'Visa & Immigration', icon: 'AIR', types: ['visa','passport'], total: 4, cls: 'review visa', bar: '#3da1ff' },
+      { id: 'cdc', name: 'CDC & Yellow Fever', icon: 'CDC', types: ['cdc','yellowfever'], total: 2, cls: 'ready', bar: '#55d96b' },
     ];
 
     /**
@@ -12389,12 +12447,7 @@
     }
 
     function openPacksUI() {
-      const packModels = [
-        { id: 'stcw', name: 'STCW Pack', icon: 'ST', types: ['certificate','coc'], total: 8, cls: 'ready', bar: '#55d96b' },
-        { id: 'medical', name: 'Medical Pack', icon: '+', types: ['medical','yellowfever'], total: 6, cls: 'warn medical', bar: '#ffd24f' },
-        { id: 'visa', name: 'Visa & Immigration', icon: 'AIR', types: ['visa','passport'], total: 4, cls: 'review visa', bar: '#3da1ff' },
-        { id: 'cdc', name: 'CDC & Yellow Fever', icon: 'CDC', types: ['cdc','yellowfever'], total: 2, cls: 'ready', bar: '#55d96b' },
-      ];
+      const packModels = PACK_MODELS;
       const mobileBody = `<div class="mobile-pack-brand"><span class="mark" aria-hidden="true"></span><div><strong>THE BLUE</strong><span>seafarer</span></div></div>
         <div class="mobile-pack-actions">
           <button class="btn btn-primary" id="btn-create-pack-top" type="button">+ New custom pack</button>
@@ -13173,11 +13226,7 @@
       };
 
       // Install PWA
-      window.addEventListener('beforeinstallprompt', e => {
-        e.preventDefault();
-        deferredInstall = e;
-      });
-      document.getElementById('btn-install').onclick = async () => {
+      const triggerInstall = async () => {
         if (deferredInstall) {
           deferredInstall.prompt();
           await deferredInstall.userChoice;
@@ -13185,7 +13234,27 @@
         } else {
           alert('To install:\n• iPhone Safari: open the HTTPS app URL, tap Share, then Add to Home Screen\n• Android Chrome: browser menu → Install app / Add to Home Screen\n• Windows Edge/Chrome: use the install icon in the address bar or browser menu');
         }
+        hideInstallBanner();
       };
+      window.addEventListener('beforeinstallprompt', e => {
+        e.preventDefault();
+        deferredInstall = e;
+      });
+      document.getElementById('btn-install').onclick = triggerInstall;
+
+      const isStandaloneDisplay = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      const installBanner = document.getElementById('install-banner');
+      function hideInstallBanner() {
+        if (installBanner) installBanner.style.display = 'none';
+      }
+      if (installBanner && !isStandaloneDisplay && localStorage.getItem('bwInstallBannerDismissed') !== '1') {
+        installBanner.style.display = 'flex';
+      }
+      document.getElementById('btn-install-banner')?.addEventListener('click', triggerInstall);
+      document.getElementById('btn-install-banner-dismiss')?.addEventListener('click', () => {
+        localStorage.setItem('bwInstallBannerDismissed', '1');
+        hideInstallBanner();
+      });
       // Production service worker: caches the app shell for vessel/offline use.
       if ('serviceWorker' in navigator && !isFileProtocol() && secureContextOk()) {
         try {
@@ -13366,12 +13435,17 @@
           // D-14: do not dual-write legacy fileData/fileName/fileType on new saves
           updatedAt: new Date().toISOString()
         };
+        const relevantPacks = PACK_MODELS.filter(p => p.types.includes(type));
+        const wasIncomplete = {};
+        relevantPacks.forEach(p => { wasIncomplete[p.id] = recommendedPackDocs(p.types).length < p.total; });
         await saveDoc(doc);
         recordActivity(isEdit ? 'document-edited' : 'document-added', { type: LABELS[type] || type, title: doc.title });
         documents = (await getAllDocs()).map(normalizeDoc);
         cat = doc.type;
         render();
         close('modal-add');
+        const newlyCompleted = relevantPacks.find(p => wasIncomplete[p.id] && recommendedPackDocs(p.types).length >= p.total);
+        showAppToast(newlyCompleted ? `🎉 ${newlyCompleted.name} complete!` : (isEdit ? 'Document updated.' : 'Document added.'), null, null);
       };
 
       document.getElementById('btn-download').onclick = () => {
