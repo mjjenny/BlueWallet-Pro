@@ -4,6 +4,13 @@ How to get code from any tool (Claude Code, etc.) into production at
 `https://bluewallet-pro-stable.cl76380.chatgpt.site/`. Confirmed with Codex
 directly on 2026-08-12 — read this before trying to improvise a different path.
 
+> **In progress (2026-08-12): migrating off this workflow entirely.** The
+> ChatGPT Sites weekly usage limit (resets Aug 18) blocked deploys mid-project,
+> so a personal Cloudflare account is being set up with a direct GitHub
+> integration — push to GitHub, Cloudflare builds and deploys automatically,
+> no Codex step at all. See "Cloudflare migration" at the end of this file for
+> current status and the gotchas hit so far.
+
 ## The constraint
 
 Production is served from a Sites project (`.openai/hosting.json`, project id
@@ -113,3 +120,56 @@ production-baseline recovery deploy).
   every one present. Not yet checked on a real device/browser — the byte
   and marker verification confirms the *right code* is live, not that it
   *renders correctly* on an actual screen.
+
+## Cloudflare migration (in progress, 2026-08-12)
+
+Goal: eliminate the Codex handoff step entirely. Cloudflare Workers Builds
+connects directly to `github.com/mjjenny/BlueWallet-Pro`, so the workflow
+becomes just **push to GitHub → Cloudflare builds and deploys**. Claude Code
+already has working GitHub push credentials, so nothing else is needed.
+
+Cost of the switch: a new URL (`*.workers.dev` initially) rather than
+`bluewallet-pro-stable.cl76380.chatgpt.site`. Both can run in parallel; the
+ChatGPT-hosted one keeps working untouched until/unless it's deliberately
+retired (same cautious pattern as the earlier GitHub Pages retirement).
+
+### Setup used
+
+Cloudflare dashboard → Compute → Workers & Pages → Create → Connect to Git:
+
+| Setting | Value |
+|---|---|
+| Git repository | `mjjenny/BlueWallet-Pro` |
+| Production branch | `feature/desktop-grok-redesign` |
+| Build command | `npm run build` |
+| Deploy command | `npx wrangler deploy` |
+| Version command (non-prod branches) | `npx wrangler versions upload` |
+| Root directory | *(empty)* |
+
+### Gotchas hit (in order)
+
+1. **`wrangler.toml` did not exist.** This project only ever configured
+   Cloudflare bindings inline in `vite.config.ts` via
+   `@cloudflare/vite-plugin`, which serves `vite build`/`vite dev` but is
+   invisible to a standalone `wrangler deploy` in CI. Added a minimal
+   `wrangler.toml` (worker entry + `ASSETS` binding pointed at `dist/client`);
+   validated locally with `wrangler deploy --dry-run` before pushing.
+
+2. **"Root directory" is the build's working directory, not the output
+   directory.** It was initially set to `dist/client`, which fails at clone
+   time with `root directory not found` because that path only exists *after*
+   the build runs. It must be the repo root (leave empty).
+
+3. **`main` on GitHub is a different, unrelated codebase.** It's an old flat
+   static-file dump with no `package.json` at all — the deploy branches here
+   were pushed as disconnected histories (see step 2 of the workflow above).
+   Cloudflare defaults its production branch to `main`, so builds failed with
+   `ENOENT ... /opt/buildhome/repo/package.json`. Fix: set Production branch
+   to the actual deploy branch.
+
+4. **"Retry deployment" replays the original build's pinned branch/commit.**
+   After fixing the production branch, four retries still failed with the
+   identical `package.json` ENOENT error, because each retry re-ran the build
+   that was originally triggered against `main`. Corrected settings only take
+   effect on a *newly triggered* build — push a commit to the production
+   branch to force one.
