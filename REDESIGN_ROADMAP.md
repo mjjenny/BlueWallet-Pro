@@ -257,23 +257,57 @@ recommendations, per user direction ("everything including polish").
    close (all three trigger paths verified: skip, complete-all-steps,
    returning user) instead of firing simultaneously.
 
-### Medium Priority — in progress
+### Medium Priority — ✅ DONE
 
-5. Visual hierarchy & contrast pass
-6. Surface Pack progress + next expiry risk on Home
-7. Readiness formula explainability — already satisfied by item 2 above
-   (click-through to the checklist); no separate formula change requested
-   beyond that
-8. Spacing/alignment tightening
+5. **Visual hierarchy & contrast** (assessed) — `#strip-name` ("DOCUMENT
+   VAULT") checked directly via `getComputedStyle`: pure white
+   (`rgb(255,255,255)`), opacity 1, no text-shadow/fill trickery. The
+   "ghosted" impression in the review isn't a measurable contrast defect —
+   likely a reaction to the very large font size, not a bug. `--muted`/
+   `--accent` contrast was already verified passing WCAG AA across all 9
+   themes in Phase 3.3. No code change beyond what item 2 already improved
+   (bigger, bolder hero).
+6. **Surface Pack progress + next expiry risk** (`65eb903`) — new "Home
+   insights" section between the hero and category rail: a horizontally-
+   scrollable row of live pack-progress pills (click → pack detail), and a
+   "next expiry risk" card showing the single most urgent document
+   (most-overdue expired one first, else soonest-expiring), hidden
+   entirely when nothing has expiry data. Reuses `getExpiryGroups()` and
+   `recommendedPackDocs()` rather than new computation.
+7. **Readiness formula explainability** — satisfied by item 2 (click/
+   keyboard-activatable ring opens the checklist breakdown). No separate
+   formula change was requested beyond explainability.
+8. **Spacing/alignment** (`355a8fa`) — assessing this surfaced a real bug,
+   not just a taste issue: `.tools-row` had a hardcoded
+   `grid-row: 3/4 !important` fighting its own `grid-area: tools`
+   assignment, stale since Phase 3.2's install banner added a row (and
+   this round's item 6 added another) — the tools row was rendering one
+   row too early, overlapping where "insights" belongs. Fixed by removing
+   the hardcoded override and letting the named grid area resolve
+   correctly. Checked `.cats`/`.docs`/`.section-head` for the same pattern
+   — none had it.
 
-### Low Priority (Polish) — not started
+### Low Priority (Polish) — ✅ DONE
 
-9. Micro-interactions (hover, add success — success feedback already
-   shipped in Phase 3.1; hover consistency across pack/category cards
-   still open)
-10. Mobile bottom nav assessment
-11. Empty-state icon/illustration treatment
+9. **Micro-interactions** (`a34fd3a`) — `.doc` had a hover lift (translateY
+   + border glow + shadow); `.cat` and `.mobile-pack-card` — also
+   clickable cards — had none, including `.mobile-pack-card` missing a
+   `transition` property entirely. Added matching hover treatment to both.
+   Add-success feedback was already shipped in Phase 3.1, not duplicated.
+10. **Mobile bottom nav** (assessed) — buttons are 64×61px, active state
+    has a clearly distinct accent colour + background tint against a
+    muted inactive state. No concrete gap found.
+11. **Empty-state illustration** (`a34fd3a`) — no image-generation tooling
+    available in this environment, so interpreted honestly as a
+    presentation upgrade rather than fabricated illustrations: the emoji
+    now sits in an 88px soft gradient circle badge (matching the glow
+    treatment already used for pack icons) instead of a bare 52px
+    character at reduced opacity.
 
-All verified in-browser at mobile (375px) + desktop (1280px) with real
-interaction (not just DOM presence checks), `npm test` clean, and
-confirmed byte-identical live on Cloudflare after each push.
+All 11 items verified in-browser at mobile (375px) + desktop (1280px) with
+real interaction (not just DOM presence checks), `npm test` clean after
+every commit, and confirmed byte-identical live on Cloudflare. Two more
+real pre-existing bugs were found and fixed along the way (beyond the
+review's own list): a duplicate `btn-profile` click handler and a
+non-functional primary-nav Profile path (item 1), and the stale
+`.tools-row` grid-row hardcoding (item 8).
