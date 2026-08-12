@@ -139,15 +139,45 @@ byte-identical live.
 
 ---
 
-## Phase 3 — Polish & delight
+## Phase 3 — Polish & delight — ✅ DONE (2026-08-12)
 
-- **3.1** Card entrance animations, animated progress rings, success feedback on
-  add / pack-completion. *(Respect `prefers-reduced-motion` — the app already
-  has handling for it.)*
-- **3.2** Onboarding improvements; make "Install / Add to Home Screen" more
-  prominent — it's currently buried in Settings despite being critical for a PWA.
-- **3.3** Theme refinements + accessibility pass (contrast, focus states, touch
-  target sizes).
+### 3.1 Entrance animations + success feedback — ✅ DONE (`4cf0b06`)
+Category tabs and pack cards now share the existing `.doc` `rise` entrance
+animation (staggered `nth-child` delays) instead of only document cards
+having one. Found and fixed a real pre-existing gap while doing this:
+`.doc`'s animation had no `prefers-reduced-motion` override at all — added
+one covering all three animated card types.
+
+Document save now shows a toast: "Document added"/"Document updated"
+normally, or "🎉 &lt;Pack name&gt; complete!" when the save pushes an auto-pack
+from incomplete to fully matched. Hoisted the previously `openPacksUI()`-local
+pack definitions to a shared `PACK_MODELS` constant so both the Packs view
+and the save handler read the same data.
+
+### 3.2 Install prominence — ✅ DONE (`4cf0b06`)
+Added a dismissible install banner at the top of the Vault view, shown
+whenever the app isn't running standalone and hasn't been dismissed before
+(persisted via `localStorage`). Reuses the existing
+`beforeinstallprompt`/`deferredInstall` logic through a shared
+`triggerInstall()` — the original Settings button still works via the same
+function. Needed an explicit `grid-area` in the one place `.main` uses
+`grid-template-areas` (`min-width:901px`) to avoid CSS Grid guessing where
+an unassigned child belongs.
+
+### 3.3 Accessibility pass — ✅ DONE (`5c43a1e`)
+- Fixed a real gap: `.search-box input` removed its focus outline with no
+  visual replacement — keyboard users got zero indication it was focused.
+  Added `.search-box:focus-within` matching the existing `.field` pattern.
+- `.x` (modal close buttons, used everywhere) had no explicit hit-area and
+  fell under 44px in most contexts (only mobile-specific `!important`
+  overrides at 48–52px covered narrow widths). Gave it a 44×44 minimum;
+  existing overrides still win where they already applied.
+- Bumped the install banner's dismiss button and the timeline filter chips
+  to the same 44px minimum.
+- Ran an actual WCAG contrast check (relative-luminance formula via
+  `getComputedStyle`, not estimation) for `--muted`/`--accent` against
+  `--panel-solid` across all 9 themes: 5.8:1–13.8:1 everywhere, comfortably
+  clearing the 4.5:1 AA threshold. No changes needed — verified, not assumed.
 
 ---
 
@@ -166,9 +196,15 @@ not that it looks right.
 
 ---
 
-## Phase 1 & 2 status: complete
+## Phase 1, 2 & 3 status: complete
 
-All nine items (1.1–1.5, 2.1–2.4) shipped and verified live on Cloudflare as
-of 2026-08-12, plus one pre-existing bug found during Phase 2 and fixed
-(`46e544c`): the Packs modal was invisible between 701–1023px viewport width.
-Next up is Phase 3 (Polish & delight) — not started, no blockers.
+All twelve roadmap items (1.1–1.5, 2.1–2.4, 3.1–3.3) shipped and verified
+live on Cloudflare as of 2026-08-12, plus one pre-existing bug found during
+Phase 2 and fixed (`46e544c`): the Packs modal was invisible between
+701–1023px viewport width.
+
+One item from the plan was never assigned to a numbered phase item and so
+was never in scope for 1.1–3.3: **Settings regrouping** (flat sections →
+Appearance / Security / Backup & Sync / Reminders / Data & Storage / Help).
+It's a real, separately-schedulable piece of work if wanted next — see the
+"Where things actually stand" table above.
