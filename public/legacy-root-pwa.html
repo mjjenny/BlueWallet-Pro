@@ -2772,10 +2772,23 @@
     .mobile-add-brand,
     .mobile-add-cats,
     .mobile-pack-brand,
-    .mobile-pack-list,
     .mobile-pack-new,
     .mobile-timeline {
       display: none;
+    }
+    /* .mobile-pack-list holds the actual pack cards (not mobile-exclusive
+       chrome like the two above) -- it must stay visible at every viewport
+       width, including the 701-1023px gap between the max-width:700px and
+       min-width:1024px overrides below. Those two only refine columns/gap
+       from here, they don't turn visibility on. */
+    .mobile-pack-list {
+      display: grid;
+      gap: 14px;
+    }
+    .mobile-pack-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
     }
 
   
