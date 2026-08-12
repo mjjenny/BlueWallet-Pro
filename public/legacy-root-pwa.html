@@ -491,6 +491,39 @@
     .pill.warn b { color: var(--warn); }
     .pill.bad b { color: var(--bad); }
 
+    /* ===== READINESS RING ===== */
+    .readiness-ring {
+      position: relative;
+      width: 64px; height: 64px; flex-shrink: 0;
+    }
+    .readiness-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+    .ring-track, .ring-fill {
+      fill: none; stroke-width: 8;
+    }
+    .ring-track { stroke: rgba(255,255,255,.1); }
+    .ring-fill {
+      stroke: var(--accent);
+      stroke-linecap: round;
+      stroke-dasharray: 264;
+      stroke-dashoffset: 264;
+      transition: stroke-dashoffset 0.8s cubic-bezier(.22,1,.36,1);
+    }
+    .readiness-ring.ready-warn .ring-fill { stroke: var(--warn); }
+    .readiness-ring.ready-bad .ring-fill { stroke: var(--bad); }
+    .readiness-pct {
+      position: absolute; inset: 0; display: grid; place-items: center;
+      font-size: 15px; font-weight: 800; color: #fff;
+    }
+    .readiness-pct span { font-size: 10px; font-weight: 700; color: var(--muted); margin-left: 1px; }
+    .readiness-label { font-size: 13px; color: var(--muted); margin-top: 6px; font-weight: 600; }
+    .readiness-cta { margin-top: 12px; width: 100%; }
+    @media (min-width: 420px) {
+      .readiness-cta { width: auto; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .ring-fill { transition: none; }
+    }
+
     /* ===== CATEGORY RAIL (no All) ===== */
     .cats {
       display: flex; flex-wrap: nowrap; gap: clamp(3px, .45vw, 7px);
@@ -8082,14 +8115,23 @@
         <img id="strip-img" class="hidden" alt="" />
         <span id="strip-ph">👤</span>
       </div>
+      <div class="readiness-ring" id="readiness-ring" role="img" aria-label="Readiness score">
+        <svg viewBox="0 0 100 100">
+          <circle class="ring-track" cx="50" cy="50" r="42" />
+          <circle class="ring-fill" id="ring-fill" cx="50" cy="50" r="42" />
+        </svg>
+        <div class="readiness-pct"><b id="readiness-score">0</b><span>%</span></div>
+      </div>
       <div class="profile-meta">
         <h2 id="strip-name">DOCUMENT VAULT</h2>
         <div class="rank-line" id="strip-rank"></div>
+        <div class="readiness-label" id="readiness-label">Getting started</div>
         <div class="stat-pills">
           <span class="pill"><b id="stat-total">0</b> TOTAL</span>
           <span class="pill warn"><b id="stat-expiring">0</b> EXPIRING</span>
           <span class="pill bad"><b id="stat-expired">0</b> EXPIRED</span>
         </div>
+        <button type="button" class="btn btn-primary readiness-cta" id="readiness-cta">+ Add first document</button>
       </div>
     </div>
 
@@ -9262,6 +9304,31 @@
       { type: 'certificate', label: 'STCW / Certificates' }
     ];
 
+    /**
+     * Readiness score: % of JOIN_REQUIRED categories that have at least one
+     * PRESENT and NOT-EXPIRED document. Deliberately stricter than
+     * renderChecklist()'s ✅/❌ (which counts "present" alone as ok, even if
+     * every instance is expired) -- an expired-only passport showing 100%
+     * ready would undercut the whole point of a readiness score.
+     */
+    function computeReadiness() {
+      const total = JOIN_REQUIRED.length;
+      let ready = 0;
+      const missing = [];
+      JOIN_REQUIRED.forEach(req => {
+        const found = documents.filter(d => d.type === req.type && !d.archived);
+        const hasValid = found.some(d => {
+          if (d.noExpiry) return true;
+          const days = daysUntil(d.expiryDate);
+          return days === null || days >= 0;
+        });
+        if (hasValid) ready++;
+        else missing.push(req.label);
+      });
+      const pct = total ? Math.round((ready / total) * 100) : 0;
+      return { pct, ready, total, missing };
+    }
+
     let documents = [], cat = 'passport', viewId = null, pendingFiles = [];
     let vaultLocked = false;
 
@@ -10322,6 +10389,36 @@
         const x = daysUntil(d.expiryDate);
         return x !== null && x < 0;
       }).length;
+
+      const readiness = computeReadiness();
+      const ringFill = document.getElementById('ring-fill');
+      const ringWrap = document.getElementById('readiness-ring');
+      const scoreEl = document.getElementById('readiness-score');
+      const labelEl = document.getElementById('readiness-label');
+      const ctaEl = document.getElementById('readiness-cta');
+      if (ringFill && ringWrap && scoreEl && labelEl && ctaEl) {
+        const circumference = 264;
+        ringFill.style.strokeDashoffset = String(circumference * (1 - readiness.pct / 100));
+        scoreEl.textContent = readiness.pct;
+        ringWrap.classList.remove('ready-warn', 'ready-bad');
+        if (readiness.pct === 100) {
+          // no class needed -- default ring colour (var(--accent)) applies
+        } else if (readiness.pct >= 60) {
+          ringWrap.classList.add('ready-warn');
+        } else {
+          ringWrap.classList.add('ready-bad');
+        }
+        if (!documents.length) {
+          labelEl.textContent = 'Getting started';
+          ctaEl.textContent = '+ Add first document';
+        } else if (readiness.pct === 100) {
+          labelEl.textContent = 'Ready to join';
+          ctaEl.textContent = '+ Add Document';
+        } else {
+          labelEl.textContent = `Missing: ${readiness.missing.join(', ')}`;
+          ctaEl.textContent = '+ Add Document';
+        }
+      }
 
       const groups = getExpiryGroups();
       const bands = [];
@@ -12505,6 +12602,8 @@
       document.getElementById('btn-add').onclick = openAddFn;
       document.getElementById('btn-add-empty').onclick = openAddFn;
       document.getElementById('fab-add').onclick = openAddFn;
+      const readinessCtaBtn = document.getElementById('readiness-cta');
+      if (readinessCtaBtn) readinessCtaBtn.onclick = openAddFn;
       document.getElementById('close-add').onclick = () => cancelAddFlow();
       document.getElementById('btn-cancel').onclick = () => cancelAddFlow();
       document.getElementById('close-view').onclick = () => { close('modal-view'); viewId = null; };
