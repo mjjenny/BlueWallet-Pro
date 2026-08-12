@@ -879,6 +879,55 @@
       .overlay { align-items: center; padding: 24px; }
     }
 
+    /* ===== ADD DOCUMENT — DESKTOP TWO-COLUMN LAYOUT ===== */
+    @media (min-width: 1024px) {
+      #modal-add .modal.scan-sheet {
+        max-width: 1040px;
+        width: 94vw;
+      }
+      #modal-add .scan-form {
+        position: relative;
+        padding-left: 412px;
+      }
+      #modal-add .scan-form > .scan-upload-field {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 380px;
+        margin: 0;
+      }
+      #modal-add .scan-form > .actions {
+        margin-left: -412px;
+        width: calc(100% + 412px);
+      }
+      #modal-add .doc-type-field select { display: none; }
+      #modal-add .mobile-add-cats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 8px;
+      }
+      #modal-add .mobile-add-cats button {
+        padding: 9px 18px;
+        border-radius: 999px;
+        border: 1px solid var(--glass-border);
+        background: rgba(148, 200, 255, .08);
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      #modal-add .mobile-add-cats button:hover {
+        background: rgba(148, 200, 255, .14);
+        color: var(--text);
+      }
+      #modal-add .mobile-add-cats button.active {
+        background: rgba(94, 212, 255, .16);
+        border-color: rgba(94, 212, 255, .5);
+        color: #63d8ff;
+      }
+    }
+
     /* Large desktop — 3-column cards when space allows */
     @media (min-width: 1280px) {
       .main { max-width: 1200px; }
