@@ -8257,14 +8257,6 @@
       <button type="button" data-mobile-nav="profile"><b>♙</b><span>Profile</span></button>
     </nav>
     <div class="top-actions">
-      <button type="button" class="mode-toggle" id="btn-mode" aria-label="Toggle Lite Full mode" title="Toggle Lite / Full">FULL</button>
-      <button class="avatar" id="btn-profile" title="Photo">
-        <img id="profile-thumb" class="hidden" alt="" />
-        <span id="profile-placeholder">👤</span>
-      </button>
-      <button class="btn btn-ghost full-only" id="btn-lock-now" title="Lock now">🔒</button>
-      <button class="btn btn-ghost" id="btn-help" aria-label="Help" title="Help">?</button>
-      <button class="btn btn-ghost" id="btn-settings" aria-label="Settings" title="Settings">⚙️</button>
       <button class="btn btn-primary" id="btn-add">+ Add</button>
     </div>
   </header>
@@ -8563,6 +8555,9 @@
           <button class="btn btn-ghost" id="btn-print-sheet" style="width:100%;margin-top:10px">🖨 Document summary</button>
           <button class="btn btn-ghost" id="btn-share-quick" style="width:100%;margin-top:10px">↗ Share summary</button>
           <button class="btn btn-ghost" id="btn-profile-settings" style="width:100%;margin-top:10px">⚙️ Settings</button>
+          <button class="btn btn-ghost" id="btn-help-profile" style="width:100%;margin-top:10px">? Help guide</button>
+          <button class="btn btn-ghost full-only" id="btn-lock-profile" style="width:100%;margin-top:10px">🔒 Lock now</button>
+          <button class="btn btn-ghost" id="btn-mode-profile" style="width:100%;margin-top:10px">Switch to Lite mode</button>
         </div>
         <p style="font-size:15px;color:var(--muted);margin-top:14px">Passport size recommended</p>
       </div>
@@ -12291,8 +12286,8 @@
       const steps = [
         { t: 'Welcome aboard', x: 'THE BLUE WALLET stores passport, CDC, COC, visas and more offline on this device only.' },
         { t: 'Add your profile', x: 'Tap the photo icon to set passport photo, rank, CDC number and next of kin.' },
-        { t: 'Security', x: 'Set a PIN in Settings. Enable biometric on HTTPS. Use Lock 🔒 anytime.' },
-        { t: 'Tools', x: 'Search, sort, checklist, packs, timeline, sea-time and vaccine logs are in the tools row.' }
+        { t: 'Security', x: 'Set a PIN in Profile → Settings. Enable biometric on HTTPS. Lock the vault anytime from Profile.' },
+        { t: 'Tools', x: 'Packs, Timeline and Sea Time have their own tabs. Search, sort, checklist and vaccine logs are in the tools row.' }
       ];
       let i = 0;
       const show = () => {
@@ -12336,14 +12331,13 @@
       appMode = mode === 'lite' ? 'lite' : 'full';
       document.body.classList.toggle('app-lite', appMode === 'lite');
       try { localStorage.setItem('bwAppMode', appMode); } catch (_) {}
-      const btn = document.getElementById('btn-mode');
       const btnS = document.getElementById('btn-mode-settings');
-      if (btn) {
-        btn.textContent = appMode === 'lite' ? 'LITE' : 'FULL';
-        btn.title = appMode === 'lite' ? 'Switch to Full version' : 'Switch to Lite version';
-      }
+      const btnP = document.getElementById('btn-mode-profile');
       if (btnS) {
         btnS.textContent = appMode === 'lite' ? 'Switch to Full mode' : 'Switch to Lite mode';
+      }
+      if (btnP) {
+        btnP.textContent = appMode === 'lite' ? 'Switch to Full mode' : 'Switch to Lite mode';
       }
       const sub = document.querySelector('.brand p');
       if (sub) sub.textContent = 'Seafarer Digital Wallet';
@@ -12769,10 +12763,10 @@
       try { savedTheme = localStorage.getItem('greenVaultTheme') || localStorage.getItem('bwTheme') || 'ocean'; } catch (_) {}
       applyTheme(savedTheme);
       
-      document.getElementById('btn-mode').onclick = () => toggleAppMode();
       document.getElementById('btn-mode-settings').onclick = () => {
         toggleAppMode();
       };
+      document.getElementById('btn-mode-profile').onclick = () => toggleAppMode();
       [
         ['sort-by', 'Sort documents'],
         ['filter-status', 'Filter documents by expiry status'],
@@ -12883,8 +12877,6 @@
         });
       });
 
-      document.getElementById('btn-profile').onclick = () => { closeMobilePrimarySurfaces(); document.getElementById('modal-profile').classList.add('show'); syncOverlayState(); };
-      document.getElementById('strip-photo').onclick = () => { closeMobilePrimarySurfaces(); document.getElementById('modal-profile').classList.add('show'); syncOverlayState(); };
       document.querySelectorAll('[data-mobile-nav]').forEach(btn => {
         btn.onclick = () => {
           const target = btn.dataset.mobileNav;
@@ -12903,7 +12895,8 @@
           } else if (target === 'seatime') {
             openSeatimeUI();
           } else if (target === 'profile') {
-            document.getElementById('modal-profile').classList.add('show');
+            if (window.__openProfile) window.__openProfile();
+            else document.getElementById('modal-profile').classList.add('show');
             syncOverlayState();
           }
         };
@@ -12914,7 +12907,7 @@
         await saveProfile(await toDataURL(f));
         await loadProfile();
       };
-      document.getElementById('btn-help').onclick = openHelpGuide;
+      document.getElementById('btn-help-profile').onclick = openHelpGuide;
       document.getElementById('close-help').onclick = closeHelpGuide;
       document.querySelectorAll('.help-tab').forEach(tab => {
         tab.onclick = () => {
@@ -12941,7 +12934,6 @@
         document.getElementById('modal-settings').classList.add('show');
         syncOverlayState();
       }
-      document.getElementById('btn-settings').onclick = openSettingsUI;
       document.getElementById('btn-profile-settings')?.addEventListener('click', () => {
         close('modal-profile');
         openSettingsUI();
@@ -13016,7 +13008,7 @@
         close('modal-generic');
         setMobileNavActive('vault');
       };
-      document.getElementById('btn-lock-now').onclick = () => showLockIfNeeded(true);
+      document.getElementById('btn-lock-profile').onclick = () => { close('modal-profile'); showLockIfNeeded(true); };
       document.getElementById('view-list').onclick = () => {
         viewMode = 'list';
         document.getElementById('view-list').classList.add('active');
@@ -13117,8 +13109,8 @@
         document.getElementById('sf-nok').value = seafarer.nok || '';
         document.getElementById('modal-profile').classList.add('show');
       };
-      document.getElementById('btn-profile').onclick = openProfile;
       document.getElementById('strip-photo').onclick = openProfile;
+      window.__openProfile = openProfile;
 
       document.getElementById('btn-save-idle').onclick = () => {
         localStorage.setItem('bwIdleMins', document.getElementById('idle-mins').value || '0');
