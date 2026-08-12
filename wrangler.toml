@@ -1,0 +1,21 @@
+# Wrangler config for standalone `wrangler deploy` / `wrangler versions upload`
+# runs (e.g. Cloudflare Workers Builds via the GitHub integration).
+#
+# This project's local dev/build already configures Cloudflare bindings
+# inline in vite.config.ts via @cloudflare/vite-plugin -- that's only used
+# by `vite build`/`vite dev`, not by a standalone wrangler CLI invocation,
+# which is why this file didn't exist before and needs to.
+#
+# D1/R2/IMAGES bindings are intentionally omitted: .openai/hosting.json has
+# d1/r2 both null (this app doesn't use a database or asset storage), and
+# worker/index.ts only touches env.DB/env.IMAGES inside its /_vinext/image
+# branch, which this single-file PWA app doesn't exercise in practice.
+
+name = "bluewallet-pro"
+main = "./worker/index.ts"
+compatibility_date = "2026-08-01"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "./dist/client"
+binding = "ASSETS"
