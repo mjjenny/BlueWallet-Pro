@@ -518,11 +518,15 @@
     /* ===== READINESS RING ===== */
     .readiness-ring {
       position: relative;
-      width: 64px; height: 64px; flex-shrink: 0;
+      width: 92px; height: 92px; flex-shrink: 0;
+      cursor: pointer;
+    }
+    .readiness-ring:focus-visible {
+      outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 50%;
     }
     .readiness-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
     .ring-track, .ring-fill {
-      fill: none; stroke-width: 8;
+      fill: none; stroke-width: 9;
     }
     .ring-track { stroke: rgba(255,255,255,.1); }
     .ring-fill {
@@ -536,13 +540,22 @@
     .readiness-ring.ready-bad .ring-fill { stroke: var(--bad); }
     .readiness-pct {
       position: absolute; inset: 0; display: grid; place-items: center;
-      font-size: 15px; font-weight: 800; color: #fff;
+      font-size: 24px; font-weight: 800; color: #fff;
     }
-    .readiness-pct span { font-size: 10px; font-weight: 700; color: var(--muted); margin-left: 1px; }
-    .readiness-label { font-size: 13px; color: var(--muted); margin-top: 6px; font-weight: 600; }
+    .readiness-pct span { font-size: 13px; font-weight: 700; color: var(--muted); margin-left: 1px; }
+    .readiness-label { font-size: 14px; color: #fff; margin-top: 6px; font-weight: 700; }
+    .readiness-breakdown { font-size: 13px; color: var(--muted); margin-top: 3px; }
     .readiness-cta { margin-top: 12px; width: 100%; }
     @media (min-width: 420px) {
       .readiness-cta { width: auto; }
+    }
+    @media (min-width: 901px) {
+      .readiness-ring { width: 128px; height: 128px; }
+      .ring-track, .ring-fill { stroke-width: 10; }
+      .readiness-pct { font-size: 32px; }
+      .readiness-pct span { font-size: 15px; }
+      .readiness-label { font-size: 16px; }
+      .readiness-breakdown { font-size: 14px; }
     }
     @media (prefers-reduced-motion: reduce) {
       .ring-fill { transition: none; }
@@ -8278,7 +8291,7 @@
         <img id="strip-img" class="hidden" alt="" />
         <span id="strip-ph">👤</span>
       </div>
-      <div class="readiness-ring" id="readiness-ring" role="img" aria-label="Readiness score">
+      <div class="readiness-ring" id="readiness-ring" role="button" tabindex="0" aria-label="Readiness score. Tap for a breakdown of what's missing.">
         <svg viewBox="0 0 100 100">
           <circle class="ring-track" cx="50" cy="50" r="42" />
           <circle class="ring-fill" id="ring-fill" cx="50" cy="50" r="42" />
@@ -8289,6 +8302,7 @@
         <h2 id="strip-name">DOCUMENT VAULT</h2>
         <div class="rank-line" id="strip-rank"></div>
         <div class="readiness-label" id="readiness-label">Getting started</div>
+        <div class="readiness-breakdown" id="readiness-breakdown"></div>
         <div class="stat-pills">
           <span class="pill"><b id="stat-total">0</b> TOTAL</span>
           <span class="pill warn"><b id="stat-expiring">0</b> EXPIRING</span>
@@ -10639,8 +10653,9 @@
       const ringWrap = document.getElementById('readiness-ring');
       const scoreEl = document.getElementById('readiness-score');
       const labelEl = document.getElementById('readiness-label');
+      const breakdownEl = document.getElementById('readiness-breakdown');
       const ctaEl = document.getElementById('readiness-cta');
-      if (ringFill && ringWrap && scoreEl && labelEl && ctaEl) {
+      if (ringFill && ringWrap && scoreEl && labelEl && breakdownEl && ctaEl) {
         const circumference = 264;
         ringFill.style.strokeDashoffset = String(circumference * (1 - readiness.pct / 100));
         scoreEl.textContent = readiness.pct;
@@ -10652,14 +10667,18 @@
         } else {
           ringWrap.classList.add('ready-bad');
         }
+        const readyCount = `${readiness.ready} of ${readiness.total} core documents ready`;
         if (!documents.length) {
           labelEl.textContent = 'Getting started';
+          breakdownEl.textContent = readyCount;
           ctaEl.textContent = '+ Add first document';
         } else if (readiness.pct === 100) {
           labelEl.textContent = 'Ready to join';
+          breakdownEl.textContent = readyCount;
           ctaEl.textContent = '+ Add Document';
         } else {
-          labelEl.textContent = `Missing: ${readiness.missing.join(', ')}`;
+          labelEl.textContent = 'Almost there';
+          breakdownEl.textContent = `${readyCount} - missing ${readiness.missing.join(', ')}`;
           ctaEl.textContent = '+ Add Document';
         }
       }
@@ -12961,11 +12980,18 @@
       document.getElementById('sort-by').onchange = e => { sortBy = e.target.value; render(); };
       document.getElementById('filter-status').onchange = e => { filterStatus = e.target.value; render(); };
 
-      document.getElementById('btn-checklist').onclick = () => {
+      const openChecklist = () => {
         renderChecklist();
         document.getElementById('modal-checklist').classList.add('show');
       };
+      document.getElementById('btn-checklist').onclick = openChecklist;
       document.getElementById('close-checklist').onclick = () => close('modal-checklist');
+      document.getElementById('readiness-ring').onclick = openChecklist;
+      document.getElementById('readiness-ring').onkeydown = e => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        e.preventDefault();
+        openChecklist();
+      };
       document.getElementById('btn-print-sheet').onclick = () => {
         const sheet = document.getElementById('print-sheet');
         sheet.innerHTML = buildPrintSheet();
