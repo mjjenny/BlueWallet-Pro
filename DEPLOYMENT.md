@@ -99,9 +99,17 @@ production-baseline recovery deploy).
   `/legacy-root-pwa.html` started 307-redirecting to `/legacy-root-pwa`
   instead of serving directly — confirmed query strings survive the redirect
   and the service worker's caching still works correctly against it.
-- **2026-08-12, desktop redesign branch pushed to GitHub**: branch
-  `feature/desktop-grok-redesign` at commit
-  `622c208c1bf929b893709c74b94b138f5901474e` pushed to
-  `github.com/mjjenny/BlueWallet-Pro`, ready for the same Codex handoff.
-  Not yet deployed to `sites` as of this writing — check git log / ask
-  before assuming it's live.
+- **2026-08-12, desktop redesign deployed**: branch
+  `feature/desktop-grok-redesign` pushed to `github.com/mjjenny/BlueWallet-Pro`
+  at commit `622c208`, then again at `0fbf364` (docs-only follow-up). Codex
+  fast-forwarded `sites`'s `main` from `6b9395a` to `0fbf364` — a clean
+  fast-forward, not forced, since this branch was built directly on top of
+  the already-live recovery baseline. Verified live: downloaded the deployed
+  `legacy-root-pwa.html` and `service-worker.js` fresh and diffed both
+  against a local build of the same commit — byte-for-byte identical apart
+  from the one known Cloudflare token. Grepped the live file for all eight
+  per-screen desktop-work section markers (Add Document, STCW, Sea-time,
+  Vaccines, Packs, Timeline, Pack Builder & Share, Settings) and confirmed
+  every one present. Not yet checked on a real device/browser — the byte
+  and marker verification confirms the *right code* is live, not that it
+  *renders correctly* on an actual screen.
