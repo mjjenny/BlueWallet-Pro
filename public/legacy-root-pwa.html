@@ -998,6 +998,35 @@
       }
     }
 
+    /* ===== VACCINATION LOG — DESKTOP LAYOUT ===== */
+    @media (min-width: 1024px) {
+      #modal-generic.vaccine-mode .modal { max-width: 760px; }
+      #modal-generic.vaccine-mode .mobile-vaccine-brand { display: none; }
+      #modal-generic.vaccine-mode .mobile-dose-field input { display: none; }
+      #modal-generic.vaccine-mode .mobile-dose-segment {
+        display: flex;
+        gap: 8px;
+        max-width: 360px;
+      }
+      #modal-generic.vaccine-mode .mobile-vaccine-existing {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+      #modal-generic.vaccine-mode .mobile-vaccine-existing:empty { display: block; }
+      #modal-generic.vaccine-mode .vac-row {
+        padding: 16px;
+        border-radius: 14px;
+        background: rgba(12, 32, 54, .55);
+        border: 1px solid var(--glass-border);
+        font-size: 13px;
+      }
+      #modal-generic.vaccine-mode .vac-row b {
+        font-size: 15px;
+        color: var(--text);
+      }
+    }
+
     /* Large desktop — 3-column cards when space allows */
     @media (min-width: 1280px) {
       .main { max-width: 1200px; }
