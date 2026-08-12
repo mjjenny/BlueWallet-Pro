@@ -22,7 +22,7 @@ on mobile / left rail on desktop. Treating it as whole-app here.
 | Category status strips | **Done** (1.2, `206d913`) — coloured strip on each category tab | — |
 | Guided empty states | **Done** (1.3, `206d913`) — per-category icon/copy/CTA, 9 categories | — |
 | Collapse the "tool dump" | **Done** (1.4, `206d913`) — Search/Sort/Filter/View + one Tools dropdown | — |
-| Settings grouping | Sections exist but flat; desktop 2-column already shipped | Regroup into 6 |
+| Settings grouping | **Done** (`cc65878`) — 6 named collapsible groups | — |
 | Sea Time as primary tab | **Done** (1.5, `206d913`) — Option A shipped | — |
 
 ---
@@ -203,8 +203,15 @@ live on Cloudflare as of 2026-08-12, plus one pre-existing bug found during
 Phase 2 and fixed (`46e544c`): the Packs modal was invisible between
 701–1023px viewport width.
 
-One item from the plan was never assigned to a numbered phase item and so
-was never in scope for 1.1–3.3: **Settings regrouping** (flat sections →
-Appearance / Security / Backup & Sync / Reminders / Data & Storage / Help).
-It's a real, separately-schedulable piece of work if wanted next — see the
-"Where things actually stand" table above.
+**Settings regrouping** (`cc65878`, 2026-08-12) — the one item never assigned
+to a numbered phase — is also done: the flat section list is now 6 native
+`<details open>` groups (Appearance, Security, Backup & Sync, Reminders,
+Data & Storage, Help), collapsible with no new JS. The old "Download &
+backup" block had become a catch-all for backup, reminder, and diagnostic
+buttons; those were split out into Reminders and a new "Diagnostics &
+reports" sub-section under Data & Storage. Verified the `id="..."` set is
+byte-identical before/after (nothing added, removed, or duplicated — only
+moved), so all existing `getElementById` wiring resolves unchanged.
+
+The entire `desktop redesign plan.pdf` is now implemented end to end. No
+open items remain on this roadmap.
