@@ -6943,6 +6943,22 @@
         height: 18px !important;
       }
 
+      /* An earlier max-width:700px block (further up this file) restyled
+         .pill.warn::before as a transparent, blue-outlined square via
+         !important -- losing the yellow-circle "warning" colour coding
+         every other breakpoint uses. That rule's specific properties
+         (border, background) were never overridden again after it, so
+         they kept winning the cascade at every width this block also
+         matches. Restoring the correct fill/shape here, last in source
+         order within this same max-width:760px scope so it wins. */
+      .stat-pills .pill.warn::before {
+        width: 18px !important;
+        height: 18px !important;
+        border: none !important;
+        border-radius: 50% !important;
+        background: rgba(255,209,102,.92) !important;
+      }
+
       .stat-pills .pill.bad::before {
         border-left-width: 10px !important;
         border-right-width: 10px !important;
