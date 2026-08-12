@@ -1027,6 +1027,26 @@
       }
     }
 
+    /* ===== DOCUMENT PACKS — DESKTOP CARD GRID ===== */
+    @media (min-width: 1024px) {
+      #modal-generic.packs-mode .modal { max-width: 1000px; }
+      #modal-generic.packs-mode .mobile-pack-brand,
+      #modal-generic.packs-mode .mobile-pack-actions,
+      #modal-generic.packs-mode .mobile-pack-new {
+        display: none;
+      }
+      #modal-generic.packs-mode .mobile-pack-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin-bottom: 24px;
+      }
+      #modal-generic.packs-mode .desktop-pack-body {
+        border-top: 1px solid var(--glass-border);
+        padding-top: 20px;
+      }
+    }
+
     /* Large desktop — 3-column cards when space allows */
     @media (min-width: 1280px) {
       .main { max-width: 1200px; }
@@ -12047,12 +12067,7 @@
             <button class="btn btn-ghost mobile-pack-share" data-pack-share data-share-pack-custom="${esc(p.id)}">Share pack</button>
           </article>`).join('')}
         </div>`;
-      const customBody = packs.map(p =>
-        `<div class="check-item"><div><div class="cn">${esc(p.name)}</div><div class="cs">${(p.docIds||[]).length} docs</div></div>
-         <div><button class="btn btn-ghost" data-open-pack="${esc(p.id)}">Open</button>
-         <button class="btn btn-danger" data-del-pack="${esc(p.id)}">Delete</button></div></div>`
-      ).join('') || '<p style="color:var(--muted)">No custom packs yet.</p>';
-      showGeneric('Document Packs', mobileBody + `<div class="desktop-pack-body">${customBody}
+      showGeneric('Document Packs', mobileBody + `<div class="desktop-pack-body">
         <div class="field" style="margin-top:14px"><label>New pack name</label>
         <input type="text" id="new-pack-name-desktop" placeholder="e.g. Joining M/V Aurora" /></div>
         <button class="btn btn-primary" id="btn-create-pack-desktop" style="width:100%">Create empty pack</button></div>`, 'packs-mode');
