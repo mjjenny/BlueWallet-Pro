@@ -11,10 +11,24 @@
 # worker/index.ts only touches env.DB/env.IMAGES inside its /_vinext/image
 # branch, which this single-file PWA app doesn't exercise in practice.
 
+# NOTE: deliberately does NOT set compatibility_flags.
+#
+# @cloudflare/vite-plugin merges this file with the inline localBindingConfig
+# in vite.config.ts (which already sets nodejs_compat) and writes the result to
+# dist/server/wrangler.json, which is what `wrangler deploy` actually uses.
+# Array fields CONCATENATE rather than override during that merge, so listing
+# nodejs_compat here too produced ["nodejs_compat","nodejs_compat"] and the
+# Cloudflare API rejected the deploy with:
+#   Compatibility flag specified multiple times: nodejs_compat [code: 10021]
+# Add compatibility flags to vite.config.ts's localBindingConfig, not here.
+#
+# `main` and `[assets]` below are likewise overridden by the plugin (to the
+# built output paths). They're kept so a bare `wrangler` invocation outside the
+# vite build still resolves, but the plugin's values are what ship.
+
 name = "bluewallet-pro"
 main = "./worker/index.ts"
 compatibility_date = "2026-08-01"
-compatibility_flags = ["nodejs_compat"]
 
 [assets]
 directory = "./dist/client"
