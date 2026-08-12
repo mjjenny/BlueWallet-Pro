@@ -24,6 +24,19 @@ Current production deployment:
 https://bluewallet-pro-stable.cl76380.chatgpt.site/legacy-root-pwa
 ```
 
+> **Updated 2026-08-12 — read [`DEPLOYMENT.md`](DEPLOYMENT.md) before deploying
+> anything.** There is now a second, newer deployment on a personal Cloudflare
+> account that deploys automatically on git push:
+>
+> ```text
+> https://bluewallet-pro.cl76380.workers.dev/legacy-root-pwa
+> ```
+>
+> It is **ahead** of the chatgpt.site URL above (includes desktop sidebar
+> navigation and layout fixes that never shipped there). The chatgpt.site
+> deployment still works but can only be updated via a manual Codex handoff,
+> which is gated by an account-wide weekly usage limit. Prefer Cloudflare.
+
 The same app is also reachable at:
 
 ```text

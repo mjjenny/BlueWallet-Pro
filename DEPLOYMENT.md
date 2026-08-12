@@ -1,141 +1,42 @@
 # DEPLOYMENT
 
-How to get code from any tool (Claude Code, etc.) into production at
-`https://bluewallet-pro-stable.cl76380.chatgpt.site/`. Confirmed with Codex
-directly on 2026-08-12 — read this before trying to improvise a different path.
+How to get code from any tool (Claude Code, etc.) into production.
 
-> **In progress (2026-08-12): migrating off this workflow entirely.** The
-> ChatGPT Sites weekly usage limit (resets Aug 18) blocked deploys mid-project,
-> so a personal Cloudflare account is being set up with a direct GitHub
-> integration — push to GitHub, Cloudflare builds and deploys automatically,
-> no Codex step at all. See "Cloudflare migration" at the end of this file for
-> current status and the gotchas hit so far.
+**Primary path since 2026-08-12: push to GitHub → Cloudflare builds and deploys
+automatically.** No Codex step, no weekly limit, no handoff message.
 
-## The constraint
+| | URL | Deploy path | Status |
+|---|---|---|---|
+| **Cloudflare Workers** | `https://bluewallet-pro.cl76380.workers.dev/legacy-root-pwa` | auto on git push | **primary** |
+| ChatGPT Sites | `https://bluewallet-pro-stable.cl76380.chatgpt.site/legacy-root-pwa` | manual Codex handoff | legacy, still live |
 
-Production is served from a Sites project (`.openai/hosting.json`, project id
-`appgprj_6a74d7c5b9f4819192ac2f63287fa26d`) whose git remote is:
+Both run in parallel. The Sites one is untouched and still works; it just can't
+be updated without Codex. Nothing forces a switchover — decide later whether to
+point a custom domain at Cloudflare and retire the Sites URL (same cautious
+pattern as the earlier GitHub Pages retirement).
 
-```text
-sites   https://git.chatgpt-team.site/70d53469-8286-4c9e-9ab4-81f6a72eccd3/appgprj_6a74d7c5b9f4819192ac2f63287fa26d.git
-```
+---
 
-**There is no user-generatable permanent deploy token, API key, or git
-credential for this remote.** The credential Codex uses to push here is:
+## Primary: Cloudflare (automatic)
 
-- short-lived
-- project-scoped
-- generated through the Sites deployment connector
-- intended for one deployment workflow
-- not available in GitHub Settings, Git Credential Manager, or anywhere a
-  normal git client can pick it up
+### The workflow
 
-This was verified two ways before being confirmed by Codex itself:
-
-- `git push sites <branch>` from a sandboxed tool session fails immediately
-  with `remote: Authentication required` / `fatal: Authentication failed` —
-  no credential prompt offered at all.
-- The identical push from Jenny's own terminal, with Git Credential Manager
-  installed and working, produced the exact same immediate failure with zero
-  prompt. That ruled out "just needs an interactive login" — this remote
-  doesn't offer normal git auth to end users, by design.
-
-**Do not put a GitHub PAT (or any other credential) into Git Credential
-Manager for `git.chatgpt-team.site`.** It won't work, and per Codex's own
-guidance this isn't a supported or safe thing to attempt. Any tool can only
-deploy directly if it natively supports the Sites connector and can generate
-its own fresh project-scoped credential — Claude Code, Qwen, and ordinary git
-clients do not.
-
-## The actual workflow
-
-1. **Build and verify changes in your tool.** Run the project's tests
-   (`npm test` — lint, build, and the render tests) before handing anything
-   off. Don't rely on Codex to catch problems introduced upstream.
-2. **Push the branch to GitHub:**
-   ```text
-   https://github.com/mjjenny/BlueWallet-Pro.git
+1. **Build and verify locally.** `npm test` runs lint, build, and the render
+   tests. Do this before pushing — Cloudflare will happily deploy a broken app.
+2. **Push to GitHub:**
+   ```bash
+   git push origin feature/desktop-grok-redesign
    ```
-   This repo has working push credentials in the Claude Code sandbox
-   environment (confirmed via `git push --dry-run` before ever pushing real
-   content). It has no relationship to this repo's git history — pushing a
-   branch here creates a disconnected branch with its own root commit. That's
-   fine; it's a relay, not a merge target. Don't treat it as a real
-   development branch of the GitHub repo.
-3. **Give Codex the exact branch name and commit hash.** Not a description of
-   the changes — the literal identifiers, so there's no ambiguity about what
-   gets deployed. Example handoff message:
-   > Pull branch `<branch-name>` from GitHub (`mjjenny/BlueWallet-Pro`) at
-   > commit `<full 40-char hash>`, and push it to the `sites` remote's `main`
-   > branch. This branch's history is unrelated to what's in this GitHub
-   > repo — take the file contents as-is, don't try to merge. After pushing,
-   > confirm with raw `git push` and `git ls-remote --heads sites` output.
-4. **Codex publishes that commit to the Sites project.** This is the only
-   step that actually touches the `sites` remote — it's the one tool in this
-   workflow that holds the connector-issued credential.
+   That's it. Cloudflare picks it up within a minute or so and deploys.
+3. **Verify the live site** (see "Verify independently" below).
 
-## After Codex deploys: verify independently, don't just trust the report
+Claude Code has working GitHub push credentials in its sandbox (confirmed via
+`git push --dry-run` before ever pushing real content), so it can do steps 1–3
+unattended.
 
-This is the same discipline the handover's Qwen-incident lesson establishes,
-and it caught real things both times it's been applied so far (see
-`MILESTONE_1_ROADMAP.md` Steps 8–9 for the full worked example on the
-production-baseline recovery deploy).
+### Project configuration
 
-1. Get the raw `git push` / `git ls-remote --heads sites` output from Codex —
-   not a summary, the actual command output. The remote hash must match the
-   commit you asked it to deploy.
-2. Independently re-download the live site and diff it against your own
-   local build (`npm run build`, compare `dist/client/` byte-for-byte, or
-   grep for a known distinguishing string). Expect one harmless difference:
-   Cloudflare injects a randomized bot-challenge token
-   (`__CF$cv$params`) into every response — confirmed by fetching the same
-   URL twice and watching it change both times. Everything else should match
-   exactly.
-3. Spot-check anything you changed actually works live, not just that the
-   bytes match — click through the specific feature, don't assume matching
-   source means matching behavior.
-
-## Worked examples
-
-- **2026-08-12, production baseline recovery**: `sites` remote's `main`
-  force-pushed to commit `6b9395a` (branch
-  `recovery/production-baseline-20260812`). Verified live: `app.js`,
-  `styles.css`, `favicon.svg`, and all four icon files went from serving a
-  broken HTML fallback to correct content-types, byte-identical to the local
-  build. One unplanned but verified-benign side effect found:
-  `/legacy-root-pwa.html` started 307-redirecting to `/legacy-root-pwa`
-  instead of serving directly — confirmed query strings survive the redirect
-  and the service worker's caching still works correctly against it.
-- **2026-08-12, desktop redesign deployed**: branch
-  `feature/desktop-grok-redesign` pushed to `github.com/mjjenny/BlueWallet-Pro`
-  at commit `622c208`, then again at `0fbf364` (docs-only follow-up). Codex
-  fast-forwarded `sites`'s `main` from `6b9395a` to `0fbf364` — a clean
-  fast-forward, not forced, since this branch was built directly on top of
-  the already-live recovery baseline. Verified live: downloaded the deployed
-  `legacy-root-pwa.html` and `service-worker.js` fresh and diffed both
-  against a local build of the same commit — byte-for-byte identical apart
-  from the one known Cloudflare token. Grepped the live file for all eight
-  per-screen desktop-work section markers (Add Document, STCW, Sea-time,
-  Vaccines, Packs, Timeline, Pack Builder & Share, Settings) and confirmed
-  every one present. Not yet checked on a real device/browser — the byte
-  and marker verification confirms the *right code* is live, not that it
-  *renders correctly* on an actual screen.
-
-## Cloudflare migration (in progress, 2026-08-12)
-
-Goal: eliminate the Codex handoff step entirely. Cloudflare Workers Builds
-connects directly to `github.com/mjjenny/BlueWallet-Pro`, so the workflow
-becomes just **push to GitHub → Cloudflare builds and deploys**. Claude Code
-already has working GitHub push credentials, so nothing else is needed.
-
-Cost of the switch: a new URL (`*.workers.dev` initially) rather than
-`bluewallet-pro-stable.cl76380.chatgpt.site`. Both can run in parallel; the
-ChatGPT-hosted one keeps working untouched until/unless it's deliberately
-retired (same cautious pattern as the earlier GitHub Pages retirement).
-
-### Setup used
-
-Cloudflare dashboard → Compute → Workers & Pages → Create → Connect to Git:
+Cloudflare dashboard → Compute → Workers & Pages → `bluewallet-pro`:
 
 | Setting | Value |
 |---|---|
@@ -145,31 +46,158 @@ Cloudflare dashboard → Compute → Workers & Pages → Create → Connect to G
 | Deploy command | `npx wrangler deploy` |
 | Version command (non-prod branches) | `npx wrangler versions upload` |
 | Root directory | *(empty)* |
+| Build cache | on |
 
-### Gotchas hit (in order)
+`wrangler.toml` at the repo root supplies `name` and `compatibility_date`. It
+deliberately does **not** set `compatibility_flags` — see gotcha 4 below.
 
-1. **`wrangler.toml` did not exist.** This project only ever configured
-   Cloudflare bindings inline in `vite.config.ts` via
-   `@cloudflare/vite-plugin`, which serves `vite build`/`vite dev` but is
-   invisible to a standalone `wrangler deploy` in CI. Added a minimal
-   `wrangler.toml` (worker entry + `ASSETS` binding pointed at `dist/client`);
-   validated locally with `wrangler deploy --dry-run` before pushing.
+### Gotchas hit during setup (all real, all cost time)
+
+1. **`wrangler.toml` didn't exist.** Cloudflare bindings were only ever
+   configured inline in `vite.config.ts` via `@cloudflare/vite-plugin`, which
+   serves `vite build`/`vite dev` but is invisible to a standalone
+   `wrangler deploy` in CI. Added a minimal one (worker entry + `ASSETS`
+   binding).
 
 2. **"Root directory" is the build's working directory, not the output
-   directory.** It was initially set to `dist/client`, which fails at clone
-   time with `root directory not found` because that path only exists *after*
-   the build runs. It must be the repo root (leave empty).
+   directory.** Setting it to `dist/client` fails at clone time with
+   `root directory not found`, because that path only exists *after* the build
+   runs. Leave it empty.
 
-3. **`main` on GitHub is a different, unrelated codebase.** It's an old flat
-   static-file dump with no `package.json` at all — the deploy branches here
-   were pushed as disconnected histories (see step 2 of the workflow above).
-   Cloudflare defaults its production branch to `main`, so builds failed with
-   `ENOENT ... /opt/buildhome/repo/package.json`. Fix: set Production branch
-   to the actual deploy branch.
+3. **GitHub's `main` is a different, unrelated codebase** — an old flat
+   static-file dump with no `package.json` (these deploy branches were pushed
+   as disconnected histories). Cloudflare defaults its production branch to
+   `main`, which fails with `ENOENT ... /opt/buildhome/repo/package.json`. Set
+   the production branch explicitly.
 
-4. **"Retry deployment" replays the original build's pinned branch/commit.**
-   After fixing the production branch, four retries still failed with the
-   identical `package.json` ENOENT error, because each retry re-ran the build
-   that was originally triggered against `main`. Corrected settings only take
-   effect on a *newly triggered* build — push a commit to the production
-   branch to force one.
+4. **Duplicate `nodejs_compat` → `[code: 10021]`.** `@cloudflare/vite-plugin`
+   merges `wrangler.toml` with the inline config in `vite.config.ts` and writes
+   `dist/server/wrangler.json` — *that generated file* is what `wrangler deploy`
+   actually uses (see the "Using redirected Wrangler configuration" line in the
+   build log). Array fields **concatenate** during that merge, so declaring the
+   flag in both places produced `["nodejs_compat","nodejs_compat"]` and the API
+   rejected the deploy. Keep compatibility flags in `vite.config.ts` only.
+
+   Note `wrangler deploy --dry-run` **cannot** catch this — dry-run skips the
+   API validation step where duplicate flags are rejected. It passed locally
+   while the real deploy failed.
+
+5. **⚠️ "Retry deployment" replays the *original* build's pinned commit.** This
+   one cost the most time by far. After fixing the production branch and the
+   duplicate flag, **five** retries still reproduced the identical error —
+   because each retry re-ran the old `main`-branch build, not the fixed code.
+   Corrected settings and new commits only take effect on a **newly triggered**
+   build.
+
+   **To force a genuinely fresh build, push a commit** (an empty one works:
+   `git commit --allow-empty`). Don't trust Retry after changing settings. The
+   build history's commit-hash column is the ground truth for what actually ran.
+
+6. **Removing a compatibility flag in the dashboard doesn't stick** — the next
+   deploy re-applies it from the repo config. That's correct behavior, not a
+   bug: config-as-code wins. But a version deployed *while* it was removed will
+   crash at runtime with `No such module "node:async_hooks"`, and that error
+   banner persists in the dashboard even after a later good deploy fixes it.
+   Check the live site, not the banner.
+
+7. **A successful deploy doesn't mean a reachable site.** The Worker deployed
+   fine but showed "No URLs enabled" — Domains 0. Enable the `workers.dev`
+   subdomain under Settings → Domains & Routes.
+
+---
+
+## Legacy: ChatGPT Sites (manual, needs Codex)
+
+Kept because the Sites URL is still live and may still be the one people have
+bookmarked. Only needed if that specific URL must be updated.
+
+Production there is a Sites project (`.openai/hosting.json`, project id
+`appgprj_6a74d7c5b9f4819192ac2f63287fa26d`) whose git remote is:
+
+```text
+sites   https://git.chatgpt-team.site/70d53469-8286-4c9e-9ab4-81f6a72eccd3/appgprj_6a74d7c5b9f4819192ac2f63287fa26d.git
+```
+
+**There is no user-obtainable permanent deploy credential for this remote** —
+confirmed directly by Codex on 2026-08-12. The credential it uses is
+short-lived, project-scoped, generated through the Sites deployment connector,
+and not available in GitHub Settings or Git Credential Manager.
+
+Verified two ways before Codex confirmed it: `git push sites <branch>` fails
+instantly with `remote: Authentication required` from a sandboxed tool session,
+**and** identically from Jenny's own terminal with Git Credential Manager
+installed — zero credential prompt either time. That ruled out "just needs an
+interactive login."
+
+**Do not put a GitHub PAT (or any credential) into Git Credential Manager for
+`git.chatgpt-team.site`.** It won't work, and per Codex's own guidance it isn't
+a supported or safe thing to attempt.
+
+Also note the ChatGPT Sites usage limit is account-wide and weekly (it blocked
+this project mid-stream on 2026-08-12, resetting Aug 18) — which is precisely
+why the Cloudflare path exists.
+
+### The handoff, if you need it
+
+1. Build and verify locally (`npm test`).
+2. Push the branch to `https://github.com/mjjenny/BlueWallet-Pro.git`.
+3. Give Codex the **exact branch and full commit hash** — not a description:
+   > Pull branch `<branch>` from GitHub (`mjjenny/BlueWallet-Pro`) at commit
+   > `<full 40-char hash>`, and push it to the `sites` remote's `main` branch.
+   > This branch's history is unrelated to what's in this GitHub repo — take
+   > the file contents as-is, don't try to merge. After pushing, confirm with
+   > raw `git push` and `git ls-remote --heads sites` output.
+4. Codex publishes it. That's the only step holding the connector credential.
+
+---
+
+## Verify independently — don't trust the report
+
+Applies to **both** paths. This is the handover's Qwen-incident discipline, and
+it has caught real problems every time it's been applied.
+
+1. **Get raw command output**, not a summary. For Codex: the actual `git push`
+   and `git ls-remote --heads sites` text, with the remote hash matching what
+   you asked for. For Cloudflare: the build's commit hash in the build history.
+2. **Re-download the live site and diff it against your own build:**
+   ```bash
+   npm run build
+   curl -s https://bluewallet-pro.cl76380.workers.dev/legacy-root-pwa -o live.html
+   diff <(grep -v '__CF\$cv\$params' live.html) \
+        <(grep -v '__CF\$cv\$params' dist/client/legacy-root-pwa.html)
+   ```
+   Expect exactly one class of difference: Cloudflare injects a randomized
+   bot-challenge token (`__CF$cv$params`) into every response — confirmed by
+   fetching the same URL twice and watching it change. Everything else should
+   match.
+3. **Grep for a marker you know is new**, to prove *which* version is live:
+   ```bash
+   grep -c "SETTINGS & BACKUP — DESKTOP" live.html
+   ```
+4. **Byte-identical ≠ renders correctly.** Matching source only proves the right
+   code shipped. Actually open it and click through the thing you changed.
+
+---
+
+## Worked examples
+
+- **2026-08-12, production baseline recovery (Sites)**: `sites` `main`
+  force-pushed to `6b9395a`. Verified live: `app.js`, `styles.css`,
+  `favicon.svg`, and all four icons went from serving a broken HTML fallback to
+  correct content-types, byte-identical to the local build. One unplanned but
+  verified-benign side effect: `/legacy-root-pwa.html` began 307-redirecting to
+  `/legacy-root-pwa`; confirmed query strings survive the redirect and the
+  service worker's caching still works against it.
+
+- **2026-08-12, desktop redesign (Sites)**: Codex fast-forwarded `sites` `main`
+  from `6b9395a` to `0fbf364`. Verified byte-identical to a local build of the
+  same commit, with all eight per-screen desktop markers present.
+
+- **2026-08-12, Cloudflare goes live**: `671d088` built and deployed
+  successfully after the gotchas above. Verified independently:
+  `/legacy-root-pwa` returns 200 (534,240 bytes), `/` and `/service-worker.js`
+  return 200, no 500 (so `nodejs_compat` is correctly applied), all nine
+  markers present including `sidebar-nav`, and content byte-identical to the
+  local build ignoring the CF token. This version is **ahead** of the Sites
+  deployment — it includes the sidebar navigation, toast-overlap, and
+  empty-state height fixes that never shipped there.
