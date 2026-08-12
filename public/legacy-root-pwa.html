@@ -1114,7 +1114,8 @@
         gap: 12px;
         align-content: start;
       }
-      #modal-generic.stcw-mode #generic-body > p {
+      #modal-generic.stcw-mode #generic-body > p,
+      #modal-generic.stcw-mode #generic-body > .stcw-add-row {
         grid-column: 1 / -1;
       }
       #modal-generic.stcw-mode .matrix-row {
@@ -3032,6 +3033,14 @@
       background: rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.08); font-size: 13px;
     }
     .matrix-row.ok { border-color: rgba(93,255,176,.35); }
+    .matrix-right { display: flex; align-items: center; gap: 8px; }
+    .matrix-remove {
+      background: none; border: 1px solid rgba(255,255,255,.18); color: var(--muted);
+      width: 22px; height: 22px; border-radius: 50%; font-size: 12px; line-height: 1;
+      cursor: pointer; display: grid; place-items: center; flex-shrink: 0; padding: 0;
+    }
+    .matrix-remove:hover { color: var(--bad); border-color: var(--bad); }
+    .stcw-add-row { margin-top: 14px; }
     .sea-row, .vac-row {
       padding: 12px; border-radius: 12px; margin-bottom: 8px;
       background: rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.08); font-size: 13px;
@@ -8276,7 +8285,7 @@
     </div>
     <h1>THE BLUE WALLET</h1>
     <p>Enter PIN to unlock</p>
-    <div class="pin-dots" id="pin-dots"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    <div class="pin-dots" id="pin-dots"><span></span><span></span><span></span><span></span></div>
     <div id="lock-err"></div>
     <div id="lock-pad">
       <button type="button" data-k="1">1</button><button type="button" data-k="2">2</button><button type="button" data-k="3">3</button>
@@ -8847,7 +8856,7 @@
           <div class="help-sec">
             <h3>PIN &amp; lock</h3>
             <ul>
-              <li><strong>PIN</strong> - 4-6 digits in Settings; turn on "Require unlock on open".</li>
+              <li><strong>PIN</strong> - 4 digits in Settings; turn on "Require unlock on open".</li>
               <li><strong>Encryption</strong> - setting a PIN encrypts documents at rest with AES-GCM; the key is derived locally with PBKDF2.</li>
               <li><strong>Lock now</strong> - Full mode padlock locks the wallet immediately.</li>
               <li><strong>Auto-lock</strong> - Full mode can re-lock after idle minutes.</li>
@@ -8921,14 +8930,14 @@
           <summary>Security</summary>
           <div class="sblock">
             <h3>PIN &amp; biometrics</h3>
-            <p>PIN lock (4–6 digits). Setting a PIN encrypts documents at rest with AES-GCM (key derived via PBKDF2). Unlock with PIN after each reload. Biometrics confirm presence but PIN is still required to decrypt when encryption is on.</p>
+            <p>PIN lock (4 digits). Setting a PIN encrypts documents at rest with AES-GCM (key derived via PBKDF2). Unlock with PIN after each reload. Biometrics confirm presence but PIN is still required to decrypt when encryption is on.</p>
             <div class="field" style="margin:10px 0 0"><label>Set / change PIN</label>
-              <input type="password" id="pin-set" inputmode="numeric" maxlength="6" placeholder="New PIN" />
+              <input type="password" id="pin-set" inputmode="numeric" maxlength="4" placeholder="New PIN" />
             </div>
-            <div class="field"><input type="password" id="pin-set2" inputmode="numeric" maxlength="6" placeholder="Confirm PIN" /></div>
+            <div class="field"><input type="password" id="pin-set2" inputmode="numeric" maxlength="4" placeholder="Confirm PIN" /></div>
             <div class="field" id="pin-current-wrap" style="display:none;margin-top:8px">
               <label>Current PIN (required to change/remove)</label>
-              <input type="password" id="pin-current" inputmode="numeric" maxlength="6" autocomplete="off" />
+              <input type="password" id="pin-current" inputmode="numeric" maxlength="4" autocomplete="off" />
             </div>
             <button class="btn btn-ghost" id="btn-save-pin" style="width:100%;margin-bottom:8px">Save PIN</button>
             <button class="btn btn-danger" id="btn-clear-pin" style="width:100%">Remove PIN</button>
@@ -9970,7 +9979,8 @@
           idleMins: +(localStorage.getItem('bwIdleMins') || 0),
           appMode: localStorage.getItem('bwAppMode') || 'full',
           theme: localStorage.getItem('bwTheme') || localStorage.getItem('greenVaultTheme') || 'ocean',
-          pinRequired: localStorage.getItem('bwPinRequired') === '1'
+          pinRequired: localStorage.getItem('bwPinRequired') === '1',
+          customStcwCourses: getCustomStcwCourses()
         }
         // PIN hash, biometric credentials, and sync secrets intentionally excluded
       };
@@ -10009,6 +10019,13 @@
           if (data.settings.idleMins != null) localStorage.setItem('bwIdleMins', String(+data.settings.idleMins || 0));
           if (data.settings.appMode) localStorage.setItem('bwAppMode', data.settings.appMode === 'lite' ? 'lite' : 'full');
           if (data.settings.theme) localStorage.setItem('bwTheme', String(data.settings.theme));
+          if (Array.isArray(data.settings.customStcwCourses)) {
+            const merged = getCustomStcwCourses();
+            data.settings.customStcwCourses.forEach(c => {
+              if (typeof c === 'string' && c.trim() && !merged.some(m => m.toLowerCase() === c.trim().toLowerCase())) merged.push(c.trim());
+            });
+            saveCustomStcwCourses(merged);
+          }
         }
       } finally {
         syncApplyingRemote = false;
@@ -11265,14 +11282,6 @@
         return;
       }
 
-      // A 4- or 5-digit entry may only be the prefix of a longer PIN.
-      // Do not count it as a failed attempt; wait for the next digit.
-      if (enteredPin.length < 6) {
-        document.getElementById('lock-err').textContent = 'Continue entering PIN';
-        return;
-      }
-
-      // Six digits is the maximum supported length, so only now record failure.
       const n = registerPinFail();
       const left = pinLockRemainingMs();
       document.getElementById('lock-err').textContent = left
@@ -12884,18 +12893,57 @@
       document.getElementById('btn-cancel-pack-share').onclick = () => openPacksUI();
     }
 
+    function getCustomStcwCourses() {
+      try { return JSON.parse(localStorage.getItem('bwCustomStcwCourses') || '[]'); } catch (_) { return []; }
+    }
+    function saveCustomStcwCourses(list) {
+      localStorage.setItem('bwCustomStcwCourses', JSON.stringify(list));
+    }
+    function addCustomStcwCourse(name) {
+      const trimmed = (name || '').trim();
+      if (!trimmed) return;
+      const list = getCustomStcwCourses();
+      if (list.some(c => c.toLowerCase() === trimmed.toLowerCase())) return;
+      list.push(trimmed);
+      saveCustomStcwCourses(list);
+    }
+    function removeCustomStcwCourse(name) {
+      saveCustomStcwCourses(getCustomStcwCourses().filter(c => c !== name));
+    }
     function openStcwUI() {
       const rankKey = Object.keys(STCW_MATRIX).find(k => (seafarer.rank||'').toLowerCase().includes(k.split(' ')[0].toLowerCase())) || 'Generic';
-      const reqs = STCW_MATRIX[rankKey] || STCW_MATRIX.Generic;
+      const baseReqs = STCW_MATRIX[rankKey] || STCW_MATRIX.Generic;
+      const customCourses = getCustomStcwCourses();
+      const rows = baseReqs.concat(customCourses).map(course => {
+        const hit = documents.find(d =>
+          (d.type === 'certificate' || d.type === 'coc') &&
+          (d.title||'').toLowerCase().includes(course.toLowerCase().slice(0,4))
+        );
+        const removeBtn = customCourses.includes(course)
+          ? `<button type="button" class="matrix-remove" data-stcw-remove="${esc(course)}" aria-label="Remove ${esc(course)} from checklist">✕</button>`
+          : '';
+        return `<div class="matrix-row ${hit?'ok':''}"><span class="matrix-course">${esc(course)}</span><span class="matrix-right"><span class="matrix-status">${hit ? 'Valid - ' + esc(hit.title) : 'Missing'}</span>${removeBtn}</span></div>`;
+      }).join('');
       const body = `<p style="color:var(--muted);margin-bottom:12px">Matrix for: <b style="color:#fff">${esc(rankKey)}</b> (set rank in profile for better match)</p>` +
-        reqs.map(course => {
-          const hit = documents.find(d =>
-            (d.type === 'certificate' || d.type === 'coc') &&
-            (d.title||'').toLowerCase().includes(course.toLowerCase().slice(0,4))
-          );
-          return `<div class="matrix-row ${hit?'ok':''}"><span class="matrix-course">${esc(course)}</span><span class="matrix-status">${hit ? 'Valid - ' + esc(hit.title) : 'Missing'}</span></div>`;
-        }).join('');
+        rows +
+        `<div class="stcw-add-row">
+          <div class="field"><label>Add another certificate to track</label>
+            <input type="text" id="stcw-add-input" placeholder="e.g. Advanced Fire Fighting, ECDIS, BRM" maxlength="80" />
+          </div>
+          <button type="button" class="btn btn-ghost" id="btn-stcw-add-course" style="width:100%;margin-top:8px">+ Add certificate</button>
+        </div>`;
       showGeneric('STCW Checklist', body, 'stcw-mode');
+      document.getElementById('btn-stcw-add-course').onclick = () => {
+        const input = document.getElementById('stcw-add-input');
+        addCustomStcwCourse(input.value);
+        openStcwUI();
+      };
+      document.getElementById('stcw-add-input').onkeydown = (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btn-stcw-add-course').click(); }
+      };
+      document.querySelectorAll('[data-stcw-remove]').forEach(btn => {
+        btn.onclick = () => { removeCustomStcwCourse(btn.dataset.stcwRemove); openStcwUI(); };
+      });
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
@@ -13334,7 +13382,7 @@
           const k = btn.dataset.k;
           if (k === 'del') { pinBuffer = pinBuffer.slice(0, -1); updatePinDots(); return; }
           if (k === 'bio') { tryBiometric(); return; }
-          if (pinBuffer.length >= 6) return;
+          if (pinBuffer.length >= 4) return;
           pinBuffer += k;
           updatePinDots();
           if (pinBuffer.length >= 4) await tryUnlock();
@@ -13351,7 +13399,7 @@
         const a = document.getElementById('pin-set').value.trim();
         const b = document.getElementById('pin-set2').value.trim();
         const cur = (document.getElementById('pin-current')?.value || '').trim();
-        if (!/^\d{4,6}$/.test(a)) { alert('PIN must be 4–6 digits'); return; }
+        if (!/^\d{4}$/.test(a)) { alert('PIN must be exactly 4 digits'); return; }
         if (a !== b) { alert('PINs do not match'); return; }
         if (!cryptoSubtleOk()) {
           // iOS file://: UI PIN only, no AES at rest

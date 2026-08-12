@@ -463,3 +463,48 @@ Verified via real WebKit: no toast appears after page load + reload
 (waited 1.5s), the Settings row correctly reflects a silently-detected
 pending update ("A new version is available." / "Update now"), and
 tapping Check for Update surfaces the toast on demand.
+
+---
+
+## PIN standardized to 4 digits; STCW checklist now extensible (2026-08-13)
+
+**PIN**: was previously variable-length (4–6 digits), which required a
+"wait for possibly more digits" guess-ahead in `tryUnlock()` since the
+app only stores a hash and can't know the intended length upfront.
+Standardized to exactly 4 digits throughout — lock screen (4 dots, was
+6), Settings PIN fields (`maxlength="4"`), save validation
+(`/^\d{4}$/`), and copy in Settings/Help. Simplified `tryUnlock()`
+accordingly — no more "Continue entering PIN" prefix-guessing, since
+length is now fixed. Verified end-to-end via real WebKit: set a 4-digit
+PIN, lock the vault, enter the 4 digits on the pad, confirmed clean
+unlock with no error.
+
+**Biometric auto-fill of the PIN was investigated and intentionally not
+implemented as literally requested.** The vault's AES-GCM key is derived
+via PBKDF2 from the PIN text itself (`deriveVaultKey`) — the app never
+stores the PIN, only a verification hash. WebAuthn/biometric assertions
+prove presence/identity but do not expose any secret the app could use
+to reconstruct the PIN or the key; there is no reversible path from "Face
+ID succeeded" to "here is the PIN" without storing the PIN in a
+biometric-gated-but-still-extractable form, which would defeat the
+purpose of PIN-derived encryption (physical device access would then be
+enough to decrypt, bypassing the PIN entirely). The existing behavior
+(`tryBiometric()` in the lock screen) already auto-unlocks with no PIN
+prompt when encryption is off; when encryption is on, it correctly falls
+through to "Biometric OK — enter PIN to decrypt vault" rather than
+faking a fill. Raised with the user as a design question rather than
+guessed at, since any implementation here is security-sensitive.
+
+**STCW checklist**: previously a fixed, hardcoded 4–7 item matrix per
+rank (`STCW_MATRIX`) with no way to track certificates outside that
+list. Added a persistent custom-course layer: a "+ Add certificate" field
+at the bottom of the STCW Checklist screen appends to
+`localStorage['bwCustomStcwCourses']` (deduped case-insensitively) and
+re-renders the matrix with the new entry included; custom entries get a
+small ✕ remove button the built-in ones don't have. Also wired into
+`buildFullBackupData()` / `applyBackupData()` (merged, not overwritten)
+so custom certificates survive Export Backup, restore, and Encrypted
+Sync Vault round-trips like the rest of the app's settings. Verified via
+real WebKit: added "Advanced Fire Fighting", confirmed it renders with a
+remove control and persists to `localStorage`, then removed it and
+confirmed the list reverts to the 4 built-in Generic-rank items.
