@@ -508,3 +508,34 @@ Sync Vault round-trips like the rest of the app's settings. Verified via
 real WebKit: added "Advanced Fire Fighting", confirmed it renders with a
 remove control and persists to `localStorage`, then removed it and
 confirmed the list reverts to the 4 built-in Generic-rank items.
+
+---
+
+## Help & FAQ caught up with this session's feature changes (2026-08-13)
+
+A pass through `#modal-help` to fix stale/incorrect content left behind
+by earlier changes in this session, not just add coverage for new ones:
+
+- **FAQ "Lite and Full use the same data?"** still said the mode toggle
+  lives "from the header" — actually wrong since the header consolidation
+  moved it into Profile. Fixed.
+- **Install pane** described tapping "the in-app Update button" as if
+  updates still surface automatically — no longer true after the
+  update-toast opt-in change. Rewritten to point at Settings -> Data &
+  storage -> Check for Update.
+- **Profile section** didn't mention it now also houses Help, Lock Now,
+  and the Lite/Full switch after the header consolidation, or that the
+  header itself only keeps + Add. Added.
+- **"Lock now" bullet** said "Full mode padlock" with no location —
+  updated to point at Profile -> Lock Now.
+- **STCW help card** didn't mention the new "+ Add certificate" control.
+  Added a line.
+- **New "Readiness & insights" section** added to the Start tab covering
+  the tappable readiness ring and the Pack progress / Next expiry risk
+  cards from Review Round 2, which had no help coverage at all before.
+
+Verified via real WebKit: extracted `innerText` from each changed help
+pane after tab-switching and confirmed the new copy renders exactly as
+written, plus grepped the built output for the FAQ line directly since
+closed `<details>` content doesn't reliably show up in `innerText`
+extraction.

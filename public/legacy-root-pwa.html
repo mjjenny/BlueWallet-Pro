@@ -8725,6 +8725,10 @@
             </div>
           </div>
           <div class="help-sec" style="margin-top:14px">
+            <h3>Readiness &amp; insights</h3>
+            <p>The Vault home screen's readiness ring is tappable and opens the Joining Vessel Checklist. Below it, Pack progress and Next expiry risk cards give an at-a-glance view of which packs are complete and which document needs attention soonest - tap either to jump straight to the relevant pack or document.</p>
+          </div>
+          <div class="help-sec" style="margin-top:14px">
             <h3>Privacy</h3>
             <p>The wallet is offline-first and local-only. Documents live in this browser's <strong>IndexedDB</strong>; the app does not upload scans, profile data, notes, or backups to a server.</p>
           </div>
@@ -8820,7 +8824,7 @@
               <div class="help-card"><h4>Checklist</h4><p>Joining pack status for passport, CDC, COC, medical, certificates, and missing documents.</p></div>
               <div class="help-card"><h4>Packs</h4><p>Named vessel/trip packs with pack builder, bulk tag/pack tools, and printable joining lists.</p></div>
               <div class="help-card"><h4>Timeline</h4><p>Renewal timeline and reminder center for upcoming expiry actions.</p></div>
-              <div class="help-card"><h4>STCW</h4><p>Course matrix by rank using profile data and certificate status.</p></div>
+              <div class="help-card"><h4>STCW</h4><p>Course matrix by rank using profile data and certificate status. Use "+ Add certificate" at the bottom of the checklist to track courses beyond the built-in list - custom entries carry over in Export Backup and sync.</p></div>
               <div class="help-card"><h4>Sea time / Vaccines</h4><p>Local-only onboard service and vaccine logs.</p></div>
               <div class="help-card"><h4>Audit / Data Safety</h4><p>Local activity log plus a data safety screen for backup, PIN, export, and offline status.</p></div>
               <div class="help-card"><h4>Release readiness</h4><p>Summarizes real-device QA, backup health, PIN, expiry, missing document, and quality/risk status.</p></div>
@@ -8851,14 +8855,14 @@
         <div class="help-pane" id="help-security">
           <div class="help-sec">
             <h3>Profile</h3>
-            <p>Tap the avatar for passport photo, name, rank, nationality, CDC no., passport no., next of kin.</p>
+            <p>Tap the avatar for passport photo, name, rank, nationality, CDC no., passport no., next of kin. Profile is also home to Help, Lock Now (Full mode), the Lite/Full mode switch, and a shortcut into Settings - the header itself only keeps the + Add button.</p>
           </div>
           <div class="help-sec">
             <h3>PIN &amp; lock</h3>
             <ul>
               <li><strong>PIN</strong> - 4 digits in Settings; turn on "Require unlock on open".</li>
               <li><strong>Encryption</strong> - setting a PIN encrypts documents at rest with AES-GCM; the key is derived locally with PBKDF2.</li>
-              <li><strong>Lock now</strong> - Full mode padlock locks the wallet immediately.</li>
+              <li><strong>Lock now</strong> - Profile -> Lock Now (Full mode) locks the wallet immediately.</li>
               <li><strong>Auto-lock</strong> - Full mode can re-lock after idle minutes.</li>
             </ul>
           </div>
@@ -8872,14 +8876,14 @@
           </div>
           <div class="help-sec">
             <h3>Install</h3>
-            <p>Settings -> Install / Add to Home Screen. On iOS Safari, use Share -> Add to Home Screen; on Android/desktop, use the browser install prompt when available. When a new hosted app version is available, tap the in-app Update button; your saved documents stay on this device.</p>
+            <p>Settings -> Install / Add to Home Screen. On iOS Safari, use Share -> Add to Home Screen; on Android/desktop, use the browser install prompt when available. Blue Wallet checks for new versions in the background but never installs one without asking - open Settings -> Data & storage -> <strong>Check for Update</strong> to check on demand and tap Update when one is available. Your saved documents stay on this device.</p>
           </div>
         </div>
 
         <div class="help-pane" id="help-faq">
           <details class="faq-item"><summary>Where are files stored?</summary><div class="faq-a">Only on this device in the browser's IndexedDB. Clearing site data removes them unless you exported a backup.</div></details>
           <details class="faq-item"><summary>Why won't OCR or biometrics work?</summary><div class="faq-a">They need a secure context: HTTPS or localhost. Opening the HTML as <code>file://</code> usually blocks them. OCR also needs its external OCR and PDF libraries to be reachable when you press the OCR button.</div></details>
-          <details class="faq-item"><summary>Lite and Full use the same data?</summary><div class="faq-a">Yes. One local database; only available controls change. Toggle anytime from the header or Settings.</div></details>
+          <details class="faq-item"><summary>Lite and Full use the same data?</summary><div class="faq-a">Yes. One local database; only available controls change. Toggle anytime from Profile or Settings.</div></details>
           <details class="faq-item"><summary>Document has no expiry date?</summary><div class="faq-a">Enable "No Expiry Date" when adding or editing. It will not appear in expiry alerts but stays in search, summary, backup, and packs.</div></details>
           <details class="faq-item"><summary>Lost PIN?</summary><div class="faq-a">The app cannot decrypt locked data without the PIN. Restore from a backup after clearing site data only if you accept resetting the local encrypted store.</div></details>
           <details class="faq-item"><summary>Category names look cut off?</summary><div class="faq-a">On narrow screens, compact category codes keep every tab visible in one row.</div></details>
