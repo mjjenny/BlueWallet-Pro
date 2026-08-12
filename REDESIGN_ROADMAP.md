@@ -17,8 +17,8 @@ on mobile / left rail on desktop. Treating it as whole-app here.
 | Readiness hero (score + metrics + CTA) | **Done** (1.1, `c2c4c34`) — progress ring, adaptive label/CTA, verified live | — |
 | Left rail on desktop | **Done** — added this session, 5 items, wired to existing nav JS | — |
 | Bottom nav on mobile | **Done** — shipped in the mobile phase | — |
-| Pack cards with progress | **Mostly done** — 4 auto-packs render with progress *bars*, status colours, and completion counts. Plan asks for *rings*. | Restyle only |
-| Timeline colour-coding | **Partially done** — `.tl-item.warn` / `.tl-item.bad` colour-code by status; 13-month grid wraps properly on desktop | Add filters + prominence |
+| Pack cards with progress | **Done** (2.1, `9db0160`) — animated rings replace the bars | — |
+| Timeline colour-coding | **Done** (2.3, `8f9403c`) — filter chips + renewal plan/missing tracker promoted above the grid | — |
 | Category status strips | **Done** (1.2, `206d913`) — coloured strip on each category tab | — |
 | Guided empty states | **Done** (1.3, `206d913`) — per-category icon/copy/CTA, 9 categories | — |
 | Collapse the "tool dump" | **Done** (1.4, `206d913`) — Search/Sort/Filter/View + one Tools dropdown | — |
@@ -87,27 +87,50 @@ the nav correctly, Profile → Settings closes Profile and opens Settings.
 
 ---
 
-## Phase 2 — Packs & Timeline polish
+## Phase 2 — Packs & Timeline polish — ✅ DONE (2026-08-12)
 
-### 2.1 Pack progress rings
-Swap the existing progress bars for rings. Cards, colours, and completion logic
-already work — visual change only.
+### 2.1 Pack progress rings — ✅ DONE (`9db0160`)
+Swapped the horizontal bars for animated SVG rings (same stroke-dashoffset
+pattern as the 1.1 readiness ring). Found and fixed a pre-existing gap along
+the way: the pack card's icon box had no width/height/background at desktop
+widths (min-width:1024px) — it silently fell back to an unstyled full-width
+block. Also found that my first pass at the ring CSS was accidentally scoped
+inside `max-width:700px`, making it structurally broken at wider viewports
+(worked "by accident" on the surface, broke on inspection) — moved the shared
+ring structure (position/absolute-SVG/track/fill) to unconditional CSS, with
+only sizing varying per breakpoint.
 
-### 2.2 Pack detail = checklist view
-Tapping a pack currently opens the doc-picker. Plan wants a checklist showing
-each *required* document with present/missing status and per-row "Add missing".
-This is the biggest functional add in Phase 2 — it needs a defined required-doc
-list per pack (the `packModels` array already declares `types` and `total`, so
-there's a foundation).
+Also removed pre-existing dead code found while working in this area:
+`openPacksUI()` and `openStcwUI()` were each declared twice; the earlier
+copies were fully shadowed by later ones and never executed.
 
-### 2.3 Timeline risk visualisation
-- Filter chips: All / Critical / Next 90 days
-- Promote "Renewal plan" and "Missing document tracker" above the month grid
-  (they're currently below it, easy to miss)
+### 2.2 Pack detail = checklist view — ✅ DONE (`9db0160`)
+Clicking a pack card (not its buttons) opens `openPackDetail()`: matched
+documents with status pills, a synthesized "N more needed" row, and "+ Add
+missing document" that pre-selects the pack's category. Reuses the existing
+STCW matrix-row styling rather than inventing new CSS. Scoped to the 4 auto
+packs only (`types`/`total` give them a real "required" concept) — custom
+packs don't have a defined required-doc list, so they keep the existing
+document-picker flow.
 
-### 2.4 Profile + Sea-time presentation
-Profile → clean identity card. Sea-time → chronological list plus a summary
-(total days, last vessel) — the summary is new; the log itself already works.
+### 2.3 Timeline risk visualisation — ✅ DONE (`8f9403c`)
+Filter chips (All / Critical / Next 90 days) added, shared between the mobile
+card list and desktop month grid. "Critical" reuses the app's own
+`reminders.critical` threshold (7 days) rather than a new number; "Next 90
+days" lines up with `reminders.secondary`'s default (90). Renewal plan and
+Missing document tracker now render above the month grid. Empty months
+collapse under a filter instead of showing a bare "-".
+
+### 2.4 Profile + Sea-time presentation — ✅ DONE (`6167479`)
+Added a summary card (total days, last vessel) above the sea-time log, hidden
+in the add/edit-entry view. Profile modal was checked against "clean identity
+card" — already a single-column photo + identity form with no concrete gap,
+so left unchanged rather than inventing unrequested redesign work.
+
+**Found but not fixed** (pre-existing, unrelated to any Phase 2 change): the
+Packs modal's card list is `display:none` for the entire 701–1023px viewport
+width range — neither the mobile nor desktop layout rules cover that gap.
+Worth a follow-up.
 
 ---
 
@@ -138,9 +161,10 @@ not that it looks right.
 
 ---
 
-## Phase 1 status: complete
+## Phase 1 & 2 status: complete
 
-All five items (1.1–1.5) shipped and verified live on Cloudflare as of
-2026-08-12. Both open questions are resolved: readiness formula per 1.1's
-notes above; nav decision = Option A. Next up is Phase 2 (Packs & Timeline
-polish) — not started, no blockers.
+All nine items (1.1–1.5, 2.1–2.4) shipped and verified live on Cloudflare as
+of 2026-08-12. Next up is Phase 3 (Polish & delight) — not started, no
+blockers. One pre-existing bug was found but not fixed during Phase 2 (see
+2.1/2.4 notes above): the Packs modal is invisible between 701–1023px
+viewport width.
