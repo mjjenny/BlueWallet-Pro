@@ -215,3 +215,65 @@ moved), so all existing `getElementById` wiring resolves unchanged.
 
 The entire `desktop redesign plan.pdf` is now implemented end to end. No
 open items remain on this roadmap.
+
+---
+
+## Review Round 2 — external UX/UI/Layout report (2026-08-12)
+
+A follow-up review (`Review of the redesigned version.pdf`) assessed the
+live app against the original plan post-Phase-3. Its claims were verified
+directly against the live site before acting on any of them (several
+turned out to be real, current gaps — not stale feedback). Scope: all 11
+recommendations, per user direction ("everything including polish").
+
+### High Priority — ✅ DONE
+
+1. **Simplify navigation** (`2f0dadb`) — Header cluster (FULL mode, avatar,
+   Lock, Help, Settings) was genuinely still competing with the sidebar/
+   bottom nav (verified live: all 5 buttons present alongside the primary
+   nav). Folded all four into the Profile sheet per the user's explicit
+   choice; header now holds only "+ Add". Found and fixed two real bugs
+   surfaced by this: a duplicate `btn-profile` onclick assignment (same
+   dead-shadowing pattern as the Phase 2 `openPacksUI`/`openStcwUI` find),
+   and the primary-nav Profile tab never actually populating profile
+   fields — it only worked before because the header avatar button
+   (wired correctly) was always available as a silent workaround.
+
+2. **Strengthen the home hero** (`e77c00a`) — Readiness ring enlarged
+   64px→92px (mobile) / 128px (desktop), added a supporting breakdown line
+   ("X of 5 core documents ready" + what's missing), and made the ring
+   click/keyboard-activatable to open the existing checklist modal for a
+   full explain-the-score breakdown — reusing existing UI instead of
+   building new.
+
+3. **Fix empty states** (`3893e4b`) — Added the recommended optional
+   secondary action ("See required documents for &lt;Pack&gt;") for any
+   category that maps to one of the 4 auto-packs.
+
+4. **Reduce first-load noise** (`3893e4b`) — Onboarding-shows-once was
+   already correct (verified in code, not a real bug). The actual problem:
+   install banner + onboarding modal + update toast could all show at
+   once on a first visit. Install banner now waits for onboarding to
+   close (all three trigger paths verified: skip, complete-all-steps,
+   returning user) instead of firing simultaneously.
+
+### Medium Priority — in progress
+
+5. Visual hierarchy & contrast pass
+6. Surface Pack progress + next expiry risk on Home
+7. Readiness formula explainability — already satisfied by item 2 above
+   (click-through to the checklist); no separate formula change requested
+   beyond that
+8. Spacing/alignment tightening
+
+### Low Priority (Polish) — not started
+
+9. Micro-interactions (hover, add success — success feedback already
+   shipped in Phase 3.1; hover consistency across pack/category cards
+   still open)
+10. Mobile bottom nav assessment
+11. Empty-state icon/illustration treatment
+
+All verified in-browser at mobile (375px) + desktop (1280px) with real
+interaction (not just DOM presence checks), `npm test` clean, and
+confirmed byte-identical live on Cloudflare after each push.
