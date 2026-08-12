@@ -11486,6 +11486,22 @@
 
     function openSeatimeUI(editId) {
       const editing = editId ? seatime.find(s => s.id === editId) : null;
+      const totalDays = seatime.reduce((sum, s) => {
+        if (!s.signOn) return sum;
+        const start = new Date(s.signOn);
+        const end = s.signOff ? new Date(s.signOff) : new Date();
+        const days = Math.round((end - start) / 86400000);
+        return sum + (Number.isFinite(days) && days > 0 ? days : 0);
+      }, 0);
+      const lastEntry = [...seatime].sort((a, b) =>
+        new Date(b.signOff || b.signOn || 0) - new Date(a.signOff || a.signOn || 0)
+      )[0];
+      const summary = seatime.length ? `<div class="help-card" style="margin-bottom:14px;display:flex;gap:24px;flex-wrap:wrap">
+        <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Total sea time</div>
+          <div style="font-size:22px;font-weight:800;color:#fff;margin-top:4px">${totalDays} days</div></div>
+        <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Last vessel</div>
+          <div style="font-size:22px;font-weight:800;color:#fff;margin-top:4px">${esc(lastEntry?.vessel || '—')}</div></div>
+      </div>` : '';
       const rows = seatime.map(s =>
         `<div class="sea-row"><b>${esc(s.vessel)}</b> · ${esc(s.rank||'')}<br>
          ${fmt(s.signOn)} → ${fmt(s.signOff) || 'present'}
@@ -11494,7 +11510,7 @@
            <button class="btn btn-danger" data-del-sea="${s.id}" style="padding:6px 10px;font-size:12px">Delete</button>
          </div></div>`
       ).join('') || '<p style="color:var(--muted)">No sea-time entries.</p>';
-      showGeneric(editing ? 'Edit sea-time' : 'Sea-time log', rows + `
+      showGeneric(editing ? 'Edit sea-time' : 'Sea-time log', (editing ? '' : summary) + rows + `
         <input type="hidden" id="sea-edit-id" value="${editing ? esc(editing.id) : ''}" />
         <div class="field"><label>Vessel</label><input id="sea-vessel" value="${editing ? esc(editing.vessel) : ''}" /></div>
         <div class="row"><div class="field"><label>Rank</label><input id="sea-rank" value="${editing ? esc(editing.rank||'') : ''}" /></div>
