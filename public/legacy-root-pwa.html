@@ -2826,6 +2826,21 @@
     .tl-item { font-size: 11px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,.06); color: #fff; }
     .tl-item.warn { color: var(--warn); }
     .tl-item.bad { color: var(--bad); }
+    .tl-hidden { display: none !important; }
+    .tl-filters {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;
+    }
+    .tl-filter-chip {
+      background: var(--glass); border: 1px solid var(--glass-border);
+      color: var(--muted); font-size: 13px; font-weight: 700;
+      padding: 8px 16px; border-radius: 999px; cursor: pointer;
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    }
+    .tl-filter-chip:hover { border-color: var(--accent); }
+    .tl-filter-chip.active {
+      background: rgba(94,212,255,.18); border-color: rgba(94,212,255,.5);
+      color: var(--accent);
+    }
     .onboard {
       position: fixed; inset: 0; z-index: 10000; background: rgba(1,6,14,.88);
       display: none; align-items: center; justify-content: center; padding: 20px;
@@ -11368,9 +11383,9 @@
       const plan = documents
         .filter(doc => joiningRisk(doc) !== 'Ready')
         .sort((a,b) => (daysUntil(a.expiryDate) ?? 9999) - (daysUntil(b.expiryDate) ?? 9999))
-        .map(doc => `<div class="tl-item ${status(doc).key==='expired'?'bad':'warn'}">${esc(doc.title)} - ${esc(joiningRisk(doc))}${doc.reminderNote ? ' - ' + esc(doc.reminderNote) : ''}</div>`)
+        .map(doc => `<div class="tl-item ${status(doc).key==='expired'?'bad':'warn'}" data-tl-days="${daysUntil(doc.expiryDate) ?? ''}">${esc(doc.title)} - ${esc(joiningRisk(doc))}${doc.reminderNote ? ' - ' + esc(doc.reminderNote) : ''}</div>`)
         .join('') || '<div class="tl-item" style="color:var(--muted)">No urgent renewal risk found.</div>';
-      const desktopTimeline = '<div class="timeline">' + months.map(mo => {
+      const monthGrid = '<div class="timeline">' + months.map(mo => {
         const items = documents.filter(doc => {
           if (doc.noExpiry || !doc.expiryDate) return false;
           const e = new Date(doc.expiryDate);
@@ -11378,12 +11393,15 @@
           return e.getFullYear() === mo.y && e.getMonth() === mo.m;
         }).map(doc => {
           const st = status(doc);
-          return `<div class="tl-item ${st.key==='expired'?'bad':(st.key==='expiring'?'warn':'')}">${esc(doc.title)} - ${fmt(doc.expiryDate)} - ${esc(joiningRisk(doc))}</div>`;
-        }).join('') || '<div class="tl-item" style="color:var(--muted)">-</div>';
+          return `<div class="tl-item ${st.key==='expired'?'bad':(st.key==='expiring'?'warn':'')}" data-tl-days="${daysUntil(doc.expiryDate) ?? ''}">${esc(doc.title)} - ${fmt(doc.expiryDate)} - ${esc(joiningRisk(doc))}</div>`;
+        }).join('') || '<div class="tl-item" style="color:var(--muted)" data-tl-days="">-</div>';
         return `<div class="tl-month"><h4>${mo.label}</h4>${items}</div>`;
-      }).join('') + `</div>
-        <div class="help-card" style="margin-top:12px"><h4>Renewal plan</h4>${plan}</div>
-        <div class="help-card" style="margin-top:12px"><h4>Missing document tracker</h4><p>${missing.length ? esc(missing.join(', ')) : 'Core joining documents are present.'}</p></div>`;
+      }).join('') + '</div>';
+      const desktopTimeline = `
+        <div class="help-card"><h4>Renewal plan</h4>${plan}</div>
+        <div class="help-card" style="margin-top:12px"><h4>Missing document tracker</h4><p>${missing.length ? esc(missing.join(', ')) : 'Core joining documents are present.'}</p></div>
+        <h3 style="margin:20px 0 12px">Month-by-month</h3>
+        ${monthGrid}`;
       const events = [];
       documents.forEach(doc => {
         const st = status(doc);
@@ -11394,20 +11412,26 @@
           tag: label,
           date: eventDate,
           docId: doc.id,
+          daysLeft: daysUntil(doc.expiryDate),
           cls: st.key === 'expired' ? 'bad' : (st.key === 'expiring' ? 'warn' : ''),
           icon: st.key === 'expired' ? '!' : (doc.type === 'certificate' || doc.type === 'coc' ? '🎓' : '✓')
         });
       });
-      vaccines.forEach(v => events.push({ title: `${v.name || 'Vaccine'} vaccination`, tag: 'Health', date: v.date || v.expiry || new Date().toISOString(), cls: 'warn', icon: '💉' }));
-      seatime.forEach(s => events.push({ title: `${s.vessel || 'Vessel'} sea service`, tag: 'Ship', date: s.signOff || s.signOn || new Date().toISOString(), cls: 'train', icon: '⚓' }));
+      vaccines.forEach(v => events.push({ title: `${v.name || 'Vaccine'} vaccination`, tag: 'Health', date: v.date || v.expiry || new Date().toISOString(), cls: 'warn', icon: '💉', daysLeft: null }));
+      seatime.forEach(s => events.push({ title: `${s.vessel || 'Vessel'} sea service`, tag: 'Ship', date: s.signOff || s.signOn || new Date().toISOString(), cls: 'train', icon: '⚓', daysLeft: null }));
       const mobileEvents = (events.length ? events : [
-        { title: 'Passport renewed', tag: 'Travel document', date: '2023-08-28', cls: '', icon: '✓' },
-        { title: 'Yellow Fever vaccination', tag: 'Health', date: '2024-03-12', cls: 'warn', icon: '💉' },
-        { title: 'Last passport expired', tag: 'Travel document', date: '2024-06-15', cls: 'bad', icon: '!' },
-        { title: 'STCW refresher completed', tag: 'Certification & training', date: '2026-08-03', cls: 'train', icon: '🎓' },
+        { title: 'Passport renewed', tag: 'Travel document', date: '2023-08-28', cls: '', icon: '✓', daysLeft: null },
+        { title: 'Yellow Fever vaccination', tag: 'Health', date: '2024-03-12', cls: 'warn', icon: '💉', daysLeft: null },
+        { title: 'Last passport expired', tag: 'Travel document', date: '2024-06-15', cls: 'bad', icon: '!', daysLeft: null },
+        { title: 'STCW refresher completed', tag: 'Certification & training', date: '2026-08-03', cls: 'train', icon: '🎓', daysLeft: null },
       ]).sort((a,b) => new Date(b.date || 0) - new Date(a.date || 0)).slice(0, 10);
-      return `<div class="mobile-timeline">
-        ${mobileEvents.map(ev => `<article class="mobile-timeline-card ${esc(ev.cls || '')}${ev.docId ? ' is-clickable' : ''}" ${ev.docId ? `data-timeline-doc="${esc(sanitizeId(ev.docId))}" role="button" tabindex="0"` : ''}>
+      return `<div class="tl-filters" role="group" aria-label="Timeline filter">
+        <button type="button" class="tl-filter-chip active" data-tl-filter="all">All</button>
+        <button type="button" class="tl-filter-chip" data-tl-filter="critical">Critical</button>
+        <button type="button" class="tl-filter-chip" data-tl-filter="next90">Next 90 days</button>
+      </div>
+      <div class="mobile-timeline">
+        ${mobileEvents.map(ev => `<article class="mobile-timeline-card ${esc(ev.cls || '')}${ev.docId ? ' is-clickable' : ''}" data-tl-days="${ev.daysLeft ?? ''}" ${ev.docId ? `data-timeline-doc="${esc(sanitizeId(ev.docId))}" role="button" tabindex="0"` : ''}>
           <span class="mobile-timeline-node" aria-hidden="true"></span>
           <div class="mobile-timeline-icon" aria-hidden="true">${esc(ev.icon)}</div>
           <div class="mobile-timeline-content">
@@ -11418,6 +11442,31 @@
         </article>`).join('')}
       </div>
       <div class="desktop-timeline-body">${desktopTimeline}</div>`;
+    }
+
+    function wireTimelineFilters() {
+      const rem = getReminders();
+      const matches = (filter, days) => {
+        if (filter === 'all') return true;
+        if (days === '' || days === null || Number.isNaN(days)) return false;
+        if (filter === 'critical') return days < 0 || days <= rem.critical;
+        if (filter === 'next90') return days < 0 || days <= 90;
+        return true;
+      };
+      document.querySelectorAll('.tl-filter-chip').forEach(chip => {
+        chip.onclick = () => {
+          const filter = chip.dataset.tlFilter;
+          document.querySelectorAll('.tl-filter-chip').forEach(c => c.classList.toggle('active', c === chip));
+          document.querySelectorAll('[data-tl-days]').forEach(el => {
+            const days = el.dataset.tlDays === '' ? null : Number(el.dataset.tlDays);
+            el.classList.toggle('tl-hidden', !matches(filter, days));
+          });
+          document.querySelectorAll('.tl-month').forEach(month => {
+            const hasVisible = [...month.querySelectorAll('.tl-item')].some(item => !item.classList.contains('tl-hidden'));
+            month.classList.toggle('tl-hidden', !hasVisible);
+          });
+        };
+      });
     }
 
     function wireTimelineCards() {
@@ -12711,6 +12760,7 @@
           } else if (target === 'timeline') {
             showGeneric('Timeline', buildTimelineHtml(), 'timeline-mode');
             wireTimelineCards();
+            wireTimelineFilters();
           } else if (target === 'packs') {
             openPacksUI();
           } else if (target === 'seatime') {
