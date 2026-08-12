@@ -311,3 +311,53 @@ real pre-existing bugs were found and fixed along the way (beyond the
 review's own list): a duplicate `btn-profile` click handler and a
 non-functional primary-nav Profile path (item 1), and the stale
 `.tools-row` grid-row hardcoding (item 8).
+
+---
+
+## Critical bug found via real iPhone screenshots (2026-08-12, `373c445`)
+
+After Review Round 2 shipped, the user sent real iPhone screenshots ("check
+it live on the phone for ios") showing the desktop sidebar nav rendering as
+a broken horizontal pill row at the top of the page, oversized text cut off
+at the screen edge, and page content overflowing horizontally — on every
+phone, not just iOS. This had been live and undetected through this
+session's entire mobile-viewport testing, because the test pattern
+`document.querySelector('.sidebar-nav ...') || document.querySelector('.mobile-bottom-nav ...')`
+used throughout calls `.click()` directly via `querySelector`, which fires
+an element's click handler even when the element is `display:none` —
+masking exactly this class of bug from every check that used it. Lesson:
+geometry/overlap assertions don't substitute for asserting the *visibility*
+of elements that are supposed to be hidden.
+
+Two compounding root causes, both real pre-existing bugs (not introduced by
+any change this session):
+
+1. `.sidebar-nav` was only ever given `display: flex` inside
+   `@media (min-width: 901px)` — there was no unconditional base rule
+   hiding it below that width. `.mobile-bottom-nav` (its mobile
+   counterpart) had the correct pattern (`display: none` unconditional,
+   overridden per breakpoint) the whole time; `.sidebar-nav` never got the
+   same treatment when it was added. Fixed by adding the missing
+   `.sidebar-nav { display: none; }`.
+
+2. `.main` is `display: flex; flex-direction: column`, and flex items
+   default to `min-width: auto` — refusing to shrink below their content's
+   intrinsic width. `.profile-strip` becomes `display: block !important`
+   at narrow widths (pre-existing, intentional), and once its content
+   needed more than the viewport width, the flex item grew instead of
+   wrapping, dragging the whole page into horizontal overflow. Fixed with
+   the standard `min-width: 0` flexbox fix, applied to all of `.main`'s
+   direct children defensively.
+
+Verified at 390px (matching the real device) and 1280px (desktop,
+unaffected) — sidebar-nav correctly hidden/shown, no horizontal overflow,
+"DOCUMENT VAULT" now wraps to 2 lines instead of forcing overflow. Confirmed
+directly on the live production URL after deploy, not just the local build.
+
+**Found, not fixed** (separate, lower severity, doesn't affect real
+phones): between 701–900px, *neither* nav renders — `.sidebar-nav` still
+gated to `min-width:901px`, `.mobile-bottom-nav` still gated to
+`max-width:700px`. Same class of gap-zone bug as the Phase 2 Packs-modal
+fix. Flagged as a follow-up, not fixed in this pass — would need matching
+adjustments across `.main`'s whole desktop grid-template-areas system, not
+just the nav threshold, to do properly.
