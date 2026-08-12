@@ -1657,6 +1657,9 @@
       box-shadow:0 16px 40px rgba(0,0,0,.5); color:#fff; font-size:13px;
     }
     .app-toast.show { display:flex; }
+    @media (min-width: 901px) {
+      .app-toast { left: 320px; max-width: 480px; }
+    }
     .app-toast[data-action="false"] { pointer-events:none; }
     .app-toast span { flex:1; }
     @media (max-width: 680px) {
@@ -2309,12 +2312,38 @@
         padding-inline: 18px;
         background: rgba(14, 29, 49, .72);
       }
+      .sidebar-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-top: 24px;
+      }
+      .sidebar-nav button {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 12px 14px;
+        border: 0;
+        border-radius: 14px;
+        background: transparent;
+        color: rgba(255,255,255,.68);
+        font-size: 16px;
+        font-weight: 700;
+        text-align: left;
+        cursor: pointer;
+      }
+      .sidebar-nav button:hover { background: rgba(148, 200, 255, .08); color: #fff; }
+      .sidebar-nav button.active {
+        color: #63d8ff;
+        background: rgba(94, 212, 255, .14);
+      }
+      .sidebar-nav button b { font-size: 20px; line-height: 1; font-weight: 500; width: 22px; text-align: center; flex-shrink: 0; }
       .top-actions {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 12px;
         width: 100%;
-        margin-top: 12px;
+        margin-top: 24px;
       }
       .top-actions .btn,
       .top-actions .avatar,
@@ -2429,6 +2458,7 @@
       .empty {
         grid-area: docs;
         margin-top: 58px;
+        align-self: start;
       }
       .docs {
         grid-template-columns: 1fr;
@@ -8020,6 +8050,13 @@
       </div>
       <span class="offline-pill-live">OFFLINE</span>
     </div>
+    <nav class="sidebar-nav" aria-label="Desktop primary navigation">
+      <button type="button" class="active" data-mobile-nav="vault"><b>□</b><span>Vault</span></button>
+      <button type="button" data-mobile-nav="timeline"><b>◷</b><span>Timeline</span></button>
+      <button type="button" data-mobile-nav="packs"><b>▱</b><span>Packs</span></button>
+      <button type="button" data-mobile-nav="profile"><b>♙</b><span>Profile</span></button>
+      <button type="button" data-mobile-nav="settings"><b>&#9881;</b><span>Settings</span></button>
+    </nav>
     <div class="top-actions">
       <button type="button" class="mode-toggle" id="btn-mode" aria-label="Toggle Lite Full mode" title="Toggle Lite / Full">FULL</button>
       <button class="avatar" id="btn-profile" title="Photo">
