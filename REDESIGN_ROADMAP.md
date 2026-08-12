@@ -19,37 +19,19 @@ on mobile / left rail on desktop. Treating it as whole-app here.
 | Bottom nav on mobile | **Done** — shipped in the mobile phase | — |
 | Pack cards with progress | **Mostly done** — 4 auto-packs render with progress *bars*, status colours, and completion counts. Plan asks for *rings*. | Restyle only |
 | Timeline colour-coding | **Partially done** — `.tl-item.warn` / `.tl-item.bad` colour-code by status; 13-month grid wraps properly on desktop | Add filters + prominence |
-| Category status strips | Cards show icon + name + count. **No status strip.** | Small addition |
-| Guided empty states | **One generic state** for all categories: "No documents here yet". Not per-category, no benefit copy. | Build from scratch |
-| Collapse the "tool dump" | **Not started.** 12 `tool-btn` buttons still in one row — this is the "random tool dump" the plan calls out. | IA change |
+| Category status strips | **Done** (1.2, `206d913`) — coloured strip on each category tab | — |
+| Guided empty states | **Done** (1.3, `206d913`) — per-category icon/copy/CTA, 9 categories | — |
+| Collapse the "tool dump" | **Done** (1.4, `206d913`) — Search/Sort/Filter/View + one Tools dropdown | — |
 | Settings grouping | Sections exist but flat; desktop 2-column already shipped | Regroup into 6 |
-| Sea Time as primary tab | **Not done** — currently reached via Profile | Nav change (see decision below) |
+| Sea Time as primary tab | **Done** (1.5, `206d913`) — Option A shipped | — |
 
 ---
 
-## ⚠️ One decision needed before Phase 1
+## Nav decision — resolved: Option A
 
-**The plan's navigation contradicts the nav we already shipped and that you
-signed off on.**
-
-| Current (shipped, agreed in mobile phase) | Plan proposes |
-|---|---|
-| Vault · Timeline · Packs · Profile · **Settings** | Vault · Packs · Timeline · **Sea Time** · Profile |
-
-The plan promotes **Sea Time** to a primary tab and folds **Settings** into
-Profile. That's defensible — Settings is a "visit rarely" destination and
-sea-time is core to a seafarer's career record. But it moves a tab you
-currently use daily, and `BLUEWALLET_HANDOVER.md` records that the 5-tab set
-was a deliberate decision (Vaccines was explicitly demoted to a category at
-that time).
-
-**Options:**
-- **A — Follow the plan.** Sea Time becomes a tab, Settings moves under Profile.
-- **B — Keep current nav.** Sea Time stays under Profile. Lowest disruption.
-- **C — Six tabs.** Rejected by default: crowds mobile, and the plan's own goal
-  is *fewer* navigation systems, not more.
-
-Nothing in Phase 1 is blocked by this except item 1.5. Decide before then.
+Sea Time is now a primary tab (Vault · Packs · Timeline · Sea Time · Profile);
+Settings moved under Profile (still reachable via the header gear icon too —
+both paths call the same `openSettingsUI()`). Shipped in `206d913`.
 
 ---
 
@@ -75,34 +57,33 @@ empty/40%/80%/100% states — no overlap, no overflow, ring/label/CTA all
 update correctly. `npm test` clean. Pushed to `feature/desktop-grok-redesign`,
 confirmed byte-identical live on Cloudflare (`READINESS RING` marker present).
 
-### 1.2 Category cards with status strips
-Add a coloured status strip to each category card (green all-valid / amber
-something expiring / red something expired / grey empty). Card markup and counts
-already exist — this is a strip plus a per-category status computation.
+### 1.2 Category cards with status strips — ✅ DONE (2026-08-12, `206d913`)
+Each category tab now shows a coloured strip along its bottom edge via
+`categoryStatus(type)`: worst-case across that category's non-archived docs
+(one expired doc → red, even if a second valid one exists; amber if soonest
+risk is "expiring"; green if all valid; grey if empty). Verified across
+good/warn/bad/empty states and at mobile (375px) + desktop (1280px).
 
-### 1.3 Guided empty states
-Replace the single generic empty state with per-category copy answering the
-plan's three questions. Plan's own example:
+### 1.3 Guided empty states — ✅ DONE (2026-08-12, `206d913`)
+Replaced the single generic empty state with per-category copy (`EMPTY_STATE_COPY`,
+9 entries) answering what/why/CTA, e.g. "Your passport is the foundation of
+every joining..." → **[ + Add Passport ]**. The CTA reuses `openAdd()`'s
+existing category preselection, so it's functionally accurate, not just
+cosmetic. Verified copy switches correctly across all 9 categories.
 
-> "Your passport is the foundation of every joining. Add it once and it stays
-> private on this device." → **[ + Add Passport ]**
+### 1.4 Collapse the 12-button tool row — ✅ DONE (2026-08-12, `206d913`)
+Search/Sort/Filter/View-toggle stay visible. Checklist/Calendar/STCW/Vaccines/
+Select moved into a single "🛠 Tools" dropdown (click-outside-to-close, closes
+on item select). Timeline/Packs/Sea time buttons removed — redundant with
+primary nav now that Sea Time is a tab. Summary/Share moved into the Profile
+sheet. Verified dropdown opens/populates/closes correctly at desktop width,
+and that the pre-existing narrow-viewport tool-row collapse (`max-width:760px`)
+is unaffected.
 
-Needs one short line of copy per category (9 total). Worth writing these
-yourself — they're voice-sensitive and you know the domain.
-
-### 1.4 Collapse the 12-button tool row
-The plan's "random tool dump". Proposed regrouping:
-- **Stay visible:** Search, Sort, Filter (these are vault controls, not tools)
-- **Move to a "Tools" overflow menu:** Checklist, Calendar, STCW, Vaccines, Bulk select
-- **Move into Profile/Settings:** Summary, Share
-- **Already primary nav:** Timeline, Packs
-
-Nothing gets deleted — everything stays reachable, just stops competing for
-attention. Worth confirming which of these you actually reach for often, since
-that should drive what stays visible.
-
-### 1.5 Nav change *(only if Option A above)*
-Sea Time → primary tab; Settings → under Profile.
+### 1.5 Nav change — ✅ DONE (2026-08-12, `206d913`)
+Sea Time → primary tab; Settings → under Profile (Option A). Verified: nav
+order on both sidebar and bottom-nav, Sea Time tab opens the log and hides
+the nav correctly, Profile → Settings closes Profile and opens Settings.
 
 ---
 
@@ -157,9 +138,9 @@ not that it looks right.
 
 ---
 
-## Two open questions
+## Phase 1 status: complete
 
-1. **Readiness formula** (blocks 1.1) — what makes a seafarer "ready"?
-2. **Nav decision** (blocks 1.5) — Option A, B, or C above?
-
-Everything else can start without further input.
+All five items (1.1–1.5) shipped and verified live on Cloudflare as of
+2026-08-12. Both open questions are resolved: readiness formula per 1.1's
+notes above; nav decision = Option A. Next up is Phase 2 (Packs & Timeline
+polish) — not started, no blockers.
