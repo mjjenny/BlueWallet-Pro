@@ -1856,8 +1856,20 @@
       background: var(--panel-solid); border: 1px solid var(--glass-border);
       border-radius: 14px; box-shadow: 0 12px 32px rgba(0,0,0,.4);
       backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      /* Where it opens on screen depends on where .tools-row's sticky
+         position lands and how tall the page is (e.g. an empty vault is a
+         short page) -- with no height cap, the last item(s) could render
+         past the bottom of the viewport with no way to scroll to them,
+         since an absolutely-positioned element doesn't reliably grow its
+         scrolling ancestor's scrollable area. Capping height and scrolling
+         internally means it always fits, regardless of where it opens. */
+      max-height: min(60vh, 360px);
+      overflow-y: auto;
     }
     .tools-dropdown.show { display: flex; }
+    /* Set by toolsToggle.onclick when there's little room below the button
+       but more above -- opens upward instead of running off the bottom. */
+    .tools-dropdown.opens-upward { top: auto; bottom: calc(100% + 6px); }
     .tools-dropdown .tool-btn { width: 100%; justify-content: flex-start; }
 
     @media (min-width: 700px) {
@@ -13490,6 +13502,21 @@
           const willShow = !toolsDropdown.classList.contains('show');
           toolsDropdown.classList.toggle('show', willShow);
           toolsToggle.setAttribute('aria-expanded', String(willShow));
+          if (willShow) {
+            // A fixed max-height isn't enough: .tools-row can be sticky-
+            // pinned anywhere on screen (varies by breakpoint/scroll), so
+            // the space actually available below the button varies too.
+            // If there's little room below but more above, flip the
+            // dropdown to open upward (the standard fix) instead of
+            // shrinking it into an unusably short, cramped scroll box.
+            const btnRect = toolsToggle.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - btnRect.bottom - 16;
+            const spaceAbove = btnRect.top - 16;
+            const openUpward = spaceBelow < 150 && spaceAbove > spaceBelow;
+            const available = openUpward ? spaceAbove : spaceBelow;
+            toolsDropdown.classList.toggle('opens-upward', openUpward);
+            toolsDropdown.style.maxHeight = Math.max(120, Math.min(360, available)) + 'px';
+          }
         };
         toolsDropdown.addEventListener('click', e => {
           if (e.target.closest('.tool-btn')) {
