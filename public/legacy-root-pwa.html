@@ -8436,6 +8436,23 @@
       border-color: rgba(93, 255, 176, .4) !important;
       color: rgba(220, 255, 235, .92) !important;
     }
+
+    /* .tools-row's base rule (~line 1801) sets overflow-x:hidden with no
+       overflow-y specified -- per the CSS overflow spec, that computes the
+       other axis as auto (clipping), not visible. #tools-dropdown is
+       position:absolute and extends below .tools-row's own box (via
+       .tools-menu, its position:relative parent), so it gets clipped there,
+       hiding every dropdown item below whatever fits in .tools-row's own
+       height. This was already fixed for <=760px (see the "overflow:
+       visible !important" already present in that range's .tools-row
+       rule) but never for 761-900px or >=901px -- i.e. tablet and desktop,
+       exactly where the dropdown is the ONLY way to reach Calendar/STCW/
+       Vaccines/Bulk-select. Closing that gap the same way. */
+    @media (min-width: 761px) {
+      .tools-row {
+        overflow: visible !important;
+      }
+    }
   </style>
 </head>
 <body>
