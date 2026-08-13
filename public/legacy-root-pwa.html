@@ -3066,7 +3066,17 @@
       .tools-row {
         position: sticky !important;
         top: calc(var(--topbar-h, 64px) + var(--cats-h, 0px)) !important;
-        z-index: 19 !important;
+        /* Was 19 (i.e. below .cats' 20) -- .tools-row's own position:sticky
+           +z-index makes it a stacking context of its own, which TRAPS the
+           Tools dropdown's z-index:40 inside it: that 40 only outranks
+           .tools-row's own children, not siblings like .cats. With 19<20,
+           the whole .tools-row context (dropdown included) painted BELOW
+           .cats regardless of the dropdown's much higher z-index, making
+           STCW/Vaccines/Select unclickable at 761-900px whenever the
+           dropdown was open -- confirmed live via elementFromPoint() at
+           the button's own center returning ".cats", not the button.
+           .tools-row now outranks .cats so its dropdown can escape above it. */
+        z-index: 21 !important;
         background: var(--bg) !important;
         border-bottom: 1px solid var(--glass-border);
       }
@@ -8479,6 +8489,24 @@
         overflow: visible !important;
       }
     }
+
+    /* The earlier ".mobile-extra-tools .tool-btn { display: inline-flex
+       !important }" fix (added near the top of this stylesheet) never
+       actually won: it ties on specificity (two classes, same as
+       ".tools-row .tool-btn") with the pre-existing hiding rule, and two
+       *later* copies of ".tools-row .tool-btn { display: none !important }"
+       elsewhere in this file (this stylesheet has several duplicated
+       breakpoint blocks) beat it on source order for an equal-specificity
+       !important tie. Confirmed live via a real cascade dump (iterating
+       every matching CSSStyleRule, including inside @media blocks) rather
+       than assumed. ID selectors trivially outrank a two-class selector on
+       specificity alone, so this wins regardless of source position --
+       same technique already used for .offline-pill-live.is-online above. */
+    @media (max-width: 760px) {
+      #btn-bulk-mobile, #view-list-mobile, #view-grid-mobile {
+        display: inline-flex !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -8790,8 +8818,8 @@
           <label class="sw"><input type="checkbox" id="doc-archived" aria-label="Archive document" /><span class="sl"></span></label>
         </div>
         <div class="row" id="dates-row">
-          <div class="field"><label>Issue Date</label><input type="date" id="doc-issue" /></div>
-          <div class="field" id="expiry-group"><label>Expiry Date *</label><input type="date" id="doc-expiry" /></div>
+          <div class="field"><label for="doc-issue">Issue Date</label><input type="date" id="doc-issue" /></div>
+          <div class="field" id="expiry-group"><label for="doc-expiry">Expiry Date *</label><input type="date" id="doc-expiry" /></div>
         </div>
         <div class="field scan-upload-field">
           <label>Scan / Photo *</label>

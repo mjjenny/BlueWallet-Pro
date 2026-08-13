@@ -1,9 +1,12 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// Targets the live deployed app -- this repo's own local dev server (vinext/
-// Miniflare) does not start in this sandbox, and the app is a single static
-// HTML/CSS/JS file with no server-side state to fake locally anyway.
-const LIVE_URL = "https://bluewallet-pro.cl76380.workers.dev";
+// Targets the live deployed app by default -- this repo's own local dev
+// server (vinext/Miniflare) does not start in this sandbox, and the app is a
+// single static HTML/CSS/JS file with no server-side state to fake locally
+// anyway. Override with AUDIT_BASE_URL (e.g. a local `http-server` on
+// dist/client) for fast pre-deploy iteration without round-tripping through
+// the live network on every run.
+const LIVE_URL = process.env.AUDIT_BASE_URL || "https://bluewallet-pro.cl76380.workers.dev";
 
 export default defineConfig({
   testDir: "./tests/e2e",

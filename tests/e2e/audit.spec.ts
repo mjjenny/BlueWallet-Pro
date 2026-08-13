@@ -8,7 +8,10 @@ import AxeBuilder from "@axe-core/playwright";
 // clipped or run off-viewport) plus REDESIGN_ROADMAP.md / MILESTONE_1_ROADMAP.md
 // / BLUEWALLET_HANDOVER.md in the repo root.
 
-const APP_PATH = "/legacy-root-pwa";
+// Cloudflare routes the live URL's extensionless path; a local static
+// server (used for fast pre-deploy iteration via AUDIT_BASE_URL) serves the
+// real filename instead.
+const APP_PATH = process.env.AUDIT_BASE_URL ? "/legacy-root-pwa.html" : "/legacy-root-pwa";
 
 // Playwright statically inspects a beforeEach/test callback's parameter list
 // to decide which fixtures to inject, so it must be an inline destructuring
