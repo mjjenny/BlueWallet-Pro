@@ -3034,7 +3034,21 @@
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 8px;
       }
-      .mobile-extra-tools .tool-btn { min-height: 44px; font-size: 13px; }
+      /* These buttons share the .tool-btn class (for consistent styling)
+         with the desktop dropdown's buttons, which are the ones
+         .tools-row .tool-btn { display:none !important } (elsewhere in this
+         file) was written for. That rule matches these too, since it's a
+         descendant selector keyed only on the class -- an explicit
+         !important override is required here, not just a style tweak,
+         confirmed by a real Playwright/WebKit run: these rendered
+         non-interactive (display:none) despite JS .click() calls appearing
+         to "work" in manual testing, because .click() fires a hidden
+         element's handler regardless of visibility. */
+      .mobile-extra-tools .tool-btn {
+        display: inline-flex !important;
+        min-height: 44px;
+        font-size: 13px;
+      }
     }
     /* Desktop keeps .cats/.tools-row reachable while scrolling via sticky
        positioning (see the min-width:901px block); below that they were
@@ -8758,14 +8772,14 @@
             <div class="tl">Favourite / pin to top</div>
             <div class="ts">Show this document first in lists</div>
           </div>
-          <label class="sw"><input type="checkbox" id="doc-fav" /><span class="sl"></span></label>
+          <label class="sw"><input type="checkbox" id="doc-fav" aria-label="Favourite / pin to top" /><span class="sl"></span></label>
         </div>
         <div class="toggle">
           <div>
             <div class="tl">No Expiry Date</div>
             <div class="ts">Enable if document never expires</div>
           </div>
-          <label class="sw"><input type="checkbox" id="doc-no-expiry" /><span class="sl"></span></label>
+          <label class="sw"><input type="checkbox" id="doc-no-expiry" aria-label="No Expiry Date" /><span class="sl"></span></label>
         </div>
         <div class="noexp" id="no-expiry-msg">✓ No validity period — will not trigger expiry alerts.</div>
         <div class="toggle">
@@ -8773,7 +8787,7 @@
             <div class="tl">Archive document</div>
             <div class="ts">Keep it for records only. Archived documents do not count as expiry or renewal risk.</div>
           </div>
-          <label class="sw"><input type="checkbox" id="doc-archived" /><span class="sl"></span></label>
+          <label class="sw"><input type="checkbox" id="doc-archived" aria-label="Archive document" /><span class="sl"></span></label>
         </div>
         <div class="row" id="dates-row">
           <div class="field"><label>Issue Date</label><input type="date" id="doc-issue" /></div>
@@ -8814,11 +8828,11 @@
         <div class="field"><label>Manual reminder note</label><textarea id="doc-reminder-note" rows="2" placeholder="e.g. Renew after medical appointment / submit to manning office"></textarea></div>
         <div class="field">
           <label>Document Quality Checklist</label>
-          <div class="check-item"><div><div class="cn">Scan is readable</div><div class="cs">Text, number and expiry can be checked.</div></div><label class="sw"><input type="checkbox" id="doc-q-readable" /><span class="sl"></span></label></div>
-          <div class="check-item"><div><div class="cn">Full page visible</div><div class="cs">No corners or important stamps are cropped.</div></div><label class="sw"><input type="checkbox" id="doc-q-fullpage" /><span class="sl"></span></label></div>
-          <div class="check-item"><div><div class="cn">Signature / stamp present</div><div class="cs">Use where the document requires endorsement proof.</div></div><label class="sw"><input type="checkbox" id="doc-q-stamp" /><span class="sl"></span></label></div>
-          <div class="check-item"><div><div class="cn">Front and back attached</div><div class="cs">Use for cards, IDs, certificates or endorsements.</div></div><label class="sw"><input type="checkbox" id="doc-q-frontback" /><span class="sl"></span></label></div>
-          <div class="check-item"><div><div class="cn">Verified against original</div><div class="cs">Mark after checking the physical document.</div></div><label class="sw"><input type="checkbox" id="doc-q-verified" /><span class="sl"></span></label></div>
+          <div class="check-item"><div><div class="cn">Scan is readable</div><div class="cs">Text, number and expiry can be checked.</div></div><label class="sw"><input type="checkbox" id="doc-q-readable" aria-label="Scan is readable" /><span class="sl"></span></label></div>
+          <div class="check-item"><div><div class="cn">Full page visible</div><div class="cs">No corners or important stamps are cropped.</div></div><label class="sw"><input type="checkbox" id="doc-q-fullpage" aria-label="Full page visible" /><span class="sl"></span></label></div>
+          <div class="check-item"><div><div class="cn">Signature / stamp present</div><div class="cs">Use where the document requires endorsement proof.</div></div><label class="sw"><input type="checkbox" id="doc-q-stamp" aria-label="Signature / stamp present" /><span class="sl"></span></label></div>
+          <div class="check-item"><div><div class="cn">Front and back attached</div><div class="cs">Use for cards, IDs, certificates or endorsements.</div></div><label class="sw"><input type="checkbox" id="doc-q-frontback" aria-label="Front and back attached" /><span class="sl"></span></label></div>
+          <div class="check-item"><div><div class="cn">Verified against original</div><div class="cs">Mark after checking the physical document.</div></div><label class="sw"><input type="checkbox" id="doc-q-verified" aria-label="Verified against original" /><span class="sl"></span></label></div>
         </div>
         <div class="field"><label>Notes</label><textarea id="doc-notes" rows="2" placeholder="Optional"></textarea></div>
         <div class="actions">
@@ -9154,12 +9168,12 @@
             <button class="btn btn-danger" id="btn-clear-pin" style="width:100%">Remove PIN</button>
             <div class="toggle" style="margin-top:12px">
               <div><div class="tl">Require unlock on open</div><div class="ts">Show lock screen when app loads</div></div>
-              <label class="sw"><input type="checkbox" id="pin-required" /><span class="sl"></span></label>
+              <label class="sw"><input type="checkbox" id="pin-required" aria-label="Require unlock on open" /><span class="sl"></span></label>
             </div>
             <div class="full-only">
             <div class="toggle">
               <div><div class="tl">Biometric unlock</div><div class="ts">Fingerprint / Face ID via WebAuthn (needs HTTPS or localhost)</div></div>
-              <label class="sw"><input type="checkbox" id="bio-enabled" /><span class="sl"></span></label>
+              <label class="sw"><input type="checkbox" id="bio-enabled" aria-label="Biometric unlock" /><span class="sl"></span></label>
             </div>
             <button class="btn btn-ghost" id="btn-register-bio" style="width:100%;margin-top:10px">🔐 Register biometric</button>
             <button class="btn btn-danger" id="btn-clear-bio" style="width:100%;margin-top:8px">Remove biometric</button>
@@ -9196,11 +9210,11 @@
             </div>
             <div class="toggle">
               <div><div class="tl">Remember passphrase here</div><div class="ts">Needed for automatic pull on this device. Leave off on shared devices.</div></div>
-              <label class="sw"><input type="checkbox" id="sync-remember" /><span class="sl"></span></label>
+              <label class="sw"><input type="checkbox" id="sync-remember" aria-label="Remember passphrase here" /><span class="sl"></span></label>
             </div>
             <div class="toggle">
               <div><div class="tl">Auto-check on open</div><div class="ts">When saved, the app checks the vault and pulls newer data only when safe.</div></div>
-              <label class="sw"><input type="checkbox" id="sync-auto" /><span class="sl"></span></label>
+              <label class="sw"><input type="checkbox" id="sync-auto" aria-label="Auto-check on open" /><span class="sl"></span></label>
             </div>
             <div class="actions" style="margin-top:10px">
               <button class="btn btn-ghost" id="btn-sync-save" type="button">Save settings</button>
@@ -10685,7 +10699,7 @@
             <div class="cs">${esc(item.detail)}</div>
             <textarea data-qa-note="${esc(item.id)}" rows="2" placeholder="Evidence note / device / browser / result" style="width:100%;margin-top:8px">${esc(row.note || '')}</textarea>
           </div>
-          <label class="sw"><input type="checkbox" data-qa-pass="${esc(item.id)}" ${row.passed ? 'checked' : ''} /><span class="sl"></span></label>
+          <label class="sw"><input type="checkbox" data-qa-pass="${esc(item.id)}" aria-label="${esc(item.label)}" ${row.passed ? 'checked' : ''} /><span class="sl"></span></label>
         </div>`;
       }).join('');
       return `
@@ -13506,16 +13520,20 @@
             // A fixed max-height isn't enough: .tools-row can be sticky-
             // pinned anywhere on screen (varies by breakpoint/scroll), so
             // the space actually available below the button varies too.
-            // If there's little room below but more above, flip the
-            // dropdown to open upward (the standard fix) instead of
-            // shrinking it into an unusably short, cramped scroll box.
+            // Open toward whichever side has more room, and cap height to
+            // that -- a real Playwright/WebKit run at 768x1024 caught a
+            // bug here: an earlier version floored max-height at 120px
+            // "for usability", which could still exceed genuinely tight
+            // available space and overflow the viewport by ~10px. Fitting
+            // the viewport takes priority over a comfortable minimum size;
+            // a short-but-correct scroll box beats one that overflows.
             const btnRect = toolsToggle.getBoundingClientRect();
             const spaceBelow = window.innerHeight - btnRect.bottom - 16;
             const spaceAbove = btnRect.top - 16;
-            const openUpward = spaceBelow < 150 && spaceAbove > spaceBelow;
+            const openUpward = spaceAbove > spaceBelow;
             const available = openUpward ? spaceAbove : spaceBelow;
             toolsDropdown.classList.toggle('opens-upward', openUpward);
-            toolsDropdown.style.maxHeight = Math.max(120, Math.min(360, available)) + 'px';
+            toolsDropdown.style.maxHeight = Math.max(60, Math.min(360, available)) + 'px';
           }
         };
         toolsDropdown.addEventListener('click', e => {
