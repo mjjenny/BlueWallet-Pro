@@ -472,6 +472,28 @@
        one that happened to trigger it. */
     .main > * { min-width: 0; }
 
+    /* ===== INITIAL LOAD OVERLAY =====
+       Visible by default (no JS needed to show it); a single line in the
+       DOMContentLoaded handler adds .hide once the first render() call
+       completes, in both the locked and unlocked startup paths. */
+    #app-loading {
+      position: fixed; inset: 0; z-index: 9999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 14px; background: var(--bg); color: var(--muted);
+      font-size: 14px; font-weight: 600;
+      transition: opacity .25s ease;
+    }
+    #app-loading.hide { opacity: 0; pointer-events: none; }
+    .app-loading-spinner {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 3px solid rgba(255,255,255,.14); border-top-color: var(--accent);
+      animation: appLoadingSpin .8s linear infinite;
+    }
+    @keyframes appLoadingSpin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+      .app-loading-spinner { animation: none; }
+    }
+
     /* ===== PROFILE STRIP ===== */
     .profile-strip {
       display: flex; align-items: center; gap: 18px;
@@ -482,6 +504,15 @@
       border-radius: 22px; padding: 18px 20px;
       box-shadow: 0 12px 36px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.08);
     }
+    /* Reads as one hero unit with the readiness/stats card above it,
+       rather than a bare, unstyled flex column with a stray gap. */
+    .profile-strip + .home-insights {
+      margin-top: 6px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 22px;
+      padding: 12px 14px;
+    }
     .profile-photo {
       width: 70px; height: 70px; border-radius: 50%; flex-shrink: 0;
       border: 3px solid var(--accent); background: var(--panel2);
@@ -491,7 +522,7 @@
     .profile-photo img { width: 100%; height: 100%; object-fit: cover; }
     .profile-meta { flex: 1; min-width: 0; }
     .profile-meta h2 { font-size: 19px; font-weight: 700; color: #fff; }
-    .profile-meta p { font-size: 15px; font-weight: 400; color: var(--muted); margin-top: 3px; }
+    .profile-meta p { font-size: 15px; font-weight: 600; color: var(--muted); margin-top: 3px; }
     .stat-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
     .pill {
       font-size: 14px; font-weight: 600; padding: 5px 12px; border-radius: 999px;
@@ -528,7 +559,7 @@
     /* ===== READINESS RING ===== */
     .readiness-ring {
       position: relative;
-      width: 92px; height: 92px; flex-shrink: 0;
+      width: 104px; height: 104px; flex-shrink: 0;
       cursor: pointer;
     }
     .readiness-ring:focus-visible {
@@ -536,7 +567,7 @@
     }
     .readiness-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
     .ring-track, .ring-fill {
-      fill: none; stroke-width: 9;
+      fill: none; stroke-width: 10;
     }
     .ring-track { stroke: rgba(255,255,255,.1); }
     .ring-fill {
@@ -550,19 +581,19 @@
     .readiness-ring.ready-bad .ring-fill { stroke: var(--bad); }
     .readiness-pct {
       position: absolute; inset: 0; display: grid; place-items: center;
-      font-size: 24px; font-weight: 800; color: #fff;
+      font-size: 26px; font-weight: 800; color: #fff;
     }
     .readiness-pct span { font-size: 13px; font-weight: 700; color: var(--muted); margin-left: 1px; }
     .readiness-label { font-size: 14px; color: #fff; margin-top: 6px; font-weight: 700; }
-    .readiness-breakdown { font-size: 13px; color: var(--muted); margin-top: 3px; }
+    .readiness-breakdown { font-size: 13px; color: var(--muted); margin-top: 3px; font-weight: 600; }
     .readiness-cta { margin-top: 12px; width: 100%; }
     @media (min-width: 420px) {
       .readiness-cta { width: auto; }
     }
     @media (min-width: 901px) {
-      .readiness-ring { width: 128px; height: 128px; }
-      .ring-track, .ring-fill { stroke-width: 10; }
-      .readiness-pct { font-size: 32px; }
+      .readiness-ring { width: 144px; height: 144px; }
+      .ring-track, .ring-fill { stroke-width: 11; }
+      .readiness-pct { font-size: 36px; }
       .readiness-pct span { font-size: 15px; }
       .readiness-label { font-size: 16px; }
       .readiness-breakdown { font-size: 14px; }
@@ -596,7 +627,16 @@
     .insight-pack-item:hover, .insight-pack-item:focus-visible { border-color: var(--accent); }
     .insight-pack-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
     .insight-pack-item b { font-size: 13px; color: #fff; font-weight: 700; }
-    .insight-pack-item span { font-size: 12px; color: var(--muted); margin-left: 4px; }
+    .insight-pack-item span { font-size: 12px; font-weight: 600; color: var(--muted); margin-left: 4px; }
+    @keyframes packCompletePulse {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(93, 255, 176, .55); }
+      40% { transform: scale(1.08); box-shadow: 0 0 0 8px rgba(93, 255, 176, 0); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(93, 255, 176, 0); }
+    }
+    .insight-pack-item.just-completed { animation: packCompletePulse .6s ease; }
+    @media (prefers-reduced-motion: reduce) {
+      .insight-pack-item.just-completed { animation: none; }
+    }
     .insight-expiry-body {
       display: flex; align-items: center; justify-content: space-between; gap: 12px;
       cursor: pointer; min-height: 44px;
@@ -2602,6 +2642,11 @@
         min-height: 62px;
         font-size: 18px;
       }
+      /* Hero already carries a permanent, always-visible "+Add" CTA
+         (#readiness-cta) -- this sidebar button was a second, identically
+         functioning duplicate. Hide the whole container (not just the
+         button) so no stray 24px-margin empty div remains in the rail. */
+      .top-actions { display: none; }
       .alert {
         grid-column: 2;
         position: relative;
@@ -2632,6 +2677,13 @@
       }
       .home-insights {
         grid-area: insights;
+      }
+      .profile-strip + .home-insights {
+        margin-top: -4px;
+        background: var(--premium-glass);
+        border: 1px solid var(--premium-line);
+        border-radius: 24px;
+        padding: 18px 24px;
       }
       .profile-strip {
         grid-area: hero;
@@ -2710,7 +2762,7 @@
       .docs,
       .empty {
         grid-area: docs;
-        margin-top: 58px;
+        margin-top: 10px;
         align-self: start;
       }
       .docs {
@@ -2771,12 +2823,8 @@
         display: grid;
         grid-template-columns: 1fr;
         gap: 10px;
-        padding: 18px;
-        border: 1px solid var(--premium-line);
-        border-radius: 28px;
-        background: rgba(7, 19, 33, .58);
-        backdrop-filter: blur(24px);
-        -webkit-backdrop-filter: blur(24px);
+        padding: 4px 0;
+        border-radius: 0;
       }
       .cat {
         min-height: 56px;
@@ -8267,9 +8315,89 @@
         }
       }
     }
+
+    /* Live-measured: at every width where .fab renders (<=700px) the
+       bottom-offset cascade above lands it ~2px from .mobile-bottom-nav's
+       top edge (fab bottom-offset 90px vs nav top-offset 88px) -- a
+       near-overlap, not a false alarm. Placed last so this rule wins the
+       equal-specificity !important cascade outright without touching the
+       six-plus existing breakpoint blocks above. Nav's top edge stays at
+       88px across this whole range (confirmed at 375/390/430/700px), so a
+       single fixed value is safe here. */
+    @media (max-width: 700px) {
+      .fab {
+        bottom: calc(104px + env(safe-area-inset-bottom, 0px)) !important;
+      }
+    }
+
+    /* Live-measured: .mobile-bottom-nav's own "on" switch is a later,
+       higher-specificity-tying !important rule scoped to max-width:760px
+       (not the max-width:700px block a static read would suggest), and
+       .sidebar-nav only turns on at min-width:901px. Between 761-900px
+       (confirmed empirically at 768/850/900px -- includes iPad portrait)
+       neither exists: zero primary navigation between Vault/Packs/Timeline/
+       Sea Time/Profile. #btn-add is still reachable there (visible via the
+       641-1023px block above), so this gap is nav-only, not "can't add a
+       document." Reuses the same nav treatment as the 760px block for
+       visual consistency with the tablet single-column layout already
+       active in this range (2866px block). */
+    @media (min-width: 761px) and (max-width: 900px) {
+      .mobile-bottom-nav {
+        display: grid !important;
+        left: 14px !important;
+        right: 14px !important;
+        bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important;
+        height: 78px !important;
+        grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+        border-radius: 22px !important;
+        padding: 7px !important;
+      }
+      /* Reserve room so document cards don't render behind the bottom
+         nav bar this just made visible (its 78px height + 10px offset =
+         88px footprint) -- the 701-900px block's own 64px bottom padding
+         (line ~2882) predates the nav existing in this range. */
+      .main {
+        padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px)) !important;
+      }
+    }
+
+    /* .fab's box-shadow is set by 4 different rules across the file (base,
+       an unscoped 901px-adjacent override, and two !important breakpoint
+       blocks); the actually-rendered value at every width where .fab is
+       visible (<=700px, confirmed above) traces to a rule buried in the
+       max-width:760px block, not the "obvious" base one. Rather than hunt
+       down and edit that specific rule (fragile -- easy to edit a dead
+       link in the chain by mistake), add one final !important override
+       here so it wins outright regardless of which prior rule it traces
+       to: same review ask as the fab/nav clearance fix above (less visual
+       weight so it reads as secondary next to the bottom nav), same
+       "win the cascade, don't fight it" technique. */
+    @media (max-width: 700px) {
+      .fab {
+        box-shadow: 0 7px 16px rgba(0, 112, 255, .22), 0 0 0 1px rgba(180, 225, 255, .18) inset !important;
+      }
+    }
+
+    /* .offline-pill-live was a permanent static "OFFLINE" label regardless
+       of actual connectivity (updateOfflinePill() now drives its text from
+       navigator.onLine). The plain class has ~15 breakpoint overrides for
+       position/size plus a handful of !important background/border/color
+       overrides -- rather than trace and edit each one, the two-class
+       selector here outranks all of them on specificity alone (0,2,0 vs
+       0,1,0), so it wins regardless of source order without needing to
+       touch the existing rules. */
+    .offline-pill-live.is-online {
+      background: rgba(12, 40, 28, .66) !important;
+      border-color: rgba(93, 255, 176, .4) !important;
+      color: rgba(220, 255, 235, .92) !important;
+    }
   </style>
 </head>
 <body>
+  <div id="app-loading" role="status" aria-live="polite">
+    <div class="app-loading-spinner" aria-hidden="true"></div>
+    <p>Loading your vault…</p>
+  </div>
   <div class="app-toast" id="app-toast" role="status"><span id="app-toast-text"></span><button type="button" class="btn btn-primary" id="app-toast-action" style="padding:8px 12px;font-size:13px">Update</button><button type="button" class="x" id="app-toast-close" aria-label="Close">✕</button></div>
   <div id="ios-banner" role="status">
     <strong>Safari mode:</strong> The wallet will use Safari-compatible local storage when IndexedDB is unavailable.
@@ -10825,8 +10953,11 @@
         packRow.innerHTML = PACK_MODELS.map(p => {
           const have = recommendedPackDocs(p.types).length;
           const capped = Math.min(have, p.total);
+          // Status-derived color (complete/partial/not-started), not the pack's
+          // own identity color -- pack identity still reads from name/icon text.
+          const statusColor = capped >= p.total ? 'var(--ok)' : (capped > 0 ? 'var(--warn)' : 'var(--bad)');
           return `<button type="button" class="insight-pack-item" data-insight-pack="${esc(p.id)}">
-            <span class="insight-pack-dot" style="background:${p.bar}"></span>
+            <span class="insight-pack-dot" style="background:${statusColor}"></span>
             <b>${esc(p.name)}</b><span>${capped}/${p.total}</span>
           </button>`;
         }).join('');
@@ -12461,7 +12592,17 @@
     }
 
     function runOnboarding() {
-      if (localStorage.getItem('bwOnboardDone') === '1') return;
+      // Reads/writes wrapped in try/catch: WebKit throws on localStorage.setItem
+      // in some restricted-storage contexts (older Safari Private Browsing,
+      // some iOS storage-partitioned setups). An uncaught throw here used to
+      // abort the onclick handler before classList.remove('show') ran,
+      // permanently stranding the modal on screen with no visible error --
+      // reproduced directly by forcing setItem to throw. Dismissal must
+      // always succeed even if the "don't show again" flag fails to persist;
+      // worst case then is it reappears next visit, not that it never closes.
+      let alreadyDone = false;
+      try { alreadyDone = localStorage.getItem('bwOnboardDone') === '1'; } catch (_) {}
+      if (alreadyDone) return;
       const steps = [
         { t: 'Welcome aboard', x: 'THE BLUE WALLET stores passport, CDC, COC, visas and more offline on this device only.' },
         { t: 'Add your profile', x: 'Tap the photo icon to set passport photo, rank, CDC number and next of kin.' },
@@ -12475,20 +12616,16 @@
         document.getElementById('ob-next').textContent = i === steps.length - 1 ? 'Got it' : 'Next';
         document.getElementById('onboard').classList.add('show');
       };
-      document.getElementById('ob-next').onclick = () => {
-        if (i >= steps.length - 1) {
-          localStorage.setItem('bwOnboardDone', '1');
-          document.getElementById('onboard').classList.remove('show');
-          window.__maybeShowInstallBanner?.();
-          return;
-        }
-        i++; show();
-      };
-      document.getElementById('ob-skip').onclick = () => {
-        localStorage.setItem('bwOnboardDone', '1');
+      const finishOnboarding = () => {
+        try { localStorage.setItem('bwOnboardDone', '1'); } catch (_) {}
         document.getElementById('onboard').classList.remove('show');
         window.__maybeShowInstallBanner?.();
       };
+      document.getElementById('ob-next').onclick = () => {
+        if (i >= steps.length - 1) { finishOnboarding(); return; }
+        i++; show();
+      };
+      document.getElementById('ob-skip').onclick = finishOnboarding;
       show();
     }
 
@@ -12507,6 +12644,14 @@
     }
 
 
+    function updateOfflinePill() {
+      const pill = document.querySelector('.offline-pill-live');
+      if (!pill) return;
+      const online = navigator.onLine;
+      pill.textContent = online ? 'ONLINE' : 'OFFLINE';
+      pill.classList.toggle('is-online', online);
+    }
+
     let appMode = 'full'; // 'lite' | 'full'
     function applyAppMode(mode) {
       appMode = mode === 'lite' ? 'lite' : 'full';
@@ -12522,8 +12667,7 @@
       }
       const sub = document.querySelector('.brand p');
       if (sub) sub.textContent = 'Seafarer Digital Wallet';
-      const offlinePill = document.querySelector('.offline-pill-live');
-      if (offlinePill) offlinePill.textContent = 'OFFLINE';
+      updateOfflinePill();
       // Reset full-only UI state when leaving full
       if (appMode === 'lite') {
         bulkMode = false;
@@ -12983,6 +13127,7 @@
         if (appMode === 'full') runOnboarding();
         maybeAutoSyncOnOpen();
       }
+      document.getElementById('app-loading')?.classList.add('hide');
       // idle activity listeners
       ['pointerdown','keydown','touchstart','scroll'].forEach(ev =>
         document.addEventListener(ev, () => resetIdle(), { passive: true })
@@ -13208,8 +13353,12 @@
       window.addEventListener('online', () => {
         showAppToast('Internet connection restored. Blue Wallet remains available offline.', null, null);
         checkForAppUpdate({ force: true });
+        updateOfflinePill();
       });
-      window.addEventListener('offline', () => showAppToast('Offline mode active — your stored documents remain on this device.', null, null));
+      window.addEventListener('offline', () => {
+        showAppToast('Offline mode active — your stored documents remain on this device.', null, null);
+        updateOfflinePill();
+      });
 
       // Search / sort / filter
       document.getElementById('search-q').oninput = e => { searchQ = e.target.value; render(); };
@@ -13764,6 +13913,14 @@
         close('modal-add');
         const newlyCompleted = relevantPacks.find(p => wasIncomplete[p.id] && recommendedPackDocs(p.types).length >= p.total);
         showAppToast(newlyCompleted ? `🎉 ${newlyCompleted.name} complete!` : (isEdit ? 'Document updated.' : 'Document added.'), null, null);
+        if (newlyCompleted) {
+          const chip = document.querySelector(`[data-insight-pack="${newlyCompleted.id}"]`);
+          if (chip) {
+            chip.classList.add('just-completed');
+            chip.addEventListener('animationend', () => chip.classList.remove('just-completed'), { once: true });
+            setTimeout(() => chip.classList.remove('just-completed'), 900);
+          }
+        }
       };
 
       document.getElementById('btn-download').onclick = () => {
