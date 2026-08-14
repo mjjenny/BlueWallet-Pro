@@ -143,7 +143,7 @@ test.describe("Primary navigation", () => {
 test.describe("Tools dropdown", () => {
   test.beforeEach(gotoOnboarded);
 
-  test("all 5 items render, are visible, and stay fully inside the viewport", async ({ page }) => {
+  test("all 6 items render, are visible, and stay fully inside the viewport", async ({ page }) => {
     const toggle = page.locator("#btn-tools-toggle");
     if (!(await toggle.isVisible())) {
       test.skip(true, "Tools dropdown trigger is intentionally hidden <=760px; mobile uses dedicated routes instead");
@@ -153,7 +153,7 @@ test.describe("Tools dropdown", () => {
 
     const vh = page.viewportSize()!.height;
     const vw = page.viewportSize()!.width;
-    for (const id of ["btn-checklist", "btn-ics", "btn-stcw", "btn-vaccines", "btn-bulk"]) {
+    for (const id of ["btn-checklist", "btn-ics", "btn-stcw", "btn-vaccines", "btn-packing", "btn-bulk"]) {
       const el = page.locator(`#${id}`);
       await expect(el, `#${id} should be visible in the open dropdown`).toBeVisible();
       const box = await el.boundingBox();
@@ -206,6 +206,24 @@ test.describe("Mobile parity routes", () => {
     await toggle.click();
     await page.locator("#btn-stcw").click();
     await expect(page.locator("#modal-generic.stcw-mode.show")).toBeVisible();
+  });
+
+  test("Pre-Deployment Checklist is reachable from the Packs screen on phones", async ({ page, isMobile }) => {
+    test.skip(!isMobile, "mobile-only route");
+    await page.locator('[data-mobile-nav="packs"]:visible').first().click();
+    const btn = page.locator("#btn-open-packing-from-packs");
+    await expect(btn).toBeVisible();
+    await btn.click();
+    await expect(page.locator("#modal-generic.packing-mode.show")).toBeVisible();
+  });
+
+  test("Pre-Deployment Checklist is reachable from the desktop/tablet Tools dropdown", async ({ page, isMobile }) => {
+    test.skip(isMobile, "desktop/tablet-only route");
+    const toggle = page.locator("#btn-tools-toggle");
+    await expect(toggle).toBeVisible();
+    await toggle.click();
+    await page.locator("#btn-packing").click();
+    await expect(page.locator("#modal-generic.packing-mode.show")).toBeVisible();
   });
 });
 
@@ -323,6 +341,21 @@ test.describe("Accessibility (axe-core, WCAG 2.1 A/AA)", () => {
     await expect(page.locator("#modal-generic.seatime-mode.show")).toBeVisible();
     const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).include("#modal-generic").analyze();
     await attachAxe(testInfo, "axe-seatime.json", results.violations);
+    const critical = results.violations.filter((v) => v.impact === "critical");
+    expect(critical, JSON.stringify(critical.map((v) => v.id))).toEqual([]);
+  });
+
+  test("Pre-Deployment Checklist modal", async ({ page, isMobile }, testInfo) => {
+    if (isMobile) {
+      await page.locator('[data-mobile-nav="packs"]:visible').first().click();
+      await page.locator("#btn-open-packing-from-packs").click();
+    } else {
+      await page.locator("#btn-tools-toggle").click();
+      await page.locator("#btn-packing").click();
+    }
+    await expect(page.locator("#modal-generic.packing-mode.show")).toBeVisible();
+    const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).include("#modal-generic").analyze();
+    await attachAxe(testInfo, "axe-packing.json", results.violations);
     const critical = results.violations.filter((v) => v.impact === "critical");
     expect(critical, JSON.stringify(critical.map((v) => v.id))).toEqual([]);
   });

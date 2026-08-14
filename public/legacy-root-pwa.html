@@ -1225,6 +1225,12 @@
       }
     }
 
+    /* ===== PACKING CHECKLIST — DESKTOP LAYOUT ===== */
+    @media (min-width: 1024px) {
+      #modal-generic.packing-mode .modal { max-width: 760px; }
+      #modal-generic.packing-mode #generic-body { padding-right: 4px; }
+    }
+
     /* ===== VACCINATION LOG — DESKTOP LAYOUT ===== */
     @media (min-width: 1024px) {
       #modal-generic.vaccine-mode .modal { max-width: 760px; }
@@ -8705,6 +8711,7 @@
           <button type="button" class="tool-btn" id="btn-ics">📅 Calendar</button>
           <button type="button" class="tool-btn" id="btn-stcw">🎓 STCW</button>
           <button type="button" class="tool-btn" id="btn-vaccines">💉 Vaccines</button>
+          <button type="button" class="tool-btn" id="btn-packing">🎒 Packing</button>
           <button type="button" class="tool-btn" id="btn-bulk">☑ Select</button>
         </div>
       </div>
@@ -9353,7 +9360,7 @@
   </div>
 
   <script>
-    const APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.28';
+    const APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.29';
     const DB_NAME = 'SeafarerWalletDB';
     let db;
     let useStorageFallback = false;
@@ -10584,7 +10591,7 @@
     }
     function showGeneric(title, bodyHtml, mode) {
       const modal = document.getElementById('modal-generic');
-      modal.classList.remove('vaccine-mode', 'packs-mode', 'timeline-mode', 'pack-builder-mode', 'pack-share-mode', 'seatime-mode', 'stcw-mode');
+      modal.classList.remove('vaccine-mode', 'packs-mode', 'timeline-mode', 'pack-builder-mode', 'pack-share-mode', 'seatime-mode', 'stcw-mode', 'packing-mode');
       if (mode) modal.classList.add(mode);
       document.getElementById('generic-title').textContent = title;
       document.getElementById('generic-body').innerHTML = bodyHtml;
@@ -12993,6 +13000,7 @@
           <button class="btn btn-primary" id="btn-create-pack-top" type="button">+ New custom pack</button>
           <button class="btn btn-ghost mobile-stcw-link" id="btn-open-stcw-from-packs" data-open-stcw type="button">STCW checklist</button>
           <button class="btn btn-ghost mobile-vaccine-link" id="btn-open-vaccines-from-packs" data-open-vaccines type="button" style="grid-column:1/-1">Vaccination log</button>
+          <button class="btn btn-ghost mobile-packing-link" id="btn-open-packing-from-packs" data-open-packing type="button" style="grid-column:1/-1">Pre-Deployment Checklist</button>
         </div>
         <div class="mobile-pack-new">
           <div class="field"><label>Custom pack name</label><input type="text" id="new-pack-name" placeholder="e.g. Joining M/V Aurora" /></div>
@@ -13058,6 +13066,10 @@
       document.getElementById('btn-open-stcw-from-packs')?.addEventListener('click', () => {
         close('modal-generic');
         openStcwUI();
+      });
+      document.getElementById('btn-open-packing-from-packs')?.addEventListener('click', () => {
+        close('modal-generic');
+        openPackingUI();
       });
       document.getElementById('btn-open-vaccines-from-packs')?.addEventListener('click', () => {
         close('modal-generic');
@@ -13198,6 +13210,91 @@
     function removeCustomStcwCourse(name) {
       saveCustomStcwCourses(getCustomStcwCourses().filter(c => c !== name));
     }
+
+    // Pre-Deployment Packing Checklist -- a static personal-packing reference
+    // (not derived from vault documents, unlike the STCW matrix or the
+    // Joining Vessel readiness checklist), so it's just plain checkboxes
+    // persisted by item id.
+    const PACKING_CHECKLIST = [
+      { title: '1. Essential Documents & Administration', note: 'Keep physical and digital copies of all documents.', items: [
+        ['Identification', "Passport (min. 1 year validity), Seaman's Book (CDC), National & Company ID."],
+        ['Certificates (Originals)', 'STCW Basic & Advanced, Certificate of Competency (CoC), Medical Fitness Certificate (DG Shipping approved).'],
+        ['Health & Vaccination', 'Yellow Fever Card, Cholera/Typhoid records, International Vaccination Booklet.'],
+        ['Employment & Travel', "Seafarer's Employment Agreement (SEA), flight e-tickets, Port Agent Letter, Guarantee Letter, signed debriefing forms from previous stints."],
+        ['Financial & Personal', 'International credit/forex card, small USD/EUR cash reserve, copies of investment or banking mandates to leave ashore.'],
+      ] },
+      { title: '2. Professional & Study Materials', note: 'Crucial for career progression and onboard administration.', items: [
+        ['Course Materials', 'Offline copies of management-level engineering courses, technical manuals, and maritime study modules.'],
+        ['Stationery', '3-4 sweat-resistant pocket logbooks, heavy-duty permanent markers, 10+ ballpoint pens.'],
+        ['Digital Backup', 'Secure USB drive with scans of all certificates, passport, and passport-sized photographs.'],
+      ] },
+      { title: '3. Specialized Technical & Engine Room Gear', note: 'While standard PPE is provided, personal comfort in high-stress zones is vital.', items: [
+        ['Apparel', '2-3 personal heavy-duty cotton boiler suits (if company sizes fluctuate).'],
+        ['Footwear Support', '2 sets of high-grade orthotic/gel insoles for steel-toe safety shoes, 14+ pairs of thick cotton work socks.'],
+        ['Hearing & Vision', 'Personal custom-molded earplugs or high-NRR ear defenders, anti-fog safety glasses.'],
+        ['Tools', 'Intrinsically safe (ATEX approved) tactical flashlight, personal pocket multimeter, high-quality multi-tool (e.g., Leatherman Surge).'],
+        ['Skin Protection', 'Industrial barrier cream (for grease/oil exposure), heavy-duty hand scrubbing paste.'],
+      ] },
+      { title: '4. Electronics & Entertainment', note: '', items: [
+        ['Hardware', 'Durable laptop/tablet with rugged casing.'],
+        ['Storage', '1TB+ external HDD loaded with offline movies, series, e-books, and offline music playlists.'],
+        ['Power', '2 universal travel adapters (surge protected), 20,000+ mAh power bank, 3-4 braided heavy-duty charging cables.'],
+        ['Audio', 'Premium active noise-canceling headphones (essential for engine noise and flights), secondary wired earphones.'],
+      ] },
+      { title: '5. Clothing & Cabin Essentials (Off-Duty)', note: '', items: [
+        ['Undergarments', '15-20 pairs of underwear, 10+ undershirts.'],
+        ['Casual Wear', '3-4 t-shirts, 2 pairs of comfortable jeans/chinos.'],
+        ['Activewear', '2 sets of gym shorts/shirts, swimming trunks.'],
+        ['Climate Gear', '2 sets of thermal base layers, lightweight windbreaker, warm beanie.'],
+        ['Footwear', 'Rubber cabin slippers/crocs, 1 pair running shoes, 1 pair smart-casual shoes.'],
+        ['Cabin Comfort', 'Own pillowcase, magnetic hooks (for cabin bulkheads), reusable thermal coffee mug.'],
+      ] },
+      { title: '6. Health, Hygiene & Toiletries (3-6 Month Supply)', note: '', items: [
+        ['Daily Hygiene', '2-3 tubes toothpaste, 2-3 toothbrushes, large bottles of 2-in-1 shampoo/body wash.'],
+        ['Grooming', 'Shaving kit with abundant replacement blades/cream, electric trimmer, deodorant/antiperspirant.'],
+        ['Skin Care', 'High SPF sunscreen, intensive body moisturizer, lip balm.'],
+        ['Medical Kit', "6-month supply of any personal prescriptions (with doctor's note), Paracetamol, Ibuprofen, loperamide, antacids, broad-spectrum antibiotics (consult physician), motion sickness pills, assorted band-aids."],
+        ['Laundry', '2 sturdy mesh laundry bags, mini sewing kit.'],
+      ] },
+    ];
+    const PACKING_TOTAL = PACKING_CHECKLIST.reduce((n, cat) => n + cat.items.length, 0);
+    function packingItemId(catIdx, itemIdx) { return 'pack-' + catIdx + '-' + itemIdx; }
+    function getPackingState() {
+      try { return JSON.parse(localStorage.getItem('bwPackingChecklist') || '{}'); }
+      catch (_) { return {}; }
+    }
+    function savePackingItemState(id, checked) {
+      const state = getPackingState();
+      if (checked) state[id] = true; else delete state[id];
+      try { localStorage.setItem('bwPackingChecklist', JSON.stringify(state)); } catch (_) {}
+    }
+    function buildPackingHtml() {
+      const state = getPackingState();
+      const doneCount = Object.keys(state).length;
+      const sections = PACKING_CHECKLIST.map((cat, ci) => {
+        const rows = cat.items.map(([name, detail], ii) => {
+          const id = packingItemId(ci, ii);
+          const isChecked = !!state[id];
+          return `<div class="check-item ${isChecked ? 'ok' : ''}"><div><div class="cn">${esc(name)}</div><div class="cs">${esc(detail)}</div></div><label class="sw"><input type="checkbox" class="packing-check" data-packing-id="${id}" aria-label="${esc(name)}" ${isChecked ? 'checked' : ''} /><span class="sl"></span></label></div>`;
+        }).join('');
+        return `<div class="help-sec"><h3>${esc(cat.title)}</h3>${cat.note ? `<p>${esc(cat.note)}</p>` : ''}${rows}</div>`;
+      }).join('');
+      return `<div class="check-item ${doneCount >= PACKING_TOTAL ? 'ok' : ''}" id="packing-progress-row"><div><div class="cn">Packed</div><div class="cs" id="packing-progress-text">${doneCount} of ${PACKING_TOTAL} items</div></div></div>` + sections;
+    }
+    function openPackingUI() {
+      showGeneric('Pre-Deployment Checklist', buildPackingHtml(), 'packing-mode');
+      document.querySelectorAll('.packing-check').forEach(cb => {
+        cb.addEventListener('change', () => {
+          savePackingItemState(cb.dataset.packingId, cb.checked);
+          cb.closest('.check-item').classList.toggle('ok', cb.checked);
+          const doneCount = Object.keys(getPackingState()).length;
+          const progressText = document.getElementById('packing-progress-text');
+          if (progressText) progressText.textContent = doneCount + ' of ' + PACKING_TOTAL + ' items';
+          document.getElementById('packing-progress-row')?.classList.toggle('ok', doneCount >= PACKING_TOTAL);
+        });
+      });
+    }
+
     function openStcwUI() {
       const rankKey = Object.keys(STCW_MATRIX).find(k => (seafarer.rank||'').toLowerCase().includes(k.split(' ')[0].toLowerCase())) || 'Generic';
       const baseReqs = STCW_MATRIX[rankKey] || STCW_MATRIX.Generic;
@@ -13314,6 +13411,7 @@
         ['btn-ics', 'Download calendar reminders'],
         ['btn-stcw', 'Open STCW matrix'],
         ['btn-vaccines', 'Open vaccines log'],
+        ['btn-packing', 'Open pre-deployment packing checklist'],
         ['btn-bulk', 'Select multiple documents'],
         ['btn-real-device-qa', 'Open real device QA pack'],
         ['btn-release-readiness', 'Open release readiness panel'],
@@ -13536,6 +13634,7 @@
       document.getElementById('btn-activity-log').onclick = () => downloadActivityLog();
       document.getElementById('btn-stcw').onclick = () => openStcwUI();
       document.getElementById('btn-vaccines').onclick = () => openVaccineUI();
+      document.getElementById('btn-packing').onclick = () => openPackingUI();
       const toolsToggle = document.getElementById('btn-tools-toggle');
       const toolsDropdown = document.getElementById('tools-dropdown');
       if (toolsToggle && toolsDropdown) {

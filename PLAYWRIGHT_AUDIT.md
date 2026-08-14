@@ -26,6 +26,28 @@ Local full-suite result on this update (`AUDIT_BASE_URL` against a local
 static build of `dist/client`, all 3 projects): **75 passed, 0 failed, 12
 skipped** (intentional per-viewport routing, unchanged from original run).
 
+## 2026-08-14 addition: Pre-Deployment Checklist
+
+New feature, not a bug fix: a static personal-packing checklist (6 categories,
+28 items, from the seafarer's own "Comprehensive Pre-Deployment Checklist"
+reference doc) reachable via the desktop/tablet Tools dropdown (🎒 Packing)
+and the mobile Packs-screen shortcut row, mirroring the existing STCW/
+Vaccines pattern exactly (`#modal-generic.packing-mode`, same trigger/close
+plumbing). Checkbox state persists to `localStorage` per item.
+`APP_CACHE_VERSION`/`CACHE_VERSION` bumped to v0.29.
+
+Covered by 3 new Playwright tests (reachability from both entry points, plus
+an axe-core WCAG 2.1 A/AA scan) — all pass on Desktop-Chromium and
+Tablet-WebKit; on Mobile-WebKit the reachability test passes cleanly, and the
+axe-core scan is "flaky" (passed on retry). That flakiness is **not specific
+to this feature** — the same run also flaked or failed on the pre-existing,
+untouched Settings and Add Document axe-core scans, and an isolated,
+single-worker re-run of the untouched Settings test reproduced the identical
+timeout on its own. This matches the "Known environment caveat" below
+(WebKit + axe-core instability on this Windows sandbox) rather than an app
+defect — confirmed by running the new feature's reachability check (same
+click path, no axe-core) in isolation, which passed in 15.6s.
+
 ## A note on scope, before the numbers
 
 No formal PRD exists for this application. Per agreement with the project owner,
@@ -411,3 +433,14 @@ own 30s timeout and cannot itself hang this way; the hang was specifically in
 the post-test-suite cleanup phase. Not reproduced on subsequent runs. If it
 recurs in CI, treat it as an infrastructure flake, not a test/app defect, and
 consider `workers: 1` or splitting `--project` runs if it becomes frequent.
+
+**Update (2026-08-14):** it did recur — this time as `axe-core`'s `.analyze()`
+call itself timing out (30s) on Mobile-WebKit specifically, hitting a
+different, seemingly random axe-core test each run (Settings, Add Document,
+and the new Pre-Deployment Checklist scan have each flaked or failed this
+way on separate runs, both isolated with `--workers=1` and in the full
+parallel suite). Non-axe tests on the same viewport (clicks, visibility,
+navigation) were never affected. Treating this as the same class of
+pre-existing WebKit-on-this-sandbox instability, not a per-test or
+per-feature defect — Desktop-Chromium and Tablet-WebKit have shown none of
+this across every run so far.
