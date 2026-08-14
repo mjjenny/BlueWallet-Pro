@@ -68,6 +68,29 @@ test.describe("Onboarding", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Service worker update handling -- regression test for Issue #5 (audit
+// report): self.clients.claim() in service-worker.js's activate handler
+// fires `controllerchange` on ANY newly-claimed client, including a
+// first-time visitor who had no controller at all, not just a real update.
+// The app used to reload unconditionally on that event, causing a spurious
+// reload on first visit (the desktop layout-shift/navigation flake the
+// original audit caught). Fixed via a hadControllerAtLoad guard.
+// ---------------------------------------------------------------------------
+test.describe("Service worker update handling", () => {
+  test("a first-visit controllerchange (clients.claim on initial activation) does not reload the page", async ({ page }) => {
+    await page.goto(APP_PATH, { waitUntil: "networkidle" });
+    await page.evaluate(() => {
+      (window as unknown as { __noReloadMarker: boolean }).__noReloadMarker = true;
+      navigator.serviceWorker.dispatchEvent(new Event("controllerchange"));
+    });
+    // Longer than the 1200ms reload delay used elsewhere in the app's update flow.
+    await page.waitForTimeout(1500);
+    const stillThere = await page.evaluate(() => (window as unknown as { __noReloadMarker?: boolean }).__noReloadMarker === true);
+    expect(stillThere, "page reloaded on a first-visit controllerchange (regression: see Issue #5)").toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Responsive layout
 // ---------------------------------------------------------------------------
 test.describe("Responsive layout", () => {
@@ -255,6 +278,81 @@ test.describe("Accessibility (axe-core, WCAG 2.1 A/AA)", () => {
     await expect(page.locator("#modal-checklist.show")).toBeVisible();
     const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).include("#modal-checklist").analyze();
     await attachAxe(testInfo, "axe-checklist.json", results.violations);
+    const critical = results.violations.filter((v) => v.impact === "critical");
+    expect(critical, JSON.stringify(critical.map((v) => v.id))).toEqual([]);
+  });
+
+  // -------------------------------------------------------------------------
+  // Sweep 2: screens PLAYWRIGHT_AUDIT.md flagged as not yet covered (only
+  // Home, Add Document, and Joining Vessel Checklist were scanned before).
+  // The `.sw` toggle-switch pattern behind Issue #4 (unlabeled checkboxes)
+  // was known to exist in Settings too, so it's the most likely place to
+  // find more of the same defect class.
+  // -------------------------------------------------------------------------
+
+  test("Settings modal", async ({ page }, testInfo) => {
+    await page.locator('[data-mobile-nav="profile"]:visible').first().click();
+    await page.locator("#btn-profile-settings").click();
+    await expect(page.locator("#modal-settings.show")).toBeVisible();
+    const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).include("#modal-settings").analyze();
+    await attachAxe(testInfo, "axe-settings.json", results.violations);
+    const critical = results.violations.filter((v) => v.impact === "critical");
+    expect(critical, JSON.stringify(critical.map((v) => v.id))).toEqual([]);
+  });
+
+  test("Packs modal", async ({ page }, testInfo) => {
+    await page.locator('[data-mobile-nav="packs"]:visible').first().click();
+    await expect(page.locator("#modal-generic.packs-mode.show")).toBeVisible();
+    const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).include("#modal-generic").analyze();
+    await attachAxe(testInfo, "axe-packs.json", results.violations);
+    const critical = results.violations.filter((v) => v.impact === "critical");
+    expect(critical, JSON.stringify(critical.map((v) => v.id))).toEqual([]);
+  });
+
+  test("Timeline modal", async ({ page }, testInfo) => {
+    await page.locator('[data-mobile-nav="timeline"]:visible').first().click();
+    await expect(page.locator("#modal-generic.timeline-mode.show")).toBeVisible();
+    const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).include("#modal-generic").analyze();
+    await attachAxe(testInfo, "axe-timeline.json", results.violations);
+    const critical = results.violations.filter((v) => v.impact === "critical");
+    expect(critical, JSON.stringify(critical.map((v) => v.id))).toEqual([]);
+  });
+
+  test("Sea Time modal", async ({ page }, testInfo) => {
+    await page.locator('[data-mobile-nav="seatime"]:visible').first().click();
+    await expect(page.locator("#modal-generic.seatime-mode.show")).toBeVisible();
+    const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).include("#modal-generic").analyze();
+    await attachAxe(testInfo, "axe-seatime.json", results.violations);
+    const critical = results.violations.filter((v) => v.impact === "critical");
+    expect(critical, JSON.stringify(critical.map((v) => v.id))).toEqual([]);
+  });
+
+  test("STCW checklist modal", async ({ page, isMobile }, testInfo) => {
+    if (isMobile) {
+      await page.locator('[data-mobile-nav="packs"]:visible').first().click();
+      await page.locator("#btn-open-stcw-from-packs").click();
+    } else {
+      await page.locator("#btn-tools-toggle").click();
+      await page.locator("#btn-stcw").click();
+    }
+    await expect(page.locator("#modal-generic.stcw-mode.show")).toBeVisible();
+    const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).include("#modal-generic").analyze();
+    await attachAxe(testInfo, "axe-stcw.json", results.violations);
+    const critical = results.violations.filter((v) => v.impact === "critical");
+    expect(critical, JSON.stringify(critical.map((v) => v.id))).toEqual([]);
+  });
+
+  test("Vaccines modal", async ({ page, isMobile }, testInfo) => {
+    if (isMobile) {
+      await page.locator('[data-mobile-nav="packs"]:visible').first().click();
+      await page.locator("#btn-open-vaccines-from-packs").click();
+    } else {
+      await page.locator("#btn-tools-toggle").click();
+      await page.locator("#btn-vaccines").click();
+    }
+    await expect(page.locator("#modal-generic.vaccine-mode.show")).toBeVisible();
+    const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).include("#modal-generic").analyze();
+    await attachAxe(testInfo, "axe-vaccines.json", results.violations);
     const critical = results.violations.filter((v) => v.impact === "critical");
     expect(critical, JSON.stringify(critical.map((v) => v.id))).toEqual([]);
   });

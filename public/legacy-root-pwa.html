@@ -9211,7 +9211,7 @@
           <div class="sblock full-only">
             <h3>Auto-lock</h3>
             <p>Re-lock after inactivity (minutes). 0 = off.</p>
-            <div class="field"><label>Idle minutes</label><input type="number" id="idle-mins" min="0" max="120" value="5" /></div>
+            <div class="field"><label for="idle-mins">Idle minutes</label><input type="number" id="idle-mins" min="0" max="120" value="5" /></div>
             <button class="btn btn-ghost" id="btn-save-idle" style="width:100%">Save auto-lock</button>
           </div>
         </details>
@@ -9259,12 +9259,12 @@
             <h3>Expiry reminders</h3>
             <p>Alert when a document is within these windows (days).</p>
             <div class="row">
-              <div class="field"><label>Primary</label><input type="number" id="rem-primary" min="1" max="730" value="183" /></div>
-              <div class="field"><label>Secondary</label><input type="number" id="rem-secondary" min="1" max="365" value="90" /></div>
+              <div class="field"><label for="rem-primary">Primary</label><input type="number" id="rem-primary" min="1" max="730" value="183" /></div>
+              <div class="field"><label for="rem-secondary">Secondary</label><input type="number" id="rem-secondary" min="1" max="365" value="90" /></div>
             </div>
             <div class="row">
-              <div class="field"><label>Urgent</label><input type="number" id="rem-urgent" min="1" max="90" value="30" /></div>
-              <div class="field"><label>Critical</label><input type="number" id="rem-critical" min="1" max="30" value="7" /></div>
+              <div class="field"><label for="rem-urgent">Urgent</label><input type="number" id="rem-urgent" min="1" max="90" value="30" /></div>
+              <div class="field"><label for="rem-critical">Critical</label><input type="number" id="rem-critical" min="1" max="30" value="7" /></div>
             </div>
             <button class="btn btn-ghost" id="btn-save-reminders" style="width:100%;margin-bottom:8px">Save reminder windows</button>
             <button class="btn btn-ghost" id="btn-reminder-center" style="width:100%;margin-bottom:8px">Reminder center</button>
@@ -9353,7 +9353,7 @@
   </div>
 
   <script>
-    const APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.26';
+    const APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.28';
     const DB_NAME = 'SeafarerWalletDB';
     let db;
     let useStorageFallback = false;
@@ -12066,10 +12066,10 @@
       ).join('') || '<p style="color:var(--muted)">No sea-time entries.</p>';
       showGeneric(editing ? 'Edit sea-time' : 'Sea-time log', (editing ? '' : summary) + rows + `
         <input type="hidden" id="sea-edit-id" value="${editing ? esc(editing.id) : ''}" />
-        <div class="field"><label>Vessel</label><input id="sea-vessel" value="${editing ? esc(editing.vessel) : ''}" /></div>
-        <div class="row"><div class="field"><label>Rank</label><input id="sea-rank" value="${editing ? esc(editing.rank||'') : ''}" /></div>
-        <div class="field"><label>Sign on</label><input type="date" id="sea-on" value="${editing ? esc(editing.signOn||'') : ''}" /></div></div>
-        <div class="field"><label>Sign off</label><input type="date" id="sea-off" value="${editing ? esc(editing.signOff||'') : ''}" /></div>
+        <div class="field"><label for="sea-vessel">Vessel</label><input id="sea-vessel" value="${editing ? esc(editing.vessel) : ''}" /></div>
+        <div class="row"><div class="field"><label for="sea-rank">Rank</label><input id="sea-rank" value="${editing ? esc(editing.rank||'') : ''}" /></div>
+        <div class="field"><label for="sea-on">Sign on</label><input type="date" id="sea-on" value="${editing ? esc(editing.signOn||'') : ''}" /></div></div>
+        <div class="field"><label for="sea-off">Sign off</label><input type="date" id="sea-off" value="${editing ? esc(editing.signOff||'') : ''}" /></div>
         <button class="btn btn-primary" id="sea-add" style="width:100%">${editing ? 'Save changes' : 'Add entry'}</button>`, 'seatime-mode');
       document.getElementById('sea-add').onclick = () => {
         const vessel = document.getElementById('sea-vessel').value.trim();
@@ -12115,8 +12115,8 @@
           <button type="button" data-dose-pick="2" class="${(editing?.dose||'') === '2' ? 'active' : ''}">2</button>
           <button type="button" data-dose-pick="Booster" class="${/booster/i.test(editing?.dose||'') ? 'active' : ''}">Booster</button>
         </div>
-        <div class="field"><label>Date</label><input type="date" id="vac-date" value="${editing ? esc(editing.date||'') : ''}" /></div>
-        <div class="field"><label>Expiry</label><input type="date" id="vac-exp" value="${editing ? esc(editing.expiry||'') : ''}" /></div>
+        <div class="field"><label for="vac-date">Date</label><input type="date" id="vac-date" value="${editing ? esc(editing.date||'') : ''}" /></div>
+        <div class="field"><label for="vac-exp">Expiry</label><input type="date" id="vac-exp" value="${editing ? esc(editing.expiry||'') : ''}" /></div>
         <button class="btn btn-primary" id="vac-add" style="width:100%">${editing ? 'Save changes' : '+ Add vaccination'}</button>
         <p class="mobile-required-note">All fields are required</p>
         </div>`);
@@ -13885,9 +13885,16 @@
       // Production service worker: caches the app shell for vessel/offline use.
       if ('serviceWorker' in navigator && !isFileProtocol() && secureContextOk()) {
         try {
+          // service-worker.js's activate handler calls self.clients.claim(),
+          // which fires controllerchange on ANY newly-claimed client -- including
+          // a first-time visitor who had no controller at all. Without this guard,
+          // every first visit gets a spurious extra reload (caught by the
+          // Playwright audit as a desktop layout-shift/navigation flake). Only
+          // reload when this page was already controlled, i.e. a real update.
+          const hadControllerAtLoad = !!navigator.serviceWorker.controller;
           let refreshing = false;
           navigator.serviceWorker.addEventListener('controllerchange', () => {
-            if (refreshing) return;
+            if (!hadControllerAtLoad || refreshing) return;
             refreshing = true;
             location.reload();
           });
