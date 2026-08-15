@@ -415,3 +415,132 @@ test.describe("Keyboard navigation", () => {
     await expect(page.locator("#modal-checklist.show")).toBeVisible();
   });
 });
+
+// ---------------------------------------------------------------------------
+// OCR preprocessing -- deskew, adaptive binarization, and MRZ checksum
+// validation, added to fix known-weak OCR quality (no deskew at all before,
+// and a half-built OpenCV binarization path that was never actually wired
+// in -- see git history). These three are fast and fully deterministic (no
+// network, no real Tesseract call), so they're safe in the regular suite.
+// A fourth, slower verification -- real Tesseract OCR on a synthetically
+// skewed MRZ image, confirming deskew turns a garbled/failed read into an
+// exact, checksum-valid one -- was run manually during development and is
+// not included here to keep this suite network-independent; see the commit
+// that added this pipeline for that result.
+// ---------------------------------------------------------------------------
+test.describe("OCR preprocessing (deskew / binarize / MRZ validity)", () => {
+  test("deskew measurably improves text-line alignment after a synthetic rotation", async ({ page }) => {
+    await page.goto(APP_PATH, { waitUntil: "networkidle" });
+    const result = await page.evaluate(async () => {
+      const w = 600, h = 400;
+      function makeTextCanvas() {
+        const c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        const ctx = c.getContext("2d")!;
+        ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = "#000";
+        ctx.font = "24px monospace";
+        for (let i = 0; i < 8; i++) ctx.fillText("THE QUICK BROWN FOX JUMPS OVER", 20, 40 + i * 40);
+        return c;
+      }
+      // @ts-expect-error -- globals from legacy-root-pwa.html's classic <script>
+      const base = makeTextCanvas();
+            // @ts-expect-error -- window global from legacy-root-pwa.html
+      const skewed = window.rotateCanvas(base, 6.3);
+            // @ts-expect-error -- window global from legacy-root-pwa.html
+      const { canvas: corrected } = await window.deskewCanvas(skewed);
+            // @ts-expect-error -- window global from legacy-root-pwa.html
+      const score = (c: HTMLCanvasElement) => window.rotatedProjectionVariance(window.grayscaleCanvasCopy(c, 500), 0);
+      return { baseScore: score(base), skewedScore: score(skewed), correctedScore: score(corrected) };
+    });
+    expect(result.skewedScore, "synthetic skew should have measurably degraded alignment").toBeLessThan(result.baseScore * 0.9);
+    expect(result.correctedScore, "deskew should meaningfully recover alignment").toBeGreaterThan(result.skewedScore * 1.5);
+  });
+
+  test("adaptive binarization handles an uneven lighting gradient better than a naive global threshold", async ({ page }) => {
+    await page.goto(APP_PATH, { waitUntil: "networkidle" });
+    const result = await page.evaluate(() => {
+      const w = 400, h = 200;
+      const c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      const ctx = c.getContext("2d")!;
+      const grad = ctx.createLinearGradient(0, 0, w, 0);
+      grad.addColorStop(0, "#eeeeee");
+      grad.addColorStop(1, "#555555");
+      ctx.fillStyle = grad; ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = "#000";
+      ctx.font = "20px monospace";
+      ctx.fillText("SAMPLE TEXT LINE ONE HERE", 5, 60);
+      ctx.fillText("SAMPLE TEXT LINE TWO HERE", 5, 100);
+      ctx.fillText("SAMPLE TEXT LINE THREE OK", 5, 140);
+
+      function naiveThreshold(canvas: HTMLCanvasElement) {
+        const cw = canvas.width, ch = canvas.height;
+        const cctx = canvas.getContext("2d")!;
+        const d = cctx.getImageData(0, 0, cw, ch).data;
+        const n = cw * ch;
+        const gray = new Float64Array(n);
+        let sum = 0;
+        for (let i = 0, p = 0; i < d.length; i += 4, p++) {
+          gray[p] = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+          sum += gray[p];
+        }
+        const mean = sum / n;
+        const out = document.createElement("canvas");
+        out.width = cw; out.height = ch;
+        const octx = out.getContext("2d")!;
+        const od = octx.createImageData(cw, ch);
+        for (let p = 0; p < n; p++) {
+          const g = gray[p] < mean ? 0 : 255;
+          od.data[p * 4] = od.data[p * 4 + 1] = od.data[p * 4 + 2] = g;
+          od.data[p * 4 + 3] = 255;
+        }
+        octx.putImageData(od, 0, 0);
+        return out;
+      }
+      function blackFraction(canvas: HTMLCanvasElement, x0: number, x1: number) {
+        const cctx = canvas.getContext("2d")!;
+        const d = cctx.getImageData(x0, 0, x1 - x0, canvas.height).data;
+        let black = 0, total = 0;
+        for (let i = 0; i < d.length; i += 4) { total++; if (d[i] < 128) black++; }
+        return black / total;
+      }
+
+            // @ts-expect-error -- window global from legacy-root-pwa.html
+      const adaptive = window.binarizeCanvas(c);
+      const naive = naiveThreshold(c);
+      const mid = w / 2;
+      const adaptiveDiff = Math.abs(blackFraction(adaptive, 0, mid) - blackFraction(adaptive, mid, w));
+      const naiveDiff = Math.abs(blackFraction(naive, 0, mid) - blackFraction(naive, mid, w));
+      return { adaptiveDiff, naiveDiff };
+    });
+    expect(result.adaptiveDiff, "adaptive threshold should be far less affected by the lighting gradient than a naive global one").toBeLessThan(result.naiveDiff);
+  });
+
+  test("parseMrzLines numberValid/expiryValid correctly reflect ICAO check digits", async ({ page }) => {
+    await page.goto(APP_PATH, { waitUntil: "networkidle" });
+    const result = await page.evaluate(() => {
+            // @ts-expect-error -- window global from legacy-root-pwa.html
+      const cd = (s: string) => window.mrzCheckDigit(s);
+      const docNo = "L898902C3"; // ICAO 9303 sample document number
+      const docCd = cd(docNo);
+      const expRaw = "401231"; // YYMMDD
+      const expCd = cd(expRaw);
+      const line1 = "P<UTOERIKSSON<<ANNA<MARIA<<<<<<<<<<<<<<<<<<<";
+      const validLine2 = `${docNo}${docCd}UTO${"740812"}${cd("740812")}F${expRaw}${expCd}${"ZE184226B<<<<<10".padEnd(14, "<")}${"0"}`.slice(0, 44);
+      const corruptLine2 = validLine2.slice(0, 5) + "X" + validLine2.slice(6);
+            // @ts-expect-error -- window global from legacy-root-pwa.html
+      const validParsed = window.parseMrzLines([line1, validLine2]);
+            // @ts-expect-error -- window global from legacy-root-pwa.html
+      const corruptParsed = window.parseMrzLines([line1, corruptLine2]);
+      return {
+        validNumberValid: validParsed?.numberValid,
+        validExpiryValid: validParsed?.expiryValid,
+        corruptNumberValid: corruptParsed?.numberValid,
+      };
+    });
+    expect(result.validNumberValid, "a correctly-formed MRZ should validate its document-number check digit").toBe(true);
+    expect(result.validExpiryValid, "a correctly-formed MRZ should validate its expiry check digit").toBe(true);
+    expect(result.corruptNumberValid, "a corrupted document number should fail check-digit validation").toBe(false);
+  });
+});

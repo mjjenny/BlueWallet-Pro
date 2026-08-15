@@ -9089,7 +9089,7 @@
           </div>
           <div class="help-sec">
             <h3>OCR</h3>
-            <p>Use <strong>Read text from scan (OCR)</strong> on Add/Edit after attaching JPG, PNG, or PDF files. PDF pages are rendered inside the browser first, then OCR uses enhanced contrast, safe layout zones, and MRZ checks where possible. OpenCV contour analysis is skipped for browser stability. Always review suggestions before Apply. OCR needs HTTPS or localhost, not <code>file://</code>.</p>
+            <p>Use <strong>Read text from scan (OCR)</strong> on Add/Edit after attaching JPG, PNG, or PDF files. PDF pages are rendered inside the browser first, then automatically straightened if the photo was taken at an angle, enhanced for contrast, and read using safe layout zones plus MRZ checks where possible. Always review suggestions before Apply. OCR needs HTTPS or localhost, not <code>file://</code>.</p>
             <ul>
               <li>On iOS Safari, camera permission is tested from <strong>Scan with camera</strong> inside Add Document.</li>
               <li>If camera is cancelled or blocked, the form stays open and no saved document is changed.</li>
@@ -9360,7 +9360,7 @@
   </div>
 
   <script>
-    const APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.29';
+    const APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0.30';
     const DB_NAME = 'SeafarerWalletDB';
     let db;
     let useStorageFallback = false;
@@ -12159,8 +12159,8 @@
     let ocrSuggestions = { number: '', expiry: '', issue: '', title: '' };
     let tesseractLoading = null;
     let tesseractWorkerLoading = null;
+    let tesseractWorker2Loading = null;
     let pdfjsLoading = null;
-    let opencvLoading = null;
     let ocrRunId = 0;
     const OCR_TIMEOUT_MS = 45000;
     const PDF_OCR_MAX_PAGES = 4;
@@ -12201,43 +12201,35 @@
       return pdfjsLoading;
     }
 
-    function getOcrWorker(Tesseract) {
-      if (tesseractWorkerLoading) return tesseractWorkerLoading;
-      tesseractWorkerLoading = Tesseract.createWorker('eng').then(async (worker) => {
+    function createOcrWorker(Tesseract) {
+      return Tesseract.createWorker('eng').then(async (worker) => {
         await worker.setParameters({
           preserve_interword_spaces: '1',
           user_defined_dpi: '300'
         });
         return worker;
-      }).catch((e) => {
+      });
+    }
+    function getOcrWorker(Tesseract) {
+      if (tesseractWorkerLoading) return tesseractWorkerLoading;
+      tesseractWorkerLoading = createOcrWorker(Tesseract).catch((e) => {
         tesseractWorkerLoading = null;
         throw e;
       });
       return tesseractWorkerLoading;
     }
-
-    function loadOpenCV() {
-      if (window.cv && window.cv.Mat) return Promise.resolve(window.cv);
-      if (opencvLoading) return opencvLoading;
-      if (!window.isSecureContext) return Promise.reject(new Error('OpenCV needs secure context'));
-      opencvLoading = new Promise((resolve, reject) => {
-        const s = document.createElement('script');
-        s.src = 'https://cdn.jsdelivr.net/npm/opencv.js@1.2.1/opencv.js';
-        s.crossOrigin = 'anonymous';
-        s.async = true;
-        s.onload = () => {
-          const wait = () => {
-            if (window.cv && window.cv.Mat) resolve(window.cv);
-            else if (window.cv && window.cv['onRuntimeInitialized'] !== undefined) {
-              window.cv.onRuntimeInitialized = () => resolve(window.cv);
-            } else setTimeout(wait, 50);
-          };
-          wait();
-        };
-        s.onerror = () => reject(new Error('OpenCV.js failed to load'));
-        document.head.appendChild(s);
+    // A second, independent worker so the MRZ-candidate group and the
+    // general-zones group can run genuinely concurrently (see
+    // runOcrFromPending) instead of serializing five OCR passes on one
+    // worker -- a single Tesseract worker processes one recognize() call at
+    // a time regardless of how many are requested.
+    function getOcrWorker2(Tesseract) {
+      if (tesseractWorker2Loading) return tesseractWorker2Loading;
+      tesseractWorker2Loading = createOcrWorker(Tesseract).catch((e) => {
+        tesseractWorker2Loading = null;
+        throw e;
       });
-      return opencvLoading;
+      return tesseractWorker2Loading;
     }
 
     function loadImageEl(dataUrl) {
@@ -12308,6 +12300,156 @@
       ctx.putImageData(imageData, 0, 0);
     }
 
+    // ----- Deskew: real-world phone photos of documents are rarely perfectly
+    // square, and Tesseract's accuracy drops sharply past a few degrees of
+    // rotation. Detected via the classic projection-profile method (search
+    // candidate angles, keep the one whose horizontal dark-pixel projection
+    // has the highest variance -- i.e. text lines line up into sharp peaks)
+    // rather than a heavier dependency like OpenCV.js.
+    function grayscaleCanvasCopy(canvas, maxSide) {
+      const scale = Math.min(1, maxSide / Math.max(canvas.width, canvas.height));
+      const w = Math.max(1, Math.round(canvas.width * scale));
+      const h = Math.max(1, Math.round(canvas.height * scale));
+      const small = document.createElement('canvas');
+      small.width = w; small.height = h;
+      const sctx = small.getContext('2d', { willReadFrequently: true });
+      sctx.drawImage(canvas, 0, 0, w, h);
+      const id = sctx.getImageData(0, 0, w, h);
+      const d = id.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const g = Math.round(0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]);
+        d[i] = d[i + 1] = d[i + 2] = g;
+      }
+      sctx.putImageData(id, 0, 0);
+      return small;
+    }
+
+    /** Rotates `canvas` by `angleDeg` (canvas ctx.rotate convention), expanding
+     * the output so nothing is cropped, filling new corners white to match the
+     * document-scan background this pipeline already assumes elsewhere. */
+    function rotateCanvas(canvas, angleDeg) {
+      if (!angleDeg || Math.abs(angleDeg) < 0.05) return canvas;
+      const rad = angleDeg * Math.PI / 180;
+      const w = canvas.width, h = canvas.height;
+      const cos = Math.abs(Math.cos(rad)), sin = Math.abs(Math.sin(rad));
+      const newW = Math.max(1, Math.ceil(w * cos + h * sin));
+      const newH = Math.max(1, Math.ceil(w * sin + h * cos));
+      const out = document.createElement('canvas');
+      out.width = newW; out.height = newH;
+      const ctx = out.getContext('2d', { willReadFrequently: true });
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, newW, newH);
+      ctx.translate(newW / 2, newH / 2);
+      ctx.rotate(rad);
+      ctx.drawImage(canvas, -w / 2, -h / 2);
+      return out;
+    }
+
+    /** Rotates a (small, already-grayscale) canvas by angleDeg and returns the
+     * variance of its horizontal dark-pixel projection -- higher means text
+     * lines are better aligned to horizontal at that angle. Uses the exact
+     * same rotation transform as rotateCanvas() above, so whatever angle
+     * maximizes this score is directly the correct angle to feed back into
+     * rotateCanvas() on the full-resolution image -- no separate sign
+     * convention to keep in sync between detection and correction. */
+    function rotatedProjectionVariance(smallGrayCanvas, angleDeg) {
+      const rotated = rotateCanvas(smallGrayCanvas, angleDeg);
+      const w = rotated.width, h = rotated.height;
+      const ctx = rotated.getContext('2d', { willReadFrequently: true });
+      const d = ctx.getImageData(0, 0, w, h).data;
+      const rows = new Float64Array(h);
+      for (let y = 0; y < h; y++) {
+        let sum = 0;
+        const rowStart = y * w * 4;
+        for (let x = 0; x < w; x++) sum += 255 - d[rowStart + x * 4];
+        rows[y] = sum;
+      }
+      let mean = 0;
+      for (let y = 0; y < h; y++) mean += rows[y];
+      mean /= h;
+      let variance = 0;
+      for (let y = 0; y < h; y++) { const diff = rows[y] - mean; variance += diff * diff; }
+      return variance / h;
+    }
+
+    /** Coarse-to-fine angle search: +/-10 deg in 1 deg steps, then refine
+     * +/-1 deg around the best coarse angle in 0.1 deg steps. Yields to the
+     * browser between candidates so this doesn't block the UI thread on a
+     * long, uninterrupted search on slower phones. */
+    async function detectSkewAngle(canvas) {
+      const small = grayscaleCanvasCopy(canvas, 500);
+      async function search(center, range, step) {
+        let best = center, bestScore = -Infinity;
+        for (let a = center - range; a <= center + range + 1e-9; a += step) {
+          const score = rotatedProjectionVariance(small, a);
+          if (score > bestScore) { bestScore = score; best = a; }
+          await yieldToBrowser();
+        }
+        return best;
+      }
+      const coarse = await search(0, 10, 1);
+      const fine = await search(coarse, 1, 0.1);
+      return Math.round(fine * 10) / 10;
+    }
+
+    async function deskewCanvas(canvas) {
+      const angle = await detectSkewAngle(canvas);
+      return { canvas: rotateCanvas(canvas, angle), angle };
+    }
+
+    /** Local-mean adaptive threshold (the same practical effect as the
+     * OpenCV adaptiveThreshold call this pipeline used to depend on -- see
+     * the removed opencvTextRegions() in git history -- without the ~8MB
+     * OpenCV.js WASM download that was already dropped once for load-time
+     * stability). Uses an integral image so each pixel's local-window mean
+     * is an O(1) lookup after one O(w*h) pass, rather than resumming the
+     * window per pixel. Returns a new binary (black/white) canvas; does not
+     * mutate the input. */
+    function binarizeCanvas(canvas, windowFrac = 0.5, t = 0.15) {
+      const w = canvas.width, h = canvas.height;
+      const srcData = canvas.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, w, h).data;
+      const gray = new Float64Array(w * h);
+      for (let i = 0, p = 0; i < srcData.length; i += 4, p++) {
+        gray[p] = 0.299 * srcData[i] + 0.587 * srcData[i + 1] + 0.114 * srcData[i + 2];
+      }
+      const iw = w + 1;
+      const integral = new Float64Array(iw * (h + 1));
+      for (let y = 0; y < h; y++) {
+        let rowSum = 0;
+        for (let x = 0; x < w; x++) {
+          rowSum += gray[y * w + x];
+          integral[(y + 1) * iw + (x + 1)] = integral[y * iw + (x + 1)] + rowSum;
+        }
+      }
+      const windowSize = Math.max(15, Math.round(Math.min(w, h) * windowFrac)) | 1; // odd
+      const half = windowSize >> 1;
+      const areaSum = (x0, y0, x1, y1) => {
+        x0 = Math.max(0, x0); y0 = Math.max(0, y0);
+        x1 = Math.min(w - 1, x1); y1 = Math.min(h - 1, y1);
+        return integral[(y1 + 1) * iw + (x1 + 1)] - integral[y0 * iw + (x1 + 1)]
+             - integral[(y1 + 1) * iw + x0] + integral[y0 * iw + x0];
+      };
+      const out = document.createElement('canvas');
+      out.width = w; out.height = h;
+      const octx = out.getContext('2d', { willReadFrequently: true });
+      const outData = octx.createImageData(w, h);
+      const od = outData.data;
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const x0 = x - half, x1 = x + half, y0 = y - half, y1 = y + half;
+          const count = (Math.min(w - 1, x1) - Math.max(0, x0) + 1) * (Math.min(h - 1, y1) - Math.max(0, y0) + 1);
+          const mean = areaSum(x0, y0, x1, y1) / Math.max(1, count);
+          const black = gray[y * w + x] < mean * (1 - t);
+          const g = black ? 0 : 255;
+          const i = (y * w + x) * 4;
+          od[i] = od[i + 1] = od[i + 2] = g;
+          od[i + 3] = 255;
+        }
+      }
+      octx.putImageData(outData, 0, 0);
+      return out;
+    }
+
     function dataUrlToBytes(dataUrl) {
       const body = String(dataUrl || '').split(',')[1] || '';
       const binary = atob(body);
@@ -12344,8 +12486,11 @@
         ctx.fillStyle = '#fff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         await page.render({ canvasContext: ctx, viewport }).promise;
-        enhanceCanvasInPlace(ctx, canvas.width, canvas.height);
-        out.push({ canvas, label: `${file.name || 'PDF'} page ${pageNo}`, totalPages: pdf.numPages });
+        status.textContent = `Preparing PDF page ${pageNo}/${pdf.numPages}: checking alignment...`;
+        const { canvas: deskewed } = await deskewCanvas(canvas);
+        const deskewedCtx = deskewed.getContext('2d', { willReadFrequently: true });
+        enhanceCanvasInPlace(deskewedCtx, deskewed.width, deskewed.height);
+        out.push({ canvas: deskewed, label: `${file.name || 'PDF'} page ${pageNo}`, totalPages: pdf.numPages });
       }
       if ((pdf.numPages || 0) > PDF_OCR_MAX_PAGES) {
         status.textContent = `Prepared first ${PDF_OCR_MAX_PAGES} PDF pages for OCR.`;
@@ -12360,9 +12505,12 @@
         if (file.type && file.type.startsWith('image/')) {
           status.textContent = `Preparing image scan for OCR: ${file.name || 'scan'}...`;
           const img = await loadImageEl(file.data);
-          const { canvas, ctx, w, h } = canvasFromImage(img);
-          enhanceCanvasInPlace(ctx, w, h);
-          pages.push({ canvas, label: file.name || 'image scan', totalPages: 1 });
+          const { canvas } = canvasFromImage(img);
+          status.textContent = `Checking photo alignment: ${file.name || 'scan'}...`;
+          const { canvas: deskewed } = await deskewCanvas(canvas);
+          const deskewedCtx = deskewed.getContext('2d', { willReadFrequently: true });
+          enhanceCanvasInPlace(deskewedCtx, deskewed.width, deskewed.height);
+          pages.push({ canvas: deskewed, label: file.name || 'image scan', totalPages: 1 });
         } else if (isPdfFile(file)) {
           const pdfPages = await renderPdfPagesForOcr(file, status, stillCurrent);
           pages.push(...pdfPages);
@@ -12374,67 +12522,27 @@
     /** Heuristic zones: top title, middle fields, bottom MRZ band */
     function heuristicZones(canvas) {
       const w = canvas.width, h = canvas.height;
-      const crop = (y0, y1) => {
+      const cropCanvas = (y0, y1) => {
         const c = document.createElement('canvas');
         const hh = Math.max(1, Math.round(y1 - y0));
         c.width = w; c.height = hh;
-        c.getContext('2d').drawImage(canvas, 0, y0, w, hh, 0, 0, w, hh);
-        return c.toDataURL('image/png');
+        c.getContext('2d', { willReadFrequently: true }).drawImage(canvas, 0, y0, w, hh, 0, 0, w, hh);
+        return c;
       };
+      const crop = (y0, y1) => cropCanvas(y0, y1).toDataURL('image/png');
+      const bottomCanvas = cropCanvas(h * 0.68, h);
       return {
         top: crop(0, h * 0.28),
         mid: crop(h * 0.22, h * 0.72),
-        bottom: crop(h * 0.68, h),
+        bottom: bottomCanvas.toDataURL('image/png'),
+        // Second MRZ candidate: adaptive-threshold binarized. MRZ text is a
+        // fixed-width font at strong, uniform contrast once cropped, which is
+        // exactly where binarization tends to help Tesseract most (see
+        // runOcrFromPending, which OCRs both and keeps whichever one's ICAO
+        // check digit actually validates -- an objective choice, not a guess).
+        bottomBinarized: binarizeCanvas(bottomCanvas).toDataURL('image/png'),
         full: canvas.toDataURL('image/png')
       };
-    }
-
-    /** OpenCV contour text regions (optional) */
-    async function opencvTextRegions(canvas) {
-      try {
-        const cv = await loadOpenCV();
-        const src = cv.imread(canvas);
-        const gray = new cv.Mat();
-        cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
-        const bin = new cv.Mat();
-        cv.adaptiveThreshold(gray, bin, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 31, 15);
-        const kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(15, 3));
-        const morph = new cv.Mat();
-        cv.morphologyEx(bin, morph, cv.MORPH_CLOSE, kernel);
-        const contours = new cv.MatVector();
-        const hierarchy = new cv.Mat();
-        cv.findContours(morph, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
-        const regions = [];
-        const areaMin = canvas.width * canvas.height * 0.002;
-        const areaMax = canvas.width * canvas.height * 0.35;
-        for (let i = 0; i < contours.size(); i++) {
-          const r = cv.boundingRect(contours.get(i));
-          const area = r.width * r.height;
-          if (area < areaMin || area > areaMax) continue;
-          if (r.width < 40 || r.height < 12) continue;
-          if (r.width / r.height < 1.2) continue; // prefer wide text lines
-          regions.push(r);
-        }
-        regions.sort((a, b) => a.y - b.y || a.x - b.x);
-        // merge nearby, take top 8
-        const crops = [];
-        const ctx = canvas.getContext('2d');
-        regions.slice(0, 12).forEach(r => {
-          const c = document.createElement('canvas');
-          const pad = 4;
-          const x = Math.max(0, r.x - pad), y = Math.max(0, r.y - pad);
-          const ww = Math.min(canvas.width - x, r.width + pad * 2);
-          const hh = Math.min(canvas.height - y, r.height + pad * 2);
-          c.width = ww; c.height = hh;
-          c.getContext('2d').drawImage(canvas, x, y, ww, hh, 0, 0, ww, hh);
-          crops.push(c.toDataURL('image/png'));
-        });
-        src.delete(); gray.delete(); bin.delete(); kernel.delete(); morph.delete(); contours.delete(); hierarchy.delete();
-        return crops;
-      } catch (e) {
-        console.warn('OpenCV regions skipped', e);
-        return [];
-      }
     }
 
     /** ICAO MRZ helpers */
@@ -12472,8 +12580,13 @@
       const expRaw = line2.slice(21, 27);
       const expCd = line2[27];
       const out = { number: '', expiry: '', issue: '', title: 'Passport (MRZ)' };
-      if (docNo && mrzCheckDigit(line2.slice(0, 9)) === docCd) out.number = docNo;
+      // Surfaced so callers can pick between multiple OCR attempts (e.g. a
+      // grayscale crop vs. a binarized one) based on which one actually
+      // checksums correctly, rather than guessing which looks cleaner.
+      out.numberValid = !!(docNo && mrzCheckDigit(line2.slice(0, 9)) === docCd);
+      if (out.numberValid) out.number = docNo;
       else if (docNo.length >= 6) out.number = docNo;
+      out.expiryValid = /^\d{6}$/.test(expRaw) && mrzCheckDigit(expRaw) === expCd;
       if (/^\d{6}$/.test(expRaw)) {
         let yy = +expRaw.slice(0, 2);
         const yyyy = 2000 + yy; // expiry almost always 20xx
@@ -12488,8 +12601,8 @@
       return out;
     }
 
-    async function ocrCrop(Tesseract, dataUrl, psm, whitelist) {
-      const worker = await getOcrWorker(Tesseract);
+    async function ocrCrop(Tesseract, dataUrl, psm, whitelist, workerGetter = getOcrWorker) {
+      const worker = await workerGetter(Tesseract);
       const cfg = {
         tessedit_pageseg_mode: String(psm),
         preserve_interword_spaces: '1'
@@ -12637,26 +12750,55 @@
           const prefix = pages.length > 1 ? `Page ${pageIndex + 1}/${pages.length}` : 'Page';
           pageLabels.push(pageInfo.label);
 
-          status.textContent = `${prefix}: reading MRZ/passport band...`;
+          status.textContent = `${prefix}: reading MRZ + page text...`;
           await yieldToBrowser();
-          try {
-            const t = await withTimeout(ocrCrop(Tesseract, zones.bottom, 6, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<'), OCR_TIMEOUT_MS, 'MRZ OCR took too long');
-            if (t) mrzText += '\n' + t;
-          } catch (e) {
-            console.warn('MRZ OCR skipped', e);
-          }
 
-          for (const [name, url, psm] of [['top', zones.top, 6], ['mid', zones.mid, 6], ['full', zones.full, 11]]) {
-            if (!stillCurrent()) return;
-            status.textContent = `${prefix}: reading ${name} text...`;
-            await yieldToBrowser();
+          // Two independent workers so the MRZ-candidate group (grayscale
+          // crop + binarized crop, compared by ICAO check digit) and the
+          // general-zones group run concurrently rather than five sequential
+          // OCR passes -- cuts wall-clock time and per-crop timeout risk,
+          // which matters most on multi-page PDFs.
+          const mrzGroup = (async () => {
+            let grayText = '', binText = '';
             try {
-              const t = await withTimeout(ocrCrop(Tesseract, url, psm), OCR_TIMEOUT_MS, `OCR took too long on ${name} text`);
-              if (t) zoneTexts.push(`--- ${pageInfo.label} ${name} ---\n${t}`);
+              grayText = await withTimeout(ocrCrop(Tesseract, zones.bottom, 6, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<', getOcrWorker), OCR_TIMEOUT_MS, 'MRZ OCR took too long');
             } catch (e) {
-              console.warn('OCR zone skipped', name, e);
+              console.warn('MRZ OCR (grayscale) skipped', e);
             }
-          }
+            if (!stillCurrent()) return { grayText: '', binText: '' };
+            try {
+              binText = await withTimeout(ocrCrop(Tesseract, zones.bottomBinarized, 6, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<', getOcrWorker), OCR_TIMEOUT_MS, 'MRZ OCR (binarized) took too long');
+            } catch (e) {
+              console.warn('MRZ OCR (binarized) skipped', e);
+            }
+            return { grayText, binText };
+          })();
+
+          const zoneGroup = (async () => {
+            const out = [];
+            for (const [name, url, psm] of [['top', zones.top, 6], ['mid', zones.mid, 6], ['full', zones.full, 11]]) {
+              if (!stillCurrent()) return out;
+              try {
+                const t = await withTimeout(ocrCrop(Tesseract, url, psm, null, getOcrWorker2), OCR_TIMEOUT_MS, `OCR took too long on ${name} text`);
+                if (t) out.push(`--- ${pageInfo.label} ${name} ---\n${t}`);
+              } catch (e) {
+                console.warn('OCR zone skipped', name, e);
+              }
+            }
+            return out;
+          })();
+
+          const [{ grayText, binText }, zoneOut] = await Promise.all([mrzGroup, zoneGroup]);
+          if (!stillCurrent()) return;
+
+          // Pick whichever MRZ candidate actually checksums correctly --
+          // an objective signal already in this file (mrzCheckDigit), not a
+          // guess about which preprocessing "looks" better.
+          const grayValid = !!parseMrzLines((grayText || '').split(/\n+/))?.numberValid;
+          const binValid = !!parseMrzLines((binText || '').split(/\n+/))?.numberValid;
+          const bestMrzText = (!grayValid && binValid) ? binText : grayText;
+          if (bestMrzText) mrzText += '\n' + bestMrzText;
+          zoneTexts.push(...zoneOut);
         }
 
         const mrzLines = (mrzText || '').split(/\n+/);

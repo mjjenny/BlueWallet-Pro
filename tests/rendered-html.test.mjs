@@ -45,7 +45,7 @@ test("ships the stable app shell with in-app update support", async () => {
   ]);
 
   assert.match(html, /THE BLUE WALLET/);
-  assert.match(html, /APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0\.29'/);
+  assert.match(html, /APP_CACHE_VERSION = 'blue-wallet-stable-rollback-v0\.30'/);
   assert.match(html, /service-worker\.js\?update-check=/);
   assert.match(html, /New Blue Wallet update available\./);
   assert.match(html, /applyAppUpdate/);
@@ -61,6 +61,6 @@ test("ships the stable app shell with in-app update support", async () => {
   assert.equal(html.includes('w.document.write(`<iframe src="${f.data}"'), false);
   assert.equal(html.includes("w.open(file.data"), false);
   assert.equal(html.includes("printPdfDirect"), false);
-  assert.match(worker, /CACHE_VERSION = "blue-wallet-stable-rollback-v0\.29"/);
+  assert.match(worker, /CACHE_VERSION = "blue-wallet-stable-rollback-v0\.30"/);
   assert.match(worker, /clients\.claim\(\)/);
 });
