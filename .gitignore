@@ -40,3 +40,9 @@ yarn-error.log*
 /.wrangler/
 /outputs/
 /work/
+
+# local tool config (Claude Code) -- machine-local, not app config
+/.claude/
+
+# historical manual-deploy release archives -- not part of tracked source
+/build/
